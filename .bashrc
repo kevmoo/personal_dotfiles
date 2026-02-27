@@ -31,6 +31,7 @@ export PATH
 # export SYSTEMD_PAGER=
 
 # User specific aliases and functions
+alias a='ls -la'
 if [ -d ~/.bashrc.d ]; then
     for rc in ~/.bashrc.d/*; do
         if [ -f "$rc" ]; then
