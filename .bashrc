@@ -33,6 +33,7 @@ export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
 
 # User specific aliases and functions
 alias a='ls -la'
+alias pu='dart pub upgrade'
 if [ -d ~/.bashrc.d ]; then
     for rc in ~/.bashrc.d/*; do
         if [ -f "$rc" ]; then
