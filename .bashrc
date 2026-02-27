@@ -34,6 +34,8 @@ export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
 # export SYSTEMD_PAGER=
 
 # User specific aliases and functions
+alias ..='cd ..'
+alias ...='cd ../..'
 alias a='ls -la'
 alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 alias pbcopy='wl-copy'

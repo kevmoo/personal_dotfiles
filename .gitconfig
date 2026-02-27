@@ -5,6 +5,10 @@
 	defaultBranch = main
 [alias]
 	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+	fa = fetch --all --prune
+	fp = "!git fa; git pull --ff-only"
+	amend = commit --amend -a
+	gp = grep -F
 [core]
 	editor = code
 [color]
