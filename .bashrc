@@ -39,7 +39,6 @@ alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 alias pbcopy='wl-copy'
 alias pbpaste='wl-paste'
 alias pu='dart pub upgrade'
-alias smerge='flatpak run com.sublimemerge.App'
 
 if [ -d ~/.bashrc.d ]; then
     for rc in ~/.bashrc.d/*; do
