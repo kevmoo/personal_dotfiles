@@ -1,3 +1,5 @@
+tap "sinelaw/fresh"
+brew "fresh-editor"
 brew "gh"
 cask "font-blex-mono-nerd-font"
 cask "font-caskaydia-mono-nerd-font"
