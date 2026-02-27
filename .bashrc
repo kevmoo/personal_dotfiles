@@ -20,7 +20,7 @@ if [ -f /etc/bashrc ]; then
 fi
 
 # User specific environment
-for dir in "$HOME/.local/bin" "$HOME/bin" "$HOME/github/flutter/bin"; do
+for dir in "$HOME/.local/bin" "$HOME/bin" "$HOME/github/flutter/bin" "$HOME/.pub-cache/bin"; do
     if [[ ":$PATH:" != *":$dir:"* ]]; then
         PATH="$dir:$PATH"
     fi
