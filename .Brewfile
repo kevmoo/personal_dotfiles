@@ -1,3 +1,4 @@
+brew "gh"
 cask "font-blex-mono-nerd-font"
 cask "font-caskaydia-mono-nerd-font"
 cask "font-droid-sans-mono-nerd-font"
