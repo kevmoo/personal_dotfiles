@@ -26,6 +26,7 @@ for dir in "$HOME/.local/bin" "$HOME/bin" "$HOME/github/flutter/bin"; do
     fi
 done
 export PATH
+export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
 
 # Uncomment the following line if you don't like systemctl's auto-paging feature:
 # export SYSTEMD_PAGER=
