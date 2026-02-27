@@ -19,9 +19,11 @@ if [ -f /etc/bashrc ]; then
     . /etc/bashrc
 fi
 
+export VOLTA_HOME="$HOME/.volta"
+
 # User specific environment
-for dir in "$HOME/.local/bin" "$HOME/bin" "$HOME/github/flutter/bin" "$HOME/.pub-cache/bin"; do
-    if [[ ":$PATH:" != *":$dir:"* ]]; then
+for dir in "$HOME/.local/bin" "$HOME/bin" "$HOME/github/flutter/bin" "$HOME/.pub-cache/bin" "$VOLTA_HOME/bin"; do
+    if [[ -d "$dir" && ":$PATH:" != *":$dir:"* ]]; then
         PATH="$dir:$PATH"
     fi
 done
@@ -33,7 +35,12 @@ export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
 
 # User specific aliases and functions
 alias a='ls -la'
+alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+alias pbcopy='wl-copy'
+alias pbpaste='wl-paste'
 alias pu='dart pub upgrade'
+alias smerge='flatpak run com.sublimemerge.App'
+
 if [ -d ~/.bashrc.d ]; then
     for rc in ~/.bashrc.d/*; do
         if [ -f "$rc" ]; then
@@ -42,6 +49,3 @@ if [ -d ~/.bashrc.d ]; then
     done
 fi
 unset rc
-alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
-export VOLTA_HOME="$HOME/.volta"
-export PATH="$VOLTA_HOME/bin:$PATH"
