@@ -48,3 +48,10 @@ if [ -d ~/.bashrc.d ]; then
     done
 fi
 unset rc
+
+brewall() {
+    echo "Running: brew update"
+    brew update
+    echo "Running: brew bundle --upgrade --global --cleanup"
+    brew bundle --upgrade --global --cleanup
+}
