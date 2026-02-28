@@ -39,7 +39,6 @@ export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
 alias ..='cd ..'
 alias ...='cd ../..'
 alias a='ls -la'
-alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 alias pbcopy='wl-copy'
 alias pbpaste='wl-paste'
 alias pu='dart pub upgrade'
