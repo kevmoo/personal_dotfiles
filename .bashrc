@@ -1,5 +1,7 @@
 # .bashrc
 
+bind "set completion-ignore-case on"
+
 npm() {
   if [[ "$*" == *"install -g"* ]] || [[ "$*" == *"--global"* ]]; then
     echo -e "\033[0;33m⚠️  Warning: You are trying to install a global NPM package.\033[0m"
@@ -34,7 +36,6 @@ export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
 # export SYSTEMD_PAGER=
 
 # User specific aliases and functions
-bind "set completion-ignore-case on"
 alias ..='cd ..'
 alias ...='cd ../..'
 alias a='ls -la'
