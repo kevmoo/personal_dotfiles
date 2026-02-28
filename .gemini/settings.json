@@ -1,0 +1,24 @@
+{
+  "general": {
+    "enableAutoUpdate": false,
+    "enableAutoUpdateNotification": true,
+    "sessionRetention": {
+      "enabled": true,
+      "maxAge": "30d",
+      "warningAcknowledged": true
+    },
+    "preferredEditor": "vscode"
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    }
+  },
+  "ide": {
+    "hasSeenNudge": true,
+    "enabled": true
+  },
+  "model": {
+    "name": "auto-gemini-3"
+  }
+}
