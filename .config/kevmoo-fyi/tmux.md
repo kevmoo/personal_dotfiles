@@ -26,7 +26,7 @@ In `tmux`, everything starts with the **Prefix**: `Ctrl` + `b`. Press it, releas
 | **Swap Pane Backward** | `Prefix` + `<` |
 | **Close Pane** | `Ctrl` + `d` (or type `exit`) |
 
-> **Note:** Mouse support is **on**. You can click to select panes/windows and scroll to enter copy mode.
+> **Note:** Mouse support is **off**. Use keyboard shortcuts for navigation and copying.
 
 ## Copy Mode & History
 | Action | Command |

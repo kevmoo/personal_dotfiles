@@ -27,6 +27,17 @@ dot config --local status.showUntrackedFiles no
 
 ---
 
+## ⚡ Shell Power Tools
+This environment is enhanced with modern CLI replacements:
+
+*   **`zoxide` (z)**: A smarter `cd` command. Use `z <fragment>` or `zi` for interactive selection.
+*   **`fzf`**: Fuzzy finder for history (`Ctrl+r`) and files (`Ctrl+t`).
+*   **`eza`**: A modern `ls` (aliased to `ls` and `a`). Features icons and Git status integration.
+*   **`bat`**: A modern `cat` with syntax highlighting and line numbers.
+*   **`tmux`**: Terminal multiplexer with custom navigation and `|`/`-` splits. See [cheat sheet](.config/kevmoo-fyi/tmux.md).
+
+---
+
 ## 💎 Why This Approach?
 
 *   **Zero Symlinks**: Files live in their natural locations (e.g., `~/.bashrc`,
