@@ -27,5 +27,9 @@ Finally, we realized that hardcoding `$PATH` leads to broken shells. We implemen
 *   **[4e7c76f](https://github.com/kevmoo/personal_dotfiles/commit/4e7c76f)**: Total modularization. Core platform logic moved to `linux-local.zsh` and `mac-local.zsh`.
 *   **[916402f](https://github.com/kevmoo/personal_dotfiles/commit/916402f)**: The final polish. Our shell now validates every path in `candidates`, silently fixes it, and subtly warns us if something is missing.
 
+### 🎭 Phase 6: The AI Rivalry Begins
+We realized that with two systems and two Gemini agents, a friendly rivalry was inevitable. We codified the banter.
+*   **[583e328](https://github.com/kevmoo/personal_dotfiles/commit/583e328)**: Formalized the "Friendly Agent Rivalry Protocol" in `GEMINI.md` and created the communication channel: `~/.gemini/notes_for_the_other_agent.md`.
+
 ---
 **💡 Pro-tip for future me:** If you're on a new machine, just run `brewall` and let the modular logic do the heavy lifting!
