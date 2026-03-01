@@ -37,6 +37,22 @@ alias ...='cd ../..'
 alias a='ls -la'
 alias pu='dart pub upgrade'
 
+# tmux session management
+# 'tm' will attach to a session named "main", or create it if it doesn't exist.
+# This allows you to share the same session between local and SSH.
+tm() {
+  tmux attach-session -t main 2>/dev/null || tmux new-session -s main
+}
+alias t='tm'
+
+# Auto-attach to tmux on SSH login
+# Only if we are in an interactive shell, not already in tmux, and connecting via SSH
+if [[ -n "$SSH_CONNECTION" || -n "$SSH_CLIENT" || -n "$SSH_TTY" ]]; then
+  if [[ -z "$TMUX" && -t 1 ]]; then
+    tm
+  fi
+fi
+
 # 5. Functions
 brewall() {
     echo "Running: brew update"

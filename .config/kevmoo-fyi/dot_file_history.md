@@ -58,6 +58,10 @@ With the core functionality solid, we did a final pass to modernize file locatio
 Realizing that some things are meant to be private, we re-engineered the Git configuration for maximum privacy and platform flexibility.
 *   **[7da5baf](https://github.com/kevmoo/personal_dotfiles/commit/7da5baf)**: Split Git configuration into three parts: `config` (the main entry point), `config-shared` (tracked aliases/settings), and `config.local` (ignored/private settings like identity and local editors).
 
+### 🌌 Phase 11: SSH Enlightenment
+To bridge the gap between local and remote work, we implemented intelligent session management.
+*   **Pending Commit**: Added `tm` (and `t` alias) to manage a shared "main" tmux session. The shell now automatically detects SSH/Tailscale connections and attaches to this session on login, providing seamless persistence across the world.
+
 ---
 **💡 Pro-tip for future me:** If you're on a new machine, just run `brewall` and let the modular logic do the heavy lifting!
 
