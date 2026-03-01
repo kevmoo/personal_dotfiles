@@ -28,22 +28,27 @@ if [[ "$(uname)" == "Linux" ]]; then
   alias pbpaste='wl-paste'
 
   # NPM Wrapper to prevent global installs on Bluefin/Silverblue
-  npm() {
-    if [[ "$*" == *"install -g"* ]] || [[ "$*" == *"--global"* ]]; then
-      echo -e "\033[0;33m⚠️  Warning: You are trying to install a global NPM package.\033[0m"
-      echo "Consider using 'npx', 'volta install', or adding to ~/.Brewfile."
-      read -q "confirm?Do you still want to proceed? (y/N) "
-      echo # Move to a new line after read
-      if [[ $confirm == [yY] ]]; then
+  # We use eval to prevent the Zsh parser from expanding the 'npm' alias on Mac
+  eval '
+    unalias npm 2>/dev/null
+    function npm {
+      if [[ "$*" == *"install -g"* ]] || [[ "$*" == *"--global"* ]]; then
+        echo -e "\033[0;33m⚠️  Warning: You are trying to install a global NPM package.\033[0m"
+        echo "Consider using npx, volta install, or adding to ~/.Brewfile."
+        read -q "confirm?Do you still want to proceed? (y/N) "
+        echo
+        if [[ $confirm == [yY] ]]; then
+          command npm "$@"
+        fi
+      else
         command npm "$@"
       fi
-    else
-      command npm "$@"
-    fi
-  }
+    }
+  '
 fi
 
 # 4. Aliases (Shared between platforms)
+alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias a='ls -la'
@@ -54,18 +59,18 @@ brewall() {
     echo "Running: brew update"
     brew update
     
-    echo "Running: brew bundle --global --file=~/.Brewfile.shared"
-    brew bundle --global --file=~/.Brewfile.shared
+    echo "Running: brew bundle --file=~/.Brewfile.shared"
+    brew bundle --file=~/.Brewfile.shared
     
     if [[ "$(uname)" == "Darwin" ]]; then
-        echo "Running: brew bundle --global --file=~/.Brewfile.mac"
-        brew bundle --global --file=~/.Brewfile.mac
+        echo "Running: brew bundle --file=~/.Brewfile.mac"
+        brew bundle --file=~/.Brewfile.mac
     elif [[ "$(uname)" == "Linux" ]]; then
-        echo "Running: brew bundle --global --file=~/.Brewfile.linux"
-        brew bundle --global --file=~/.Brewfile.linux
+        echo "Running: brew bundle --file=~/.Brewfile.linux"
+        brew bundle --file=~/.Brewfile.linux
     fi
 
-    echo "Running: brew bundle cleanup --global --file=~/.Brewfile.shared"
+    echo "Running: brew bundle cleanup --file=~/.Brewfile.shared"
     # Note: Cleanup might need care with multiple files, usually best to do it manually or via a combined temp file
 }
 
