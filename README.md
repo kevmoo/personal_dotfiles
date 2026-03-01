@@ -34,20 +34,26 @@ This setup uses modular Brewfiles to share configuration between Linux and macOS
 *   **`~/.Brewfile.mac`**: macOS-specific GUI apps and development tools.
 *   **`~/.Brewfile.linux`**: Linux-specific Flatpaks and system fonts.
 
-### 🤫 Handling Secrets (Untracked)
-For sensitive information (e.g., API keys, private tokens), create a local file:
-`~/.zshrc.d/secrets.zsh`
-
-**Ensure this file is NEVER committed** to the public repository by adding it to the local exclude list:
-```bash
-echo ".zshrc.d/secrets.zsh" >> $HOME/.dotfiles/info/exclude
-```
-
 ### The `brewall` command
 A custom Zsh function is included in `~/.zshrc` to sync your environment:
 ```bash
 brewall  # Updates brew and installs tools from shared + platform-specific files
 ```
+
+---
+
+## 🧩 The Critical Un-Trackable State
+Because this is a bare repository with the working tree at `$HOME`, some critical configuration lives inside the `~/.dotfiles/` directory itself and **cannot be tracked** by Git. When setting up a new machine, you must manually recreate these:
+
+1.  **Untracked Filter:** To keep `dot status` clean, ignore untracked files:
+    ```bash
+    dot config --local status.showUntrackedFiles no
+    ```
+2.  **Secret Exclusion:** Add `.zshrc.d/secrets.zsh` to the local Git exclude list:
+    ```bash
+    echo ".zshrc.d/secrets.zsh" >> $HOME/.dotfiles/info/exclude
+    ```
+3.  **Secrets Content:** Manually recreate `~/.zshrc.d/secrets.zsh` with your API keys and private tokens. This file is sourced by `~/.zshrc` but ignored by Git.
 
 ---
 
@@ -113,8 +119,4 @@ dot pull origin main
    dot checkout 2>&1 | grep -E "^\s+\." | awk '{print $1}' | \
    xargs -I{} mv $HOME/{} ~/.dotfiles-backup/{} && \
    dot checkout
-   ```
-4. **Silence untracked files**:
-   ```bash
-   dot config --local status.showUntrackedFiles no
    ```
