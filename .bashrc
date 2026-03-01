@@ -24,7 +24,7 @@ fi
 export VOLTA_HOME="$HOME/.volta"
 
 # User specific environment
-for dir in "$HOME/.local/bin" "$HOME/bin" "$HOME/github/flutter/bin" "$HOME/.pub-cache/bin" "$VOLTA_HOME/bin"; do
+for dir in "$HOME/.local/bin" "$HOME/bin" "$HOME/github/flutter/bin" "$HOME/github/depot_tools" "$HOME/.pub-cache/bin" "$VOLTA_HOME/bin"; do
     if [[ -d "$dir" && ":$PATH:" != *":$dir:"* ]]; then
         PATH="$dir:$PATH"
     fi
