@@ -26,6 +26,21 @@ if [[ "$(uname)" == "Linux" ]]; then
   # Linux needs aliases for pbcopy/pbpaste (already native on macOS)
   alias pbcopy='wl-copy'
   alias pbpaste='wl-paste'
+
+  # NPM Wrapper to prevent global installs on Bluefin/Silverblue
+  npm() {
+    if [[ "$*" == *"install -g"* ]] || [[ "$*" == *"--global"* ]]; then
+      echo -e "\033[0;33m⚠️  Warning: You are trying to install a global NPM package.\033[0m"
+      echo "Consider using 'npx', 'volta install', or adding to ~/.Brewfile."
+      read -q "confirm?Do you still want to proceed? (y/N) "
+      echo # Move to a new line after read
+      if [[ $confirm == [yY] ]]; then
+        command npm "$@"
+      fi
+    else
+      command npm "$@"
+    fi
+  }
 fi
 
 # 4. Aliases (Shared between platforms)
@@ -35,21 +50,6 @@ alias a='ls -la'
 alias pu='dart pub upgrade'
 
 # 5. Functions
-# NPM Wrapper to prevent global installs on Bluefin/Silverblue
-npm() {
-  if [[ "$*" == *"install -g"* ]] || [[ "$*" == *"--global"* ]]; then
-    echo -e "\033[0;33m⚠️  Warning: You are trying to install a global NPM package.\033[0m"
-    echo "Consider using 'npx', 'volta install', or adding to ~/.Brewfile."
-    read -q "confirm?Do you still want to proceed? (y/N) "
-    echo # Move to a new line after read
-    if [[ $confirm == [yY] ]]; then
-      command npm "$@"
-    fi
-  else
-    command npm "$@"
-  fi
-}
-
 brewall() {
     echo "Running: brew update"
     brew update
