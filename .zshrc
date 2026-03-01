@@ -59,19 +59,19 @@ brewall() {
     echo "Running: brew update"
     brew update
     
-    echo "Running: brew bundle --file=~/.Brewfile.shared"
-    brew bundle --file=~/.Brewfile.shared
+    local temp_brewfile=$(mktemp)
+    cat ~/.Brewfile.shared > "$temp_brewfile"
     
     if [[ "$(uname)" == "Darwin" ]]; then
-        echo "Running: brew bundle --file=~/.Brewfile.mac"
-        brew bundle --file=~/.Brewfile.mac
+        cat ~/.Brewfile.mac >> "$temp_brewfile"
     elif [[ "$(uname)" == "Linux" ]]; then
-        echo "Running: brew bundle --file=~/.Brewfile.linux"
-        brew bundle --file=~/.Brewfile.linux
+        cat ~/.Brewfile.linux >> "$temp_brewfile"
     fi
 
-    echo "Running: brew bundle cleanup --file=~/.Brewfile.shared"
-    # Note: Cleanup might need care with multiple files, usually best to do it manually or via a combined temp file
+    echo "Running: brew bundle --cleanup --force"
+    brew bundle --file="$temp_brewfile" --cleanup --force
+    
+    rm "$temp_brewfile"
 }
 
 # 6. Modular Configs (Source everything in ~/.zshrc.d)

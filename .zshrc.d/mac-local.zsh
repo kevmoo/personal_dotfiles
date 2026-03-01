@@ -9,7 +9,6 @@ path=(
   "$HOME/github/depot_tools"
   "$HOME/github/flutter/bin"
   "$HOME/.cargo/bin"
-  "/opt/homebrew/opt/node@22/bin"
   $path
 )
 

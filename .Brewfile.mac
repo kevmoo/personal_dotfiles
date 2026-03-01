@@ -2,7 +2,6 @@
 
 # Programming Languages & Toolchains
 brew "go"           # Open source programming language
-brew "node@22"      # JavaScript runtime built on V8
 brew "rustup-init"  # Rust toolchain installer
 
 # Development Utilities
