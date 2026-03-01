@@ -3,6 +3,10 @@
 # 1. Completion and Zsh options
 autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # Case-insensitive completion
+zstyle ':completion:*' menu select                 # Arrow-key selection menu
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}" # Match LS_COLORS
+zstyle ':completion:*:*:*:*:descriptions' format '%F{green}-- %d --%f' # Section headers
+
 setopt AUTO_CD          # If a command is a path, CD to it
 setopt HIST_IGNORE_DUPS # Don't record duplicate history
 setopt SHARE_HISTORY    # Share history between sessions
