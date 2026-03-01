@@ -27,6 +27,21 @@ dot config --local status.showUntrackedFiles no
 
 ---
 
+## 🍺 Package Management (Homebrew)
+This setup uses modular Brewfiles to share configuration between Linux and macOS:
+
+*   **`~/.Brewfile.shared`**: CLI tools used on both platforms (e.g., `bat`, `eza`, `fzf`).
+*   **`~/.Brewfile.mac`**: macOS-specific GUI apps and development tools.
+*   **`~/.Brewfile.linux`**: Linux-specific Flatpaks and system fonts.
+
+### The `brewall` command
+A custom Zsh function is included in `~/.zshrc` to sync your environment:
+```bash
+brewall  # Updates brew and installs tools from shared + platform-specific files
+```
+
+---
+
 ## ⚡ Shell Power Tools
 This environment is enhanced with modern CLI replacements:
 
