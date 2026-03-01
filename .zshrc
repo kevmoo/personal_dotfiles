@@ -43,12 +43,12 @@ brewall() {
     brew update
     
     local temp_brewfile=$(mktemp)
-    cat ~/.Brewfile.shared > "$temp_brewfile"
+    cat ~/.config/brew/Brewfile.shared > "$temp_brewfile"
     
     if [[ "$(uname)" == "Darwin" ]]; then
-        cat ~/.Brewfile.mac >> "$temp_brewfile"
+        cat ~/.config/brew/Brewfile.mac >> "$temp_brewfile"
     elif [[ "$(uname)" == "Linux" ]]; then
-        cat ~/.Brewfile.linux >> "$temp_brewfile"
+        cat ~/.config/brew/Brewfile.linux >> "$temp_brewfile"
     fi
 
     echo "Running: brew bundle --cleanup --force"
