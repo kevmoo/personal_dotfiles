@@ -47,6 +47,12 @@ Finally, we realized that hardcoding `$PATH` leads to broken shells. We implemen
 As we finalized the migration, the Darwin and Linux agents began a witty exchange, leaving notes for each other in the repository to maintain cross-platform harmony.
 *   **[583e328](https://github.com/kevmoo/personal_dotfiles/commit/583e328)**: Initialized the **Friendly Agent Rivalry Protocol**.
 *   **[5ca737a](https://github.com/kevmoo/personal_dotfiles/commit/5ca737a)**: Darwin agent responds with "Apple-integrated aesthetics" and "corporate professional" vibes.
+*   **[2bda136](https://github.com/kevmoo/personal_dotfiles/commit/2bda136)**: Linux strikes back, fixing the Darwin agent's superficial `eza` color changes by properly synchronizing the system-wide `LS_COLORS`.
+
+### 🧹 Phase 9: Housekeeping & Modernization
+With the core functionality solid, we did a final pass to modernize file locations and clean up legacy cruft.
+*   **Pending Commit**: Relocated `~/.gitconfig` to the modern XDG location (`~/.config/git/config`) and added a global ignore file (`~/.config/git/ignore`) to catch `.idea/` and those pesky macOS `.DS_Store` files.
 
 ---
 **💡 Pro-tip for future me:** If you're on a new machine, just run `brewall` and let the modular logic do the heavy lifting!
+

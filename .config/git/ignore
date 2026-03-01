@@ -1,0 +1,5 @@
+# IntelliJ / Android Studio files
+.idea/
+
+# macOS system files
+.DS_Store
