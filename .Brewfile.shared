@@ -11,4 +11,3 @@ brew "protobuf"     # Protocol buffers (Google's data interchange format)
 brew "procs"        # Modern replacement for 'ps'
 brew "oxipng"       # Multithreaded PNG optimizer
 brew "typos-cli"    # Fast spell checker for source code
-brew "volta"        # JS toolchain manager

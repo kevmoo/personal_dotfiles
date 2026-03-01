@@ -5,9 +5,10 @@ brew "go"           # Open source programming language
 brew "rustup-init"  # Rust toolchain installer
 
 # Development Utilities
-brew "starship"     # Customizable prompt for any shell
 brew "mkcert"       # Make locally-trusted development certificates
 brew "qrtool"       # Utility for reading and creating QR codes
+brew "starship"     # Customizable prompt for any shell
+brew "volta"        # JS toolchain manager
 brew "wasm-tools"   # Low-level tooling for WebAssembly
 brew "witr"         # Process causal chain explorer ("Why Is This Running?")
 brew "wrk"          # Modern HTTP benchmarking tool
