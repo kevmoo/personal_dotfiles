@@ -125,3 +125,8 @@ After the initial checkout and `brewall`, perform these final steps:
 2.  **Initialize Volta**: `volta install node@latest`
 3.  **Initialize Rust**: `rustup-init` (follow the prompts)
 4.  **Verify Setup**: Open a new terminal and ensure the Starship prompt appears.
+
+---
+
+## 📜 The Odyssey
+Curious how this setup came to be? Check out the [Great Dotfile Migration History](.config/kevmoo-fyi/dot_file_history.md) for the full story.
