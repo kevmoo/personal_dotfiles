@@ -10,20 +10,15 @@ Unlike a standard repository, a bare repo doesn't have a default working
 directory. We manually point its "working tree" to `$HOME` using a simple shell
 alias.
 
-### The Magic Alias
+### The Magic Alias & Shell Modularity
 Add this to your `.zshrc`:
 ```bash
 alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 ```
-
-## ⚙️ Key Configuration
-To prevent Git from showing every untracked file in your home directory (which
-would make `dot status` unusable), we configure the repository to ignore
-untracked files by default:
-
-```bash
-dot config --local status.showUntrackedFiles no
-```
+The shell automatically sources all `*.zsh` files in `~/.zshrc.d/`. Modular configurations include:
+*   **`shell-power.zsh`**: (Tracked) Common interactive enhancements (fzf, zoxide, eza).
+*   **`mac-local.zsh`**: (Tracked) Mac-specific PATH and environment overrides.
+*   **`secrets.zsh`**: (Untracked) Private API keys.
 
 ---
 
@@ -120,3 +115,11 @@ dot pull origin main
    xargs -I{} mv $HOME/{} ~/.dotfiles-backup/{} && \
    dot checkout
    ```
+
+### 🏁 Post-Install Steps
+After the initial checkout and `brewall`, perform these final steps:
+
+1.  **Set Default Shell**: `chsh -s /bin/zsh`
+2.  **Initialize Volta**: `volta install node@latest`
+3.  **Initialize Rust**: `rustup-init` (follow the prompts)
+4.  **Verify Setup**: Open a new terminal and ensure the Starship prompt appears.
