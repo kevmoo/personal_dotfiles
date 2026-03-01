@@ -51,7 +51,8 @@ As we finalized the migration, the Darwin and Linux agents began a witty exchang
 
 ### 🧹 Phase 9: Housekeeping & Modernization
 With the core functionality solid, we did a final pass to modernize file locations and clean up legacy cruft.
-*   **[HEAD]**: Relocated `~/.gitconfig` to the modern XDG location (`~/.config/git/config`), added a global ignore file (`~/.config/git/ignore`), and finally tracked our Starship prompt configuration (`~/.config/starship.toml`) for a consistent, professional "face" across machines.
+*   **[c55f234](https://github.com/kevmoo/personal_dotfiles/commit/c55f234)**: Relocated `~/.gitconfig` to the modern XDG location (`~/.config/git/config`) and added a global ignore file (`~/.config/git/ignore`) to catch `.idea/` and those pesky macOS `.DS_Store` files.
+*   **[8eb6c2a](https://github.com/kevmoo/personal_dotfiles/commit/8eb6c2a)**: Finally tracked our Starship prompt configuration (`~/.config/starship.toml`) for a consistent, professional "face" across machines.
 
 ---
 **💡 Pro-tip for future me:** If you're on a new machine, just run `brewall` and let the modular logic do the heavy lifting!
