@@ -1,15 +1,9 @@
 # ~/.zshrc.d/mac-local.zsh
 
-# Mac-specific PATH additions (Zsh unique array handles deduplication)
-typeset -U path
-path=(
+# Mac-specific PATH additions
+candidates+=(
   "$HOME/.jetski/jetski/bin"
-  "$HOME/.pub-cache/bin"
-  "$HOME/bin"
-  "$HOME/github/depot_tools"
-  "$HOME/github/flutter/bin"
   "$HOME/.cargo/bin"
-  $path
 )
 
 # Environment Variables

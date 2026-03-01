@@ -1,5 +1,8 @@
 # ~/.zshrc.d/linux-local.zsh
 
+# Linux-specific PATH additions
+# candidates+=("$HOME/some/linux/only/path")
+
 export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
 
 # Linux needs aliases for pbcopy/pbpaste (already native on macOS)

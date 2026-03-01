@@ -20,14 +20,13 @@ export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 
 # 2. Path Management (Zsh specific: $path array automatically syncs with $PATH)
 typeset -U path # Keep path array unique
-path=(
+local -a candidates=(
   "$HOME/.local/bin"
   "$HOME/bin"
   "$HOME/github/flutter/bin"
   "$HOME/github/depot_tools"
   "$HOME/.pub-cache/bin"
   "$HOME/.volta/bin"
-  $path
 )
 export VOLTA_HOME="$HOME/.volta"
 
@@ -67,6 +66,25 @@ if [[ -d ~/.zshrc.d ]]; then
 
     source "$rc"
   done
+fi
+
+# 7. Finalize Environment
+# Filter candidates and update $path
+local -a missing=()
+for dir in $candidates; do
+  if [[ -d "$dir" ]]; then
+    path=("$dir" $path)
+  else
+    missing+=("$dir")
+  fi
+done
+
+# Inform the user about missing paths (subtly)
+if (( ${#missing} > 0 )); then
+  # Only show this in interactive shells
+  if [[ -t 1 ]]; then
+    echo -e "\033[0;34mℹ️  Note: Some configured paths are missing: \033[0;33m${missing[*]}\033[0m"
+  fi
 fi
 
 # Custom prompt (simple fallback, or use starship if available)
