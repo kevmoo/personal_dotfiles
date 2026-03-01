@@ -1,0 +1,14 @@
+# ~/.Brewfile.shared - CLI tools for both Linux and macOS
+
+brew "bat"
+brew "eza"
+brew "gh"
+brew "zoxide"
+brew "fzf"
+brew "starship"
+brew "cmake"
+brew "ninja"
+brew "protobuf"
+brew "procs"
+brew "oxipng"
+brew "typos-cli"

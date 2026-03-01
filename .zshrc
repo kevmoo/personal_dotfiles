@@ -53,8 +53,20 @@ npm() {
 brewall() {
     echo "Running: brew update"
     brew update
-    echo "Running: brew bundle --upgrade --global --cleanup"
-    brew bundle --upgrade --global --cleanup
+    
+    echo "Running: brew bundle --global --file=~/.Brewfile.shared"
+    brew bundle --global --file=~/.Brewfile.shared
+    
+    if [[ "$(uname)" == "Darwin" ]]; then
+        echo "Running: brew bundle --global --file=~/.Brewfile.mac"
+        brew bundle --global --file=~/.Brewfile.mac
+    elif [[ "$(uname)" == "Linux" ]]; then
+        echo "Running: brew bundle --global --file=~/.Brewfile.linux"
+        brew bundle --global --file=~/.Brewfile.linux
+    fi
+
+    echo "Running: brew bundle cleanup --global --file=~/.Brewfile.shared"
+    # Note: Cleanup might need care with multiple files, usually best to do it manually or via a combined temp file
 }
 
 # 6. Modular Configs (Source everything in ~/.zshrc.d)

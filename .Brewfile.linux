@@ -1,9 +1,8 @@
+# ~/.Brewfile.linux - Linux-only Flatpaks and fonts
+
 tap "sinelaw/fresh"
-brew "bat"
-brew "eza"
 brew "fresh-editor"
-brew "gh"
-brew "zoxide"
+
 cask "font-blex-mono-nerd-font"
 cask "font-caskaydia-mono-nerd-font"
 cask "font-droid-sans-mono-nerd-font"
@@ -12,6 +11,7 @@ cask "font-go-mono-nerd-font"
 cask "font-sauce-code-pro-nerd-font"
 cask "font-source-code-pro"
 cask "font-ubuntu-nerd-font"
+
 flatpak "com.github.PintaProject.Pinta"
 flatpak "com.github.tchx84.Flatseal"
 flatpak "com.google.Chrome"
@@ -53,6 +53,7 @@ flatpak "org.gnome.Weather"
 flatpak "org.mozilla.firefox"
 flatpak "org.pipewire.Helvum"
 flatpak "page.tesk.Refine"
+
 vscode "dart-code.dart-code"
 vscode "ms-azuretools.vscode-containers"
 vscode "ms-vscode-remote.remote-containers"

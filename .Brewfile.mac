@@ -1,0 +1,19 @@
+# ~/.Brewfile.mac - macOS specific apps and tools
+
+brew "carapace"
+brew "go"
+brew "mkcert"
+brew "node@22"
+brew "nushell"
+brew "qrtool"
+brew "rustup-init"
+brew "wasm-tools"
+brew "witr"
+brew "wrk"
+brew "zbar"
+
+cask "bluesnooze"
+cask "firefox"
+cask "font-roboto-mono-nerd-font"
+cask "gcloud-cli"
+cask "visual-studio-code"
