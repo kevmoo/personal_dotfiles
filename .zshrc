@@ -31,33 +31,6 @@ path=(
 )
 export VOLTA_HOME="$HOME/.volta"
 
-# 3. Platform Detection & Tool Settings
-if [[ "$(uname)" == "Linux" ]]; then
-  export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
-  # Linux needs aliases for pbcopy/pbpaste (already native on macOS)
-  alias pbcopy='wl-copy'
-  alias pbpaste='wl-paste'
-
-  # NPM Wrapper to prevent global installs on Bluefin/Silverblue
-  # We use eval to prevent the Zsh parser from expanding the 'npm' alias on Mac
-  eval '
-    unalias npm 2>/dev/null
-    function npm {
-      if [[ "$*" == *"install -g"* ]] || [[ "$*" == *"--global"* ]]; then
-        echo -e "\033[0;33m⚠️  Warning: You are trying to install a global NPM package.\033[0m"
-        echo "Consider using npx, volta install, or adding to ~/.Brewfile."
-        read -q "confirm?Do you still want to proceed? (y/N) "
-        echo
-        if [[ $confirm == [yY] ]]; then
-          command npm "$@"
-        fi
-      else
-        command npm "$@"
-      fi
-    }
-  '
-fi
-
 # 4. Aliases (Shared between platforms)
 alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 alias ..='cd ..'
@@ -88,6 +61,10 @@ brewall() {
 # 6. Modular Configs (Source everything in ~/.zshrc.d)
 if [[ -d ~/.zshrc.d ]]; then
   for rc in ~/.zshrc.d/*(N); do
+    # Skip platform-specific files that don't match the current OS
+    if [[ "$rc" == *"mac-local.zsh"* && "$(uname)" != "Darwin" ]]; then continue; fi
+    if [[ "$rc" == *"linux-local.zsh"* && "$(uname)" != "Linux" ]]; then continue; fi
+
     source "$rc"
   done
 fi
