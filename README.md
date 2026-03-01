@@ -97,8 +97,12 @@ dot pull origin main
    ```bash
    alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
    ```
-3. **Checkout the content** into your home directory:
+3. **Checkout the content** into your home directory. If you have existing
+   configuration files, this may fail. To resolve it, back them up first:
    ```bash
+   mkdir -p ~/.dotfiles-backup && \
+   dot checkout 2>&1 | grep -E "^\s+\." | awk '{print $1}' | \
+   xargs -I{} mv $HOME/{} ~/.dotfiles-backup/{} && \
    dot checkout
    ```
 4. **Silence untracked files**:
