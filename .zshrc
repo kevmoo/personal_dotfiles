@@ -3,9 +3,16 @@
 # 1. Completion and Zsh options
 autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # Case-insensitive completion
-setopt AUTO_CD          # If a command is a directory, cd into it
-setopt HIST_IGNORE_DUPS # Don't record duplicate history entries
-setopt SHARE_HISTORY    # Share history between all sessions
+setopt AUTO_CD          # If a command is a path, CD to it
+setopt HIST_IGNORE_DUPS # Don't record duplicate history
+setopt SHARE_HISTORY    # Share history between sessions
+
+# Word navigation (make Ctrl-W delete by path segments, not just whitespace)
+autoload -Uz select-word-style
+select-word-style bash
+# Default WORDCHARS often includes / - removing it makes / a word boundary
+export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
+
 
 # 2. Path Management (Zsh specific: $path array automatically syncs with $PATH)
 typeset -U path # Keep path array unique
