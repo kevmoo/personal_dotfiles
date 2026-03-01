@@ -3,3 +3,6 @@
 
 # macOS system files
 .DS_Store
+
+# Git local config
+config.local

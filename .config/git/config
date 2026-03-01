@@ -1,17 +1,7 @@
-[user]
-	name = kevmoo
-	email = kevmoo@j832.com
-[init]
-	defaultBranch = main
-[alias]
-	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
-	fa = fetch --all --prune
-	fp = "!git fa; git pull --ff-only"
-	amend = commit --amend -a
-	gp = grep -F
-[core]
-	editor = code
-[color]
-	ui = auto
-[url "git@github.com:"]
-	insteadOf = https://github.com/
+# Main Git Configuration (Tracked)
+
+[include]
+	path = config-shared
+
+[include]
+	path = config.local
