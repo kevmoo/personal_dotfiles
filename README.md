@@ -11,7 +11,7 @@ directory. We manually point its "working tree" to `$HOME` using a simple shell
 alias.
 
 ### The Magic Alias
-Add this to your `.bashrc` or `.zshrc`:
+Add this to your `.zshrc`:
 ```bash
 alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 ```
@@ -40,7 +40,7 @@ This environment is enhanced with modern CLI replacements:
 
 ## 💎 Why This Approach?
 
-*   **Zero Symlinks**: Files live in their natural locations (e.g., `~/.bashrc`,
+*   **Zero Symlinks**: Files live in their natural locations (e.g., `~/.zshrc`,
     `~/.gitconfig`). You don't need to manage a complex tree of symlinks or use
     tools like GNU Stow.
 *   **Native Git Experience**: Since `dot` is just a standard Git command with
@@ -57,8 +57,8 @@ This environment is enhanced with modern CLI replacements:
 
 ### Tracking a new config file
 ```bash
-dot add ~/.bashrc
-dot commit -m "Add bashrc to dotfiles"
+dot add ~/.zshrc
+dot commit -m "Add zshrc to dotfiles"
 ```
 
 ### Reviewing changes

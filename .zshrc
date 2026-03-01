@@ -34,14 +34,6 @@ alias ...='cd ../..'
 alias a='ls -la'
 alias pu='dart pub upgrade'
 
-# Modern tool replacements (if installed)
-if (( $+commands[eza] )); then
-  alias ls='eza --icons --git'
-fi
-if (( $+commands[bat] )); then
-  alias cat='bat'
-fi
-
 # 5. Functions
 # NPM Wrapper to prevent global installs on Bluefin/Silverblue
 npm() {
@@ -65,18 +57,7 @@ brewall() {
     brew bundle --upgrade --global --cleanup
 }
 
-# 6. Tool Initializations
-# fzf
-if (( $+commands[fzf] )); then
-  source <(fzf --zsh)
-fi
-
-# zoxide
-if (( $+commands[zoxide] )); then
-  eval "$(zoxide init zsh)"
-fi
-
-# 7. Modular Configs (Source everything in ~/.zshrc.d)
+# 6. Modular Configs (Source everything in ~/.zshrc.d)
 if [[ -d ~/.zshrc.d ]]; then
   for rc in ~/.zshrc.d/*(N); do
     source "$rc"
