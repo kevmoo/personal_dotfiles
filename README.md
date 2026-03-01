@@ -34,6 +34,15 @@ This setup uses modular Brewfiles to share configuration between Linux and macOS
 *   **`~/.Brewfile.mac`**: macOS-specific GUI apps and development tools.
 *   **`~/.Brewfile.linux`**: Linux-specific Flatpaks and system fonts.
 
+### 🤫 Handling Secrets (Untracked)
+For sensitive information (e.g., API keys, private tokens), create a local file:
+`~/.zshrc.d/secrets.zsh`
+
+**Ensure this file is NEVER committed** to the public repository by adding it to the local exclude list:
+```bash
+echo ".zshrc.d/secrets.zsh" >> $HOME/.dotfiles/info/exclude
+```
+
 ### The `brewall` command
 A custom Zsh function is included in `~/.zshrc` to sync your environment:
 ```bash
