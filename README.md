@@ -68,6 +68,8 @@ This environment is enhanced with modern CLI replacements:
 *   **Zero Symlinks**: Files live in their natural locations (e.g., `~/.zshrc`,
     `~/.gitconfig`). You don't need to manage a complex tree of symlinks or use
     tools like GNU Stow.
+*   **Gemini Settings**: Your coding style and preferences are tracked in
+    [.gemini/GEMINI.md](.gemini/GEMINI.md).
 *   **Native Git Experience**: Since `dot` is just a standard Git command with
     specific flags, all your existing Git knowledge applies (`dot status`,
     `dot add`, `dot commit`, `dot diff`, etc.).
