@@ -54,6 +54,10 @@ With the core functionality solid, we did a final pass to modernize file locatio
 *   **[c55f234](https://github.com/kevmoo/personal_dotfiles/commit/c55f234)**: Relocated `~/.gitconfig` to the modern XDG location (`~/.config/git/config`) and added a global ignore file (`~/.config/git/ignore`) to catch `.idea/` and those pesky macOS `.DS_Store` files.
 *   **[8eb6c2a](https://github.com/kevmoo/personal_dotfiles/commit/8eb6c2a)**: Finally tracked our Starship prompt configuration (`~/.config/starship.toml`) for a consistent, professional "face" across machines.
 
+### 🛡️ Phase 10: The Privacy Split
+Realizing that some things are meant to be private, we re-engineered the Git configuration for maximum privacy and platform flexibility.
+*   **[7da5baf](https://github.com/kevmoo/personal_dotfiles/commit/7da5baf)**: Split Git configuration into three parts: `config` (the main entry point), `config-shared` (tracked aliases/settings), and `config.local` (ignored/private settings like identity and local editors).
+
 ---
 **💡 Pro-tip for future me:** If you're on a new machine, just run `brewall` and let the modular logic do the heavy lifting!
 
