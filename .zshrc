@@ -67,8 +67,8 @@ brewall() {
         cat ~/.config/brew/Brewfile.linux >> "$temp_brewfile"
     fi
 
-    echo "Running: brew bundle --cleanup --force"
-    brew bundle --file="$temp_brewfile" --cleanup --force
+    echo "Running: brew bundle --upgrade --cleanup --force --verbose"
+    brew bundle --file="$temp_brewfile" --upgrade --cleanup --force --verbose
     
     rm "$temp_brewfile"
 }

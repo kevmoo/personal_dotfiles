@@ -12,11 +12,11 @@ brew "volta"        # JS toolchain manager
 brew "wasm-tools"   # Low-level tooling for WebAssembly
 brew "witr"         # Process causal chain explorer ("Why Is This Running?")
 brew "wrk"          # Modern HTTP benchmarking tool
-brew "zbar"         # Barcode reading library and tools
+#brew "zbar"         # Barcode reading library and tools
 
 # Desktop Apps & GUI Tools
 cask "bluesnooze"   # Sleeping/waking Bluetooth utility
-cask "firefox"      # Web browser
+#cask "firefox"      # Web browser
 cask "font-roboto-mono-nerd-font" # Nerd Font
-cask "gcloud-cli"   # Google Cloud CLI
-cask "visual-studio-code"         # Code editor
+#cask "gcloud-cli"   # Google Cloud CLI
+#cask "visual-studio-code"         # Code editor
