@@ -21,13 +21,14 @@ export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 # 2. Path Management (Zsh specific: $path array automatically syncs with $PATH)
 typeset -U path # Keep path array unique
 local -a candidates=(
+  "/opt/homebrew/share/google-cloud-sdk/bin"
+  "/opt/homebrew/opt/python@3.12/bin"
   "$HOME/.local/bin"
   "$HOME/bin"
   "$HOME/github/flutter/bin"
   "$HOME/github/depot_tools"
   "$HOME/.pub-cache/bin"
   "$HOME/.volta/bin"
-  "/opt/homebrew/opt/python@3.12/bin"
 )
 export VOLTA_HOME="$HOME/.volta"
 export CLOUDSDK_PYTHON="/opt/homebrew/opt/python@3.12/bin/python3"
