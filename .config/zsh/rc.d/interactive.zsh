@@ -7,19 +7,21 @@ local plugin_paths=(
   "/home/linuxbrew/.linuxbrew/share" # Linux
 )
 
-# 2. Source Plugins
-for base in $plugin_paths; do
-  if [[ -d "$base/zsh-syntax-highlighting" ]]; then
-    source "$base/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-  fi
-  if [[ -d "$base/zsh-autosuggestions" ]]; then
-    source "$base/zsh-autosuggestions/zsh-autosuggestions.zsh"
-  fi
-done
+# 2. Source Plugins (Only if we have a TTY/interactive shell)
+if [[ -t 1 ]]; then
+  for base in $plugin_paths; do
+    if [[ -d "$base/zsh-syntax-highlighting" ]]; then
+      source "$base/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+    fi
+    if [[ -d "$base/zsh-autosuggestions" ]]; then
+      source "$base/zsh-autosuggestions/zsh-autosuggestions.zsh"
+    fi
+  done
 
-# 3. Configure Autosuggestions
-# Use Ctrl-Space to accept the current suggestion (like Nushell)
-bindkey '^ ' autosuggest-accept
+  # 3. Configure Autosuggestions
+  # Use Ctrl-Space to accept the current suggestion (like Nushell)
+  bindkey '^ ' autosuggest-accept
 
-# Highlight color (subtle gray)
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
+  # Highlight color (subtle gray)
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
+fi
