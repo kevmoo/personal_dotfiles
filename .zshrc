@@ -46,7 +46,7 @@ export LESSHISTFILE="$HOME/.local/state/less/history"
 alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 alias ..='cd ..'
 alias ...='cd ../..'
-alias a='ls -la'
+alias a='ls -la --no-git'
 alias pu='dart pub upgrade'
 
 # tmux session management
