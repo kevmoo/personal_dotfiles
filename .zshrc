@@ -29,8 +29,6 @@ fi
 # 2. Path Management (Zsh specific: $path array automatically syncs with $PATH)
 typeset -U path # Keep path array unique
 local -a candidates=(
-  "/opt/homebrew/share/google-cloud-sdk/bin"
-  "/opt/homebrew/opt/python@3.12/bin"
   "$HOME/.local/bin"
   "$HOME/bin"
   "$HOME/github/flutter/bin"
@@ -39,7 +37,6 @@ local -a candidates=(
   "$HOME/.local/share/volta/bin"
 )
 export VOLTA_HOME="$HOME/.local/share/volta"
-export CLOUDSDK_PYTHON="/opt/homebrew/opt/python@3.12/bin/python3.12"
 export NODE_REPL_HISTORY="$HOME/.local/state/node/history"
 export PYTHON_HISTORY="$HOME/.local/state/python/history"
 export LESSHISTFILE="$HOME/.local/state/less/history"
