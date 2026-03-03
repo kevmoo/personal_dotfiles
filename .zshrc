@@ -27,6 +27,7 @@ local -a candidates=(
   "$HOME/github/depot_tools"
   "$HOME/.pub-cache/bin"
   "$HOME/.volta/bin"
+  "/opt/homebrew/opt/python@3.12/bin"
 )
 export VOLTA_HOME="$HOME/.volta"
 

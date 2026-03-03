@@ -18,5 +18,5 @@ brew "zbar"         # Barcode reading library and tools
 cask "bluesnooze"   # Sleeping/waking Bluetooth utility
 cask "firefox"      # Web browser
 cask "font-roboto-mono-nerd-font" # Nerd Font
-#cask "gcloud-cli"   # Google Cloud CLI
+cask "gcloud-cli"   # Google Cloud CLI
 cask "visual-studio-code"         # Code editor
