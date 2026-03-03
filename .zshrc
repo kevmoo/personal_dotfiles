@@ -1,27 +1,29 @@
 # .zshrc - Portable Zsh configuration
 
-# 1. Completion and Zsh options
-# Ensure XDG directories exist
-mkdir -p "$HOME/.cache/zsh" "$HOME/.local/state/zsh"
-export ZSH_COMPDUMP="$HOME/.cache/zsh/zcompdump"
-autoload -Uz compinit && compinit -d "$ZSH_COMPDUMP"
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # Case-insensitive completion
-zstyle ':completion:*' menu select                 # Arrow-key selection menu
-zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}" # Match LS_COLORS
-zstyle ':completion:*:*:*:*:descriptions' format '%F{green}-- %d --%f' # Section headers
+# 1. Completion and Zsh options (Interactive only)
+if [[ -t 1 ]]; then
+  # Ensure XDG directories exist
+  mkdir -p "$HOME/.cache/zsh" "$HOME/.local/state/zsh"
+  export ZSH_COMPDUMP="$HOME/.cache/zsh/zcompdump"
+  autoload -Uz compinit && compinit -d "$ZSH_COMPDUMP"
+  zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # Case-insensitive completion
+  zstyle ':completion:*' menu select                 # Arrow-key selection menu
+  zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}" # Match LS_COLORS
+  zstyle ':completion:*:*:*:*:descriptions' format '%F{green}-- %d --%f' # Section headers
 
-setopt AUTO_CD          # If a command is a path, CD to it
-setopt HIST_IGNORE_DUPS # Don't record duplicate history
-setopt SHARE_HISTORY    # Share history between sessions
-export HISTFILE="$HOME/.local/state/zsh/history"
-export HISTSIZE=10000
-export SAVEHIST=10000
+  setopt AUTO_CD          # If a command is a path, CD to it
+  setopt HIST_IGNORE_DUPS # Don't record duplicate history
+  setopt SHARE_HISTORY    # Share history between sessions
+  export HISTFILE="$HOME/.local/state/zsh/history"
+  export HISTSIZE=10000
+  export SAVEHIST=10000
 
-# Word navigation (make Ctrl-W delete by path segments, not just whitespace)
-autoload -Uz select-word-style
-select-word-style bash
-# Default WORDCHARS often includes / - removing it makes / a word boundary
-export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
+  # Word navigation (make Ctrl-W delete by path segments, not just whitespace)
+  autoload -Uz select-word-style
+  select-word-style bash
+  # Default WORDCHARS often includes / - removing it makes / a word boundary
+  export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
+fi
 
 
 # 2. Path Management (Zsh specific: $path array automatically syncs with $PATH)
