@@ -30,6 +30,7 @@ local -a candidates=(
   "/opt/homebrew/opt/python@3.12/bin"
 )
 export VOLTA_HOME="$HOME/.volta"
+export CLOUDSDK_PYTHON="/opt/homebrew/opt/python@3.12/bin/python3"
 
 # 4. Aliases (Shared between platforms)
 alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
