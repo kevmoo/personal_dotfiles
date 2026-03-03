@@ -34,9 +34,9 @@ local -a candidates=(
   "$HOME/github/flutter/bin"
   "$HOME/github/depot_tools"
   "$HOME/.pub-cache/bin"
-  "$HOME/.volta/bin"
+  "$HOME/.local/share/volta/bin"
 )
-export VOLTA_HOME="$HOME/.volta"
+export VOLTA_HOME="$HOME/.local/share/volta"
 export CLOUDSDK_PYTHON="/opt/homebrew/opt/python@3.12/bin/python3.12"
 export NODE_REPL_HISTORY="$HOME/.local/state/node/history"
 export PYTHON_HISTORY="$HOME/.local/state/python/history"
