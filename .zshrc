@@ -1,7 +1,10 @@
 # .zshrc - Portable Zsh configuration
 
 # 1. Completion and Zsh options
-autoload -Uz compinit && compinit
+# Ensure XDG directories exist
+mkdir -p "$HOME/.cache/zsh" "$HOME/.local/state/zsh"
+export ZSH_COMPDUMP="$HOME/.cache/zsh/zcompdump"
+autoload -Uz compinit && compinit -d "$ZSH_COMPDUMP"
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # Case-insensitive completion
 zstyle ':completion:*' menu select                 # Arrow-key selection menu
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}" # Match LS_COLORS
@@ -10,6 +13,9 @@ zstyle ':completion:*:*:*:*:descriptions' format '%F{green}-- %d --%f' # Section
 setopt AUTO_CD          # If a command is a path, CD to it
 setopt HIST_IGNORE_DUPS # Don't record duplicate history
 setopt SHARE_HISTORY    # Share history between sessions
+export HISTFILE="$HOME/.local/state/zsh/history"
+export HISTSIZE=10000
+export SAVEHIST=10000
 
 # Word navigation (make Ctrl-W delete by path segments, not just whitespace)
 autoload -Uz select-word-style
@@ -32,6 +38,9 @@ local -a candidates=(
 )
 export VOLTA_HOME="$HOME/.volta"
 export CLOUDSDK_PYTHON="/opt/homebrew/opt/python@3.12/bin/python3.12"
+export NODE_REPL_HISTORY="$HOME/.local/state/node/history"
+export PYTHON_HISTORY="$HOME/.local/state/python/history"
+export LESSHISTFILE="$HOME/.local/state/less/history"
 
 # 4. Aliases (Shared between platforms)
 alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
