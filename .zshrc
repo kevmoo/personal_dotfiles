@@ -85,9 +85,9 @@ brewall() {
     rm "$temp_brewfile"
 }
 
-# 6. Modular Configs (Source everything in ~/.zshrc.d)
-if [[ -d ~/.zshrc.d ]]; then
-  for rc in ~/.zshrc.d/*(N); do
+# 6. Modular Configs (Source everything in ~/.config/zsh/rc.d)
+if [[ -d ~/.config/zsh/rc.d ]]; then
+  for rc in ~/.config/zsh/rc.d/*(N); do
     # Skip platform-specific files that don't match the current OS
     if [[ "$rc" == *"mac-local.zsh"* && "$(uname)" != "Darwin" ]]; then continue; fi
     if [[ "$rc" == *"linux-local.zsh"* && "$(uname)" != "Linux" ]]; then continue; fi
