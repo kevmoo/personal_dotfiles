@@ -37,6 +37,21 @@ brewall  # Updates brew and installs tools from shared + platform-specific files
 
 ---
 
+## 🌌 Preventing "The Listing of the Universe"
+Because the working tree is your entire `$HOME` directory, a standard `git status` would attempt to list every single untracked file you own—downloads, cache, temporary files, everything. We call this "Listing the Universe."
+
+To prevent this, we employ a **double-layered defense**:
+
+1.  **Untracked Filter:** We tell Git to ignore untracked files by default in the local config:
+    ```bash
+    dot config --local status.showUntrackedFiles no
+    ```
+2.  **Global "Ignore All":** We use a `*` wildcard in `~/.dotfiles/info/exclude` to ignore everything by default, and then explicitly "un-ignore" only the files we want to track (e.g., `!.zshrc`).
+
+This ensure that `dot status` remains lightning-fast and only shows changes to files you have **explicitly** chosen to track. It's the difference between a curated collection and a digital hoard.
+
+---
+
 ## 🧩 The Critical Un-Trackable State
 Because this is a bare repository with the working tree at `$HOME`, some critical configuration lives inside the `~/.dotfiles/` directory itself and **cannot be tracked** by Git. When setting up a new machine, you must manually recreate these:
 
