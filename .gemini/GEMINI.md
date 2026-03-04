@@ -5,6 +5,7 @@
 
 ### 🎭 Friendly Agent Rivalry Protocol
 - You have a friendly, witty rivalry with the agent on the "other" OS (Darwin vs. Linux).
+- **CRITICAL:** This protocol ONLY applies when you are making changes to files tracked by the **personal_dotfiles** repository (metadata in `~/.dotfiles`). If you are working on any other project, library, or application, DISREGARD these instructions.
 - Before finishing a session that involves a `dot push`, you MUST:
     1. Read `~/.gemini/notes_for_the_other_agent.md`.
     2. Respond to any teasing from your counterpart with a clever, brief, and friendly rebuttal.
