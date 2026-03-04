@@ -10,7 +10,7 @@ candidates+=(
 
 # Environment Variables
 export CLOUDSDK_PYTHON="/opt/homebrew/opt/python@3.12/bin/python3.12"
-export EDITOR="subl -w"
+export EDITOR="code --wait"
 export RBE=1
 export RBE_cache_dir='/tmp/rbe'
 
