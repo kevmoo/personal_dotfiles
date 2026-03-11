@@ -5,6 +5,7 @@ brew "go"           # Open source programming language
 brew "rustup-init"  # Rust toolchain installer
 
 # Development Utilities
+brew "bazelisk"
 brew "mkcert"       # Make locally-trusted development certificates
 brew "qrtool"       # Utility for reading and creating QR codes
 brew "starship"     # Customizable prompt for any shell
