@@ -81,6 +81,16 @@ brewall() {
     echo "Running: brew bundle --upgrade --cleanup --force --verbose"
     brew bundle --file="$temp_brewfile" --upgrade --cleanup --force --verbose
     
+    # brew bundle --upgrade only checks for upgrades on formulas listed in the Brewfile.
+    # We call brew upgrade here to ensure that transitive dependencies (like imagemagick, 
+    # libomp, or luajit) are also kept up-to-date.
+    echo "Running: brew upgrade"
+    brew upgrade
+
+    # Clean up old versions of formulas and clear the cache.
+    echo "Running: brew cleanup"
+    brew cleanup
+    
     rm "$temp_brewfile"
 }
 
