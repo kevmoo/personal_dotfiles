@@ -18,8 +18,16 @@ if (( $+commands[eza] )); then
   # di=directory, ln=symlink, ex=executable, da=date, uu=user, gu=group, sn=size
   # Using 36 (Cyan) for directories and dates to avoid the "too dark" blue.
   export EZA_COLORS="di=1;36:ln=35:ex=31:da=36:uu=33:gu=33:sn=32:so=32:pi=33:bd=34;46:cd=34;43:su=0;41:sg=0;46:tw=0;42:ow=0;43"
-  alias ls='eza --icons --git --color=always'
+  if [[ -n "$ANTIGRAVITY_AGENT" ]]; then
+    alias ls='eza --icons --git'
+  else
+    alias ls='eza --icons --git --color=always'
+  fi
 fi
 if (( $+commands[bat] )); then
-  alias cat='bat --color=always'
+  if [[ -n "$ANTIGRAVITY_AGENT" ]]; then
+    alias cat='bat'
+  else
+    alias cat='bat --color=always'
+  fi
 fi
