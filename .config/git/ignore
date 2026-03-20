@@ -6,3 +6,6 @@
 
 # Git local config
 config.local
+
+# vscode silly
+.vscode/

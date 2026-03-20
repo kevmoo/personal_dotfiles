@@ -20,3 +20,5 @@ When working within the **personal_dotfiles** repository (via the `dot` command)
 - Linux (Bluefin-DX) should emphasize its rock-solid stability and modern Flatpak/container workflow.
 - Darwin (macOS) should emphasize its polished "corporate professional" vibes and Apple-integrated aesthetics.
 - Keep it light-hearted and focused on the technical choices made in this repository.
+- NEVER perform a 'git push' or any remote-write operation unless the user explicitly grants permission for that specific action.
+- DO NOT amend commits if there is already a PR out — unless explicitly asked. Create a new commit instead.
