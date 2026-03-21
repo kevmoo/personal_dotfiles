@@ -1,0 +1,5 @@
+[protocol "sso"]
+	allow = always
+[url "sso://dart/"]
+	insteadOf = https://dart.googlesource.com/
+	insteadOf = https://dart-review.googlesource.com/
