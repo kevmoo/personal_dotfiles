@@ -1,10 +1,5 @@
 # .zshrc - Portable Zsh configuration
 
-# Disable formatting/styling for the AI agent
-if [[ -n "$ANTIGRAVITY_AGENT" ]]; then
-  export NO_COLOR=1
-fi
-
 # 1. Completion and Zsh options (Interactive only)
 if [[ -t 1 ]]; then
   # Ensure XDG directories exist
@@ -130,7 +125,7 @@ if (( ${#missing} > 0 )); then
 fi
 
 # Custom prompt (simple fallback, or use starship if available)
-if (( $+commands[starship] )) && [[ -z "$ANTIGRAVITY_AGENT" ]]; then
+if (( $+commands[starship] )) && [[ "$TERM" != "dumb" ]]; then
   eval "$(starship init zsh)"
 else
   PROMPT='%F{cyan}%n@%m%f:%F{blue}%~%f %# '
