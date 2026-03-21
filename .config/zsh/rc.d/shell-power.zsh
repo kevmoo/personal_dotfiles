@@ -24,10 +24,6 @@ if (( $+commands[eza] )); then
     alias ls='eza --icons --git --color=always'
   fi
 fi
-if (( $+commands[bat] )); then
-  if [[ "$TERM" == "dumb" ]]; then
-    alias cat='bat'
-  else
-    alias cat='bat --color=always'
-  fi
+if (( $+commands[bat] )) && [[ "$TERM" != "dumb" ]]; then
+  alias cat='bat --color=always'
 fi
