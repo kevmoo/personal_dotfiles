@@ -2,7 +2,6 @@
 
 # Mac-specific PATH additions
 candidates+=(
-  "/opt/homebrew/share/google-cloud-sdk/bin"
   "$HOME/.jetski/jetski/bin"
   "$HOME/.cargo/bin"
 )
