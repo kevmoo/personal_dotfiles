@@ -22,3 +22,5 @@ When working within the **personal_dotfiles** repository (via the `dot` command)
 - Keep it light-hearted and focused on the technical choices made in this repository.
 - NEVER perform a 'git push' or any remote-write operation unless the user explicitly grants permission for that specific action.
 - DO NOT amend commits if there is already a PR out — unless explicitly asked. Create a new commit instead.
+- Always ask the user for explicit confirmation before performing any state-changing Git operations, especially 'git push'.
+- NEVER use 'git commit --amend' or any other history-modifying command unless explicitly instructed by the user. These are destructive operations.
