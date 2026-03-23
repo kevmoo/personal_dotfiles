@@ -1,0 +1,5 @@
+[tools]
+node = "22.22.0"
+"npm:firebase-tools" = "latest"
+"npm:@google/gemini-cli" = "latest"
+"npm:@googleworkspace/cli" = "latest"

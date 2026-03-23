@@ -34,9 +34,7 @@ local -a candidates=(
   "$HOME/github/flutter/bin"
   "$HOME/github/depot_tools"
   "$HOME/.pub-cache/bin"
-  "$HOME/.local/share/volta/bin"
 )
-export VOLTA_HOME="$HOME/.local/share/volta"
 export NODE_REPL_HISTORY="$HOME/.local/state/node/history"
 export PYTHON_HISTORY="$HOME/.local/state/python/history"
 export LESSHISTFILE="$HOME/.local/state/less/history"
@@ -122,6 +120,12 @@ if (( ${#missing} > 0 )); then
   if [[ -t 1 ]]; then
     echo -e "\033[0;34mℹ️  Note: Some configured paths are missing: \033[0;33m${missing[*]}\033[0m"
   fi
+fi
+
+# 8. Initialize Tool Managers
+# mise: universal tool manager
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
 fi
 
 # Custom prompt (simple fallback, or use starship if available)

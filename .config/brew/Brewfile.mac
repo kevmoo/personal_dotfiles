@@ -8,8 +8,8 @@ brew "rustup-init"  # Rust toolchain installer
 brew "bazelisk"
 brew "mkcert"       # Make locally-trusted development certificates
 brew "qrtool"       # Utility for reading and creating QR codes
+brew "mise"          # Universal tool manager (replaces volta)
 brew "starship"     # Customizable prompt for any shell
-brew "volta"        # JS toolchain manager
 brew "wasm-tools"   # Low-level tooling for WebAssembly
 brew "witr"         # Process causal chain explorer ("Why Is This Running?")
 brew "wrk"          # Modern HTTP benchmarking tool
