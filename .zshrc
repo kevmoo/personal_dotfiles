@@ -45,6 +45,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias a='ls -la --no-git'
 alias pu='dart pub upgrade'
+alias pbr='dart run build_runner'
 
 # tmux session management
 # 'tm' will attach to a session named "main", or create it if it doesn't exist.

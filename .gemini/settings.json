@@ -7,7 +7,9 @@
       "maxAge": "30d",
       "warningAcknowledged": true
     },
-    "preferredEditor": "vscode"
+    "preferredEditor": "vscode",
+    "defaultApprovalMode": "auto_edit",
+    "enableNotifications": true
   },
   "security": {
     "auth": {
@@ -20,5 +22,11 @@
   },
   "model": {
     "name": "auto-gemini-3"
+  },
+  "ui": {
+    "hideContextSummary": false,
+    "footer": {
+      "hideContextPercentage": false
+    }
   }
 }
