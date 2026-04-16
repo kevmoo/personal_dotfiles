@@ -9,6 +9,7 @@
 	fp = "!git fa; git pull --ff-only"
 	amend = commit --amend -a
 	gp = grep -F
+	frk = !gh repo fork --remote-name=kevmoo --remote && gh repo set-default origin
 
 [color]
 	ui = auto
