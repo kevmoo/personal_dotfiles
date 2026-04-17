@@ -25,5 +25,5 @@ if (( $+commands[eza] )); then
   fi
 fi
 if (( $+commands[bat] )) && [[ "$TERM" != "dumb" ]]; then
-  alias cat='bat --color=always'
+  alias cat='bat'
 fi
