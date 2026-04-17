@@ -4,12 +4,13 @@
 	defaultBranch = main
 
 [alias]
-	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+	amend = commit --amend -a
+	c = "!f() { git switch -c \"$1\" origin/HEAD; }; f"
 	fa = fetch --all --prune
 	fp = "!git fa; git pull --ff-only"
-	amend = commit --amend -a
-	gp = grep -F
 	frk = !gh repo fork --remote-name=kevmoo --remote && gh repo set-default origin
+	gp = grep -F
+	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
 
 [color]
 	ui = auto
