@@ -35,6 +35,12 @@ A custom Zsh function is included in `~/.zshrc` to sync your environment:
 brewall  # Updates brew and installs tools from shared + platform-specific files
 ```
 
+### The `brew-check` command
+A custom script in `~/.local/bin/brew-check` to audit your system against your Brewfiles:
+```bash
+brew-check  # Lists packages installed but NOT in your Brewfiles
+```
+
 ---
 
 ## 🌌 Preventing "The Listing of the Universe"
@@ -54,19 +60,31 @@ This ensure that `dot status` remains lightning-fast and only shows changes to f
 
 ## 🧩 The Critical Un-Trackable State
 
-**WARNING:** Since `info/exclude` itself cannot be tracked, you must update the documentation below whenever you add a new "un-ignored" file.
-Because this is a bare repository with the working tree at `$HOME`, some critical configuration lives inside the `~/.dotfiles/` directory itself and **cannot be tracked** by Git. When setting up a new machine, you must manually recreate these:
+**WARNING:** Since `info/exclude` itself cannot be tracked by Git, you must manually recreate your "un-ignore" rules when setting up a new machine.
+
+Re-apply these rules to `~/.dotfiles/info/exclude`:
+```text
+*
+!.zshrc
+!.zshenv
+!.config/
+!.local/
+!.local/bin/
+!.gemini/
+!.zshrc.d/
+!README.md
+.config/zsh/rc.d/secrets.zsh
+```
+
+Additionally, you must:
 
 1.  **Untracked Filter:** To keep `dot status` clean, ignore untracked files:
     ```bash
     dot config --local status.showUntrackedFiles no
     ```
-    - Add `!.config/` to track config files.
-    - Add `!.local/` to track local binaries.
-2.  **Secret Exclusion:** Add `.zshrc.d/secrets.zsh` to the local Git exclude list:
-    - Add `!.local/bin/brew-check` to the local Git exclude list to track the brew audit script.
+2.  **Secret Exclusion:** Ensure your secrets file is explicitly ignored (it should be covered by the `*` above, but being explicit doesn't hurt):
     ```bash
-    echo ".zshrc.d/secrets.zsh" >> $HOME/.dotfiles/info/exclude
+    echo ".config/zsh/rc.d/secrets.zsh" >> $HOME/.dotfiles/info/exclude
     ```
 3.  **Secrets Content:** Manually recreate `~/.zshrc.d/secrets.zsh` with your API keys and private tokens. This file is sourced by `~/.zshrc` but ignored by Git.
 
