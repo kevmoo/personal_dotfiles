@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Get current installed items
+INSTALLED_FORMULAE=$(brew leaves)
+INSTALLED_CASKS=$(brew list --cask)
+
+# Get expected items from config
+BREWFILE_SHARED="$HOME/.config/brew/Brewfile.shared"
+BREWFILE_MAC="$HOME/.config/brew/Brewfile.mac"
+
+EXPECTED_FORMULAE=$(grep '^brew "' "$BREWFILE_SHARED" "$BREWFILE_MAC" 2>/dev/null | sed -E 's/.*brew "([^"]+)".*/\1/')
+EXPECTED_CASKS=$(grep '^cask "' "$BREWFILE_SHARED" "$BREWFILE_MAC" 2>/dev/null | sed -E 's/.*cask "([^"]+)".*/\1/')
+
+echo "--- Formulae installed but NOT in Brewfiles ---"
+for f in $INSTALLED_FORMULAE; do
+    if ! echo "$EXPECTED_FORMULAE" | grep -qx "$f"; then
+        echo "  - $f"
+    fi
+done
+
+echo ""
+echo "--- Casks installed but NOT in Brewfiles ---"
+for c in $INSTALLED_CASKS; do
+    if ! echo "$EXPECTED_CASKS" | grep -qx "$c"; then
+        echo "  - $c"
+    fi
+done

@@ -2,7 +2,7 @@
 
 # Programming Languages & Toolchains
 brew "go"           # Open source programming language
-brew "rustup-init"  # Rust toolchain installer
+brew "rustup"  # Rust toolchain installer
 
 # Development Utilities
 brew "bazelisk"

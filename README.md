@@ -53,13 +53,18 @@ This ensure that `dot status` remains lightning-fast and only shows changes to f
 ---
 
 ## 🧩 The Critical Un-Trackable State
+
+**WARNING:** Since `info/exclude` itself cannot be tracked, you must update the documentation below whenever you add a new "un-ignored" file.
 Because this is a bare repository with the working tree at `$HOME`, some critical configuration lives inside the `~/.dotfiles/` directory itself and **cannot be tracked** by Git. When setting up a new machine, you must manually recreate these:
 
 1.  **Untracked Filter:** To keep `dot status` clean, ignore untracked files:
     ```bash
     dot config --local status.showUntrackedFiles no
     ```
+    - Add `!.config/` to track config files.
+    - Add `!.local/` to track local binaries.
 2.  **Secret Exclusion:** Add `.zshrc.d/secrets.zsh` to the local Git exclude list:
+    - Add `!.local/bin/brew-check` to the local Git exclude list to track the brew audit script.
     ```bash
     echo ".zshrc.d/secrets.zsh" >> $HOME/.dotfiles/info/exclude
     ```
