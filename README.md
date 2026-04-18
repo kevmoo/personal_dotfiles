@@ -30,31 +30,22 @@ This setup uses modular Brewfiles to share configuration between Linux and macOS
 *   **`~/.Brewfile.linux`**: Linux-specific Flatpaks and system fonts.
 
 ### The `brewall` command
-A custom Zsh function is included in `~/.zshrc` to sync your environment:
-```bash
-brewall  # Updates brew and installs tools from shared + platform-specific files
-```
+A custom Zsh function is included in `~/.zshrc` to sync your environment.
 
-### The `brew-check` command
-A custom script in `~/.local/bin/brew-check` to audit your system against your Brewfiles:
-```bash
-brew-check  # Lists packages installed but NOT in your Brewfiles
-```
+### 🛠 Audit Tools
+*   **`brew-check`**: Lists Homebrew packages installed but NOT in your Brewfiles.
+*   **`dot-check-ignores`**: Validates that your untrackable `~/.dotfiles/info/exclude` is in sync with the tracked version in `.config/dot/info-exclude.example`.
 
 ---
 
 ## 🌌 Preventing "The Listing of the Universe"
-Because the working tree is your entire `$HOME` directory, a standard `git status` would attempt to list every single untracked file you own—downloads, cache, temporary files, everything. We call this "Listing the Universe."
+Because the working tree is your entire `$HOME` directory, a standard `git status` would attempt to list every single untracked file you own. We employ a **double-layered defense**:
 
-To prevent this, we employ a **double-layered defense**:
-
-1.  **Untracked Filter:** We tell Git to ignore untracked files by default in the local config:
+1.  **Untracked Filter:** We tell Git to ignore untracked files by default:
     ```bash
     dot config --local status.showUntrackedFiles no
     ```
 2.  **Global "Ignore All":** We use a `*` wildcard in `~/.dotfiles/info/exclude` to ignore everything by default, and then explicitly "un-ignore" only the files we want to track (e.g., `!.zshrc`).
-
-This ensure that `dot status` remains lightning-fast and only shows changes to files you have **explicitly** chosen to track. It's the difference between a curated collection and a digital hoard.
 
 ---
 
@@ -62,107 +53,38 @@ This ensure that `dot status` remains lightning-fast and only shows changes to f
 
 **WARNING:** Since `info/exclude` itself cannot be tracked by Git, you must manually recreate your "un-ignore" rules when setting up a new machine.
 
-Re-apply these rules to `~/.dotfiles/info/exclude`:
-```text
-*
-!.zshrc
-!.zshenv
-!.config/
-!.local/
-!.local/bin/
-!.gemini/
-!.zshrc.d/
-!README.md
-.config/zsh/rc.d/secrets.zsh
-```
-
-Additionally, you must:
-
-1.  **Untracked Filter:** To keep `dot status` clean, ignore untracked files:
+### Initial Setup on a New Machine
+1.  **Clone & Alias**:
     ```bash
-    dot config --local status.showUntrackedFiles no
+    git clone --bare <your-repo-url> $HOME/.dotfiles
+    alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
     ```
-2.  **Secret Exclusion:** Ensure your secrets file is explicitly ignored (it should be covered by the `*` above, but being explicit doesn't hurt):
+2.  **Restore the Exclude File**:
+    The tracked version of your ignore rules lives at `.config/dot/info-exclude.example`. Restore it manually:
     ```bash
-    echo ".config/zsh/rc.d/secrets.zsh" >> $HOME/.dotfiles/info/exclude
+    mkdir -p ~/.dotfiles/info
+    dot show HEAD:.config/dot/info-exclude.example > ~/.dotfiles/info/exclude
     ```
-3.  **Secrets Content:** Manually recreate `~/.zshrc.d/secrets.zsh` with your API keys and private tokens. This file is sourced by `~/.zshrc` but ignored by Git.
+3.  **Checkout Content**:
+    ```bash
+    dot checkout
+    ```
+4.  **Validate**:
+    ```bash
+    dot-check-ignores
+    ```
 
 ---
 
 ## ⚡ Shell Power Tools
-This environment is enhanced with modern CLI replacements:
-
-*   **`zoxide` (z)**: A smarter `cd` command. Use `z <fragment>` or `zi` for interactive selection.
-*   **`fzf`**: Fuzzy finder for history (`Ctrl+r`) and files (`Ctrl+t`).
-*   **`eza`**: A modern `ls` (aliased to `ls` and `a`). Features icons and Git status integration.
-*   **`bat`**: A modern `cat` with syntax highlighting and line numbers.
-*   **`tmux`**: Terminal multiplexer with custom navigation and `|`/`-` splits. See [cheat sheet](.config/kevmoo-fyi/tmux.md).
+This environment is enhanced with modern CLI replacements: `zoxide`, `fzf`, `eza`, `bat`, and `tmux`.
 
 ---
 
 ## 💎 Why This Approach?
-
-*   **Zero Symlinks**: Files live in their natural locations (e.g., `~/.zshrc`,
-    `~/.gitconfig`). You don't need to manage a complex tree of symlinks or use
-    tools like GNU Stow.
-*   **Gemini Settings**: Your coding style and preferences are tracked in
-    [.gemini/GEMINI.md](.gemini/GEMINI.md).
-*   **Native Git Experience**: Since `dot` is just a standard Git command with
-    specific flags, all your existing Git knowledge applies (`dot status`,
-    `dot add`, `dot commit`, `dot diff`, etc.).
-*   **Portable & Lightweight**: This works on any system with Git installed. No
-    Python, Ruby, or Node.js dependencies are required.
-*   **Clean Workflow**: Only files you explicitly `dot add` are tracked. The
-    rest of your home directory remains invisible to Git.
-
----
-
-## 🛠 Common Workflows
-
-### Tracking a new config file
-```bash
-dot add ~/.zshrc
-dot commit -m "Add zshrc to dotfiles"
-```
-
-### Reviewing changes
-```bash
-dot status
-dot diff
-```
-
-### Syncing with a remote
-```bash
-dot push origin main
-dot pull origin main
-```
-
-### Initial Setup on a New Machine
-1. **Clone the repo** as a bare repository:
-   ```bash
-   git clone --bare <your-repo-url> $HOME/.dotfiles
-   ```
-2. **Define the alias** in your current shell session:
-   ```bash
-   alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
-   ```
-3. **Checkout the content** into your home directory. If you have existing
-   configuration files, this may fail. To resolve it, back them up first:
-   ```bash
-   mkdir -p ~/.dotfiles-backup && \
-   dot checkout 2>&1 | grep -E "^\s+\." | awk '{print $1}' | \
-   xargs -I{} mv $HOME/{} ~/.dotfiles-backup/{} && \
-   dot checkout
-   ```
-
-### 🏁 Post-Install Steps
-After the initial checkout and `brewall`, perform these final steps:
-
-1.  **Set Default Shell**: `chsh -s /bin/zsh`
-2.  **Initialize Volta**: `volta install node@latest`
-3.  **Initialize Rust**: `rustup-init` (follow the prompts)
-4.  **Verify Setup**: Open a new terminal and ensure the Starship prompt appears.
+*   **Zero Symlinks**: Files live in their natural locations.
+*   **Native Git Experience**: It's just Git.
+*   **Clean Workflow**: Only explicitly tracked files are visible.
 
 ---
 

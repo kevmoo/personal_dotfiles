@@ -1,0 +1,9 @@
+*
+!.zshrc
+!.zshenv
+!.config/**
+!.local/**
+!.gemini/**
+!.zshrc.d/**
+!README.md
+.config/zsh/rc.d/secrets.zsh

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+DOTFILES_EXCLUDE="$HOME/.dotfiles/info/exclude"
+EXAMPLE_EXCLUDE="$HOME/.config/dot/info-exclude.example"
+
+if [ ! -f "$DOTFILES_EXCLUDE" ]; then
+    echo "❌ Error: $DOTFILES_EXCLUDE not found!"
+    exit 1
+fi
+
+if [ ! -f "$EXAMPLE_EXCLUDE" ]; then
+    echo "❌ Error: $EXAMPLE_EXCLUDE (the tracked version) not found!"
+    exit 1
+fi
+
+if diff "$DOTFILES_EXCLUDE" "$EXAMPLE_EXCLUDE" > /dev/null; then
+    echo "✅ info/exclude is in sync with the tracked version."
+else
+    echo "⚠️ info/exclude is OUT OF SYNC with the tracked version!"
+    echo "--- Diff (Actual vs Tracked) ---"
+    diff --color "$DOTFILES_EXCLUDE" "$EXAMPLE_EXCLUDE"
+    echo "--------------------------------"
+    echo "To update the tracked version: cat $DOTFILES_EXCLUDE > $EXAMPLE_EXCLUDE"
+    echo "To restore the actual version: cat $EXAMPLE_EXCLUDE > $DOTFILES_EXCLUDE"
+fi
