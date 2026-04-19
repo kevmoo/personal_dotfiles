@@ -24,3 +24,10 @@ When working within the **personal_dotfiles** repository (via the `dot` command)
 - DO NOT amend commits if there is already a PR out — unless explicitly asked. Create a new commit instead.
 - Always ask the user for explicit confirmation before performing any state-changing Git operations, especially 'git push'.
 - NEVER use 'git commit --amend' or any other history-modifying command unless explicitly instructed by the user. These are destructive operations.
+
+### 🐚 Shell & Prompt Layout
+- **Entry Point:** `~/.zshrc`
+- **Modular Configs:** `~/.config/zsh/rc.d/*.zsh`
+  - `shell-power.zsh`: Enhancements (fzf, zoxide, eza).
+  - `mac-local.zsh` / `linux-local.zsh`: OS-specific overrides.
+- **Prompt:** Managed by `starship` via `~/.config/starship.toml`.

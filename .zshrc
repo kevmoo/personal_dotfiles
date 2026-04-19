@@ -133,5 +133,5 @@ fi
 if (( $+commands[starship] )) && [[ "$TERM" != "dumb" ]]; then
   eval "$(starship init zsh)"
 else
-  PROMPT='%F{cyan}%n@%m%f:%F{blue}%~%f %# '
+  PROMPT='%F{cyan}%n@%m%f:%F{blue}%2~%f %# '
 fi
