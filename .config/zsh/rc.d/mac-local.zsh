@@ -7,7 +7,7 @@ candidates+=(
 )
 
 # Environment Variables
-export EDITOR="code --wait"
+export EDITOR="codium --wait"
 export RBE=1
 export RBE_cache_dir='/tmp/rbe'
 

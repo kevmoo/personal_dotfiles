@@ -9,6 +9,10 @@ export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
 alias pbcopy='wl-copy'
 alias pbpaste='wl-paste'
 
+# Use VSCodium (Flatpak) as the editor
+alias codium='flatpak run com.vscodium.codium'
+export EDITOR="codium --wait"
+
 # NPM Wrapper to prevent global installs on Bluefin/Silverblue
 # We use eval to prevent the Zsh parser from expanding the 'npm' alias on Mac
 eval '

@@ -7,7 +7,7 @@
       "maxAge": "30d",
       "warningAcknowledged": true
     },
-    "preferredEditor": "vscode",
+    "preferredEditor": "vscodium",
     "defaultApprovalMode": "auto_edit",
     "enableNotifications": true
   },

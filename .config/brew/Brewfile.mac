@@ -17,4 +17,4 @@ brew "zbar"         # Barcode reading library and tools
 cask "bluesnooze"   # Sleeping/waking Bluetooth utility
 cask "firefox"      # Web browser
 cask "font-roboto-mono-nerd-font" # Nerd Font
-cask "visual-studio-code"         # Code editor
+cask "vscodium"         # Code editor (telemetry-free)
