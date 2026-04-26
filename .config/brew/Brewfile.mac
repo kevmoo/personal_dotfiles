@@ -6,11 +6,8 @@ brew "rustup"  # Rust toolchain installer
 
 # Development Utilities
 brew "bazelisk"
-brew "mise"          # Universal tool manager (replaces volta)
 brew "mkcert"       # Make locally-trusted development certificates
 brew "qrtool"       # Utility for reading and creating QR codes
-brew "ripgrep"		# fast grep!
-brew "starship"     # Customizable prompt for any shell
 brew "wasm-tools"   # Low-level tooling for WebAssembly
 brew "witr"         # Process causal chain explorer ("Why Is This Running?")
 brew "wrk"          # Modern HTTP benchmarking tool

@@ -6,5 +6,5 @@
 [include]
 	path = config.local
 
-[includeIf "gitdir:/Users/kevmoo/github/"]
+[includeIf "gitdir:~/github/"]
 	path = config.mac

@@ -27,6 +27,7 @@
     "hideContextSummary": false,
     "footer": {
       "hideContextPercentage": false
-    }
+    },
+    "theme": "Default Light"
   }
 }
