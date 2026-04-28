@@ -5,9 +5,15 @@ brew "go"           # Open source programming language
 brew "rustup"  # Rust toolchain installer
 
 # Development Utilities
-brew "bazelisk"
+brew "bazelisk"     # User-friendly launcher for Bazel
+brew "dotnet"       # Needed for shelf compliance!
+brew "mise"         # Universal tool manager (replaces volta)
 brew "mkcert"       # Make locally-trusted development certificates
+brew "oha"          # HTTP load generator, inspired by rakyll/hey with tui animation
 brew "qrtool"       # Utility for reading and creating QR codes
+brew "ripgrep"      # fast grep!
+brew "starship"     # Customizable prompt for any shell
+brew "wabt"         # Web Assembly Binary Toolkit
 brew "wasm-tools"   # Low-level tooling for WebAssembly
 brew "witr"         # Process causal chain explorer ("Why Is This Running?")
 brew "wrk"          # Modern HTTP benchmarking tool
@@ -17,4 +23,4 @@ brew "zbar"         # Barcode reading library and tools
 cask "bluesnooze"   # Sleeping/waking Bluetooth utility
 cask "firefox"      # Web browser
 cask "font-roboto-mono-nerd-font" # Nerd Font
-cask "vscodium"         # Code editor (telemetry-free)
+cask "vscodium"					  # VSCode, no BS
