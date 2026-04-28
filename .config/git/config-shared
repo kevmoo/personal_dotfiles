@@ -17,3 +17,6 @@
 
 [url "git@github.com:"]
 	insteadOf = https://github.com/
+[hook "dart-format"]
+	event = pre-commit
+	command = ~/.config/git/hooks/dart_format_pre_commit.sh
