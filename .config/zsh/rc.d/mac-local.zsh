@@ -13,3 +13,6 @@ export RBE_cache_dir='/tmp/rbe'
 
 # Increase open file descriptor limit
 ulimit -n 10240
+
+# Added by Antigravity
+export PATH="/Users/kevmoo/.antigravity/antigravity/bin:$PATH"
