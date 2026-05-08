@@ -7,6 +7,7 @@ brew "rustup"  # Rust toolchain installer
 # Development Utilities
 brew "bazelisk"     # User-friendly launcher for Bazel
 brew "dotnet"       # Needed for shelf compliance!
+brew "fvm"          # Flutter version manager
 brew "mise"         # Universal tool manager (replaces volta)
 brew "mkcert"       # Make locally-trusted development certificates
 brew "oha"          # HTTP load generator, inspired by rakyll/hey with tui animation
@@ -20,7 +21,8 @@ brew "wrk"          # Modern HTTP benchmarking tool
 brew "zbar"         # Barcode reading library and tools
 
 # Desktop Apps & GUI Tools
-cask "bluesnooze"   # Sleeping/waking Bluetooth utility
-cask "firefox"      # Web browser
+cask "bluesnooze"                 # Sleeping/waking Bluetooth utility
+cask "firefox"                    # Web browser
 cask "font-roboto-mono-nerd-font" # Nerd Font
+cask "gcloud-cli"                 # Like it says!
 cask "vscodium"					  # VSCode, no BS
