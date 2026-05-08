@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Colors for premium Cupertino/Darwin aesthetic
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+echo -e "${CYAN}${BOLD}🍺 Homebrew Environment Synchronization${NC}"
+echo -e "Sourcing and consolidating active Brewfile configs...\n"
+
+# Core update
+echo -e "${CYAN}→ Running: brew update${NC}"
+brew update
+
+# Consolidate configurations
+temp_brewfile=$(mktemp)
+cat "$HOME/.config/brew/Brewfile.shared" > "$temp_brewfile"
+
+if [[ "$(uname)" == "Darwin" ]]; then
+    cat "$HOME/.config/brew/Brewfile.mac" >> "$temp_brewfile"
+elif [[ "$(uname)" == "Linux" ]]; then
+    cat "$HOME/.config/brew/Brewfile.linux" >> "$temp_brewfile"
+fi
+
+# Execute Bundle
+echo -e "\n${CYAN}→ Running: brew bundle --upgrade --cleanup --force --verbose${NC}"
+brew bundle --file="$temp_brewfile" --upgrade --cleanup --force --verbose
+
+# Upgrade transitives
+echo -e "\n${CYAN}→ Running: brew upgrade${NC}"
+brew upgrade
+
+# Final Cleanup
+echo -e "\n${CYAN}→ Running: brew cleanup${NC}"
+brew cleanup
+
+rm "$temp_brewfile"
+
+echo -e "\n${GREEN}${BOLD}✨ Homebrew environment is perfectly synchronized and clean!${NC}"

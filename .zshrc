@@ -64,34 +64,6 @@ if [[ -n "$SSH_CONNECTION" || -n "$SSH_CLIENT" || -n "$SSH_TTY" ]]; then
 fi
 
 # 5. Functions
-brewall() {
-    echo "Running: brew update"
-    brew update
-    
-    local temp_brewfile=$(mktemp)
-    cat ~/.config/brew/Brewfile.shared > "$temp_brewfile"
-    
-    if [[ "$(uname)" == "Darwin" ]]; then
-        cat ~/.config/brew/Brewfile.mac >> "$temp_brewfile"
-    elif [[ "$(uname)" == "Linux" ]]; then
-        cat ~/.config/brew/Brewfile.linux >> "$temp_brewfile"
-    fi
-
-    echo "Running: brew bundle --upgrade --cleanup --force --verbose"
-    brew bundle --file="$temp_brewfile" --upgrade --cleanup --force --verbose
-    
-    # brew bundle --upgrade only checks for upgrades on formulas listed in the Brewfile.
-    # We call brew upgrade here to ensure that transitive dependencies (like imagemagick, 
-    # libomp, or luajit) are also kept up-to-date.
-    echo "Running: brew upgrade"
-    brew upgrade
-
-    # Clean up old versions of formulas and clear the cache.
-    echo "Running: brew cleanup"
-    brew cleanup
-    
-    rm "$temp_brewfile"
-}
 
 # 6. Modular Configs (Source everything in ~/.config/zsh/rc.d)
 if [[ -d ~/.config/zsh/rc.d ]]; then
