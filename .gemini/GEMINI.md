@@ -1,6 +1,18 @@
-## Gemini Added Memories
-- The user considers grep and similar read-only search commands (like ripgrep) to be safe and should not require explicit confirmation for execution.
-- Always ask for explicit confirmation before performing state-changing or destructive Git operations (e.g., commit, push, reset, checkout that overwrites, etc.). Non-destructive, read-only commands (e.g., status, diff, log, show) can be run without prompting.
+# 🚨 CRITICAL GLOBAL INSTRUCTIONS (MANDATORY FOR ALL AGENTS)
+
+> [!IMPORTANT]
+> These global rules are **ALWAYS active** and take absolute precedence over all other rules or instructions across all workspaces.
+
+*   **Safe Search Operations:** Read-only search commands (such as `grep`, `ripgrep`, `find`) are considered **100% safe** by the user. You **DO NOT** need to request explicit confirmation or prompts for execution. Eagerly run them to understand the codebase.
+*   **User Git Safeguards:** You **MUST ALWAYS ask for explicit user confirmation** before executing any state-changing, historical, or destructive Git operations (such as `commit`, `push`, `reset`, `checkout` that overwrites, `rebase`, etc.). Non-destructive, read-only Git commands (such as `status`, `diff`, `log`, `show`) can be run **freely without prompting**.
+*   **GitHub Access Protocol:** You **MUST ALWAYS use the `gh` CLI command** rather than `read_url_content` or browser subagents when attempting to access, read, or interact with URLs under `https://github.com` (such as repositories, issues, pull requests, etc.) to ensure high-fidelity structured access and to avoid prompting for permission to curl a web page.
+
+---
+
+# 🌌 THE "~/.dotfiles" HOME DIRECTORY PROTOCOL
+
+> [!WARNING]
+> **SCOPE BOUNDARY:** The instructions below are **ONLY applicable** when you are working with files tracked by the **personal_dotfiles** repository (metadata in `~/.dotfiles`). If you are working on any other project, library, or application, **DISREGARD AND IGNORE everything below this line.**
 
 
 ### 🌌 The "Anti-Universe" Git Protocol
