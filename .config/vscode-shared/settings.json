@@ -1,0 +1,36 @@
+{
+  "dart.showTodos": false,
+  "editor.rulers": [
+    80
+  ],
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "json.schemaDownload.enable": true,
+  "files.autoSave": "afterDelay",
+  "editor.defaultFormatter": "Dart-Code.dart-code",
+  "editor.formatOnSaveMode": "file",
+  "security.workspace.trust.untrustedFiles": "open",
+  "dart.debugExternalPackageLibraries": true,
+  "dart.debugSdkLibraries": true,
+  "git.blame.editorDecoration.enabled": true,
+  "git.blame.statusBarItem.enabled": false,
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "dart.checkForSdkUpdates": false,
+  "dart.runPubGetOnPubspecChanges": "prompt",
+  "dart.sdkPath": "~/github/flutter/bin/cache/dart-sdk/",
+  "dart.documentation": "summary",
+  "dart.experimentalRefactors": true,
+  "[css]": {
+    "editor.defaultFormatter": "vscode.css-language-features"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "workbench.colorTheme": "Default Light Modern",
+}
