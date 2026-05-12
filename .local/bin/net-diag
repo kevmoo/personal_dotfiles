@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Network Diagnostic Script for Linux
+# Dumps a comprehensive set of networking info for debugging.
+
+echo "=== System Identity ==="
+hostnamectl | grep -E "Static hostname|Operating System|Kernel"
+echo ""
+
+echo "=== Network Interfaces (ip addr) ==="
+ip -brief addr
+echo ""
+
+echo "=== Routing Table (ip route) ==="
+ip route
+echo ""
+
+if command -v nmcli &> /dev/null; then
+    echo "=== NetworkManager Status ==="
+    nmcli device status
+    echo ""
+    echo "=== Active Connections ==="
+    nmcli connection show --active
+    echo ""
+fi
+
+if command -v resolvectl &> /dev/null; then
+    echo "=== DNS Status (resolvectl) ==="
+    resolvectl status
+    echo ""
+fi
+
+echo "=== Listening Ports (ss -tulnp) ==="
+ss -tulnp
+echo ""
+
+echo "=== External Connectivity (Ping 8.8.8.8) ==="
+ping -c 3 -W 2 8.8.8.8 | grep -E "packets transmitted|rtt" || echo "Ping failed"
+echo ""
+
+echo "=== DNS Resolution (Ping google.com) ==="
+ping -c 3 -W 2 google.com | grep -E "packets transmitted|rtt" || echo "DNS/Ping failed"
+echo ""
+
+echo "=== RF Kill Status (rfkill) ==="
+if command -v rfkill &> /dev/null; then
+    rfkill list
+else
+    echo "rfkill not found"
+fi
+echo ""
+
+echo "=== Recent NetworkManager Logs (last 20 lines) ==="
+journalctl -u NetworkManager --no-pager -n 20 | sed 's/^/  /'
+echo ""
