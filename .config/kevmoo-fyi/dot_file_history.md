@@ -60,7 +60,11 @@ Realizing that some things are meant to be private, we re-engineered the Git con
 
 ### 🌌 Phase 11: SSH Enlightenment
 To bridge the gap between local and remote work, we implemented intelligent session management.
-*   **Pending Commit**: Added `tm` (and `t` alias) to manage a shared "main" tmux session. The shell now automatically detects SSH/Tailscale connections and attaches to this session on login, providing seamless persistence across the world.
+*   **[54ec2a6](https://github.com/kevmoo/personal_dotfiles/commit/54ec2a6)**: Added `tm` (and `t` alias) to manage a shared "main" tmux session. The shell now automatically detects SSH/Tailscale connections and attaches to this session on login, providing seamless persistence across the world.
+
+### 🔌 Phase 12: Networking Diagnostics
+As the environment grew more complex, we needed better tools to diagnose connectivity issues on the Linux side.
+*   **[e8e8287](https://github.com/kevmoo/personal_dotfiles/commit/e8e8287)**: Added `net-diag`, a comprehensive networking dump script that cuts through the noise of modern Linux networking to provide clear interface, routing, and NetworkManager status.
 
 ---
 **💡 Pro-tip for future me:** If you're on a new machine, just run `brewall` and let the modular logic do the heavy lifting!
