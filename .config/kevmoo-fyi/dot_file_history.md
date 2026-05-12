@@ -66,6 +66,10 @@ To bridge the gap between local and remote work, we implemented intelligent sess
 As the environment grew more complex, we needed better tools to diagnose connectivity issues on the Linux side.
 *   **[e8e8287](https://github.com/kevmoo/personal_dotfiles/commit/e8e8287)**: Added `net-diag`, a comprehensive networking dump script that cuts through the noise of modern Linux networking to provide clear interface, routing, and NetworkManager status.
 
+### 🏛️ Phase 13: The Great Reorganization
+The Mac agent stepped in to perform a massive architectural cleanup, moving logic out of shell configs and into standalone tools.
+*   **[c88a9a9](https://github.com/kevmoo/personal_dotfiles/commit/c88a9a9)**: "The Great Reorganization." Migrated `brewall` to a standalone binary, introduced `brew-check` for environment audits, unified VS Code/VSCodium settings in `.config/vscode-shared/`, and refined the "Anti-Universe" protocol for even tighter control over tracked files.
+
 ---
 **💡 Pro-tip for future me:** If you're on a new machine, just run `brewall` and let the modular logic do the heavy lifting!
 
