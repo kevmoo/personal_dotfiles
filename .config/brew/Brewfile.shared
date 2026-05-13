@@ -17,3 +17,4 @@ brew "mise"          # Universal tool manager (replaces volta)
 brew "starship"     # Customizable prompt for any shell
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
+brew "sem-cli"

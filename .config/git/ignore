@@ -9,3 +9,6 @@ config.local
 
 # vscode silly
 .vscode/
+
+# sem-cli
+.sem/
