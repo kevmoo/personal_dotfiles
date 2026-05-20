@@ -12,7 +12,7 @@
   "git.blame.statusBarItem.enabled": false,
   "json.schemaDownload.enable": true,
   "editor.formatOnSaveMode": "file",
-  "dart.sdkPath": "~/github/flutter/bin/cache/dart-sdk/",
+  "dart.sdkPath": "/Users/kevmoo/github/flutter/bin/cache/dart-sdk",
   "dart.debugExternalPackageLibraries": true,
   "dart.debugSdkLibraries": true,
   "dart.showTodos": false,
