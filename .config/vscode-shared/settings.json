@@ -6,7 +6,7 @@
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "security.workspace.trust.untrustedFiles": "open",
-  "workbench.colorTheme": "Light Modern",
+  "workbench.colorTheme": "Default Light Modern",
   "terminal.integrated.defaultProfile.osx": "zsh",
   "git.blame.editorDecoration.enabled": true,
   "git.blame.statusBarItem.enabled": false,
@@ -22,7 +22,14 @@
   "dart.experimentalRefactors": true,
   "[dart]": {
     "editor.defaultFormatter": "Dart-Code.dart-code",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.rulers": [
+      80
+    ],
+    "editor.selectionHighlight": false,
+    "editor.tabCompletion": "onlySnippets",
+    "editor.wordBasedSuggestions": "off"
   },
   "[jsonc]": {
     "editor.defaultFormatter": "vscode.json-language-features"

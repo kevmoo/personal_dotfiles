@@ -4,6 +4,8 @@
 candidates+=(
   "$HOME/.jetski/jetski/bin"
   "$HOME/.cargo/bin"
+  "$HOME/.antigravity/antigravity/bin"
+  "$HOME/.antigravity-ide/antigravity-ide/bin"
 )
 
 # Environment Variables
@@ -13,6 +15,3 @@ export RBE_cache_dir='/tmp/rbe'
 
 # Increase open file descriptor limit
 ulimit -n 10240
-
-# Added by Antigravity
-export PATH="/Users/kevmoo/.antigravity/antigravity/bin:$PATH"
