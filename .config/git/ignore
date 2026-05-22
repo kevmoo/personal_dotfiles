@@ -13,4 +13,5 @@ config.local
 # sem-cli
 .sem/
 
-.antigravitycli/*
+.antigravitycli/
+.jetskicli/

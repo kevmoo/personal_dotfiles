@@ -4,3 +4,4 @@ node = ["24", "22"]
 "npm:@google/gemini-cli" = "latest"
 "npm:@googleworkspace/cli" = "latest"
 gcloud = "latest"
+terraform = "latest"
