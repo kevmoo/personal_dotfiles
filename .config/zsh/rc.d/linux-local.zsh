@@ -1,7 +1,7 @@
 # ~/.zshrc.d/linux-local.zsh
 
 # Linux-specific PATH additions
-# candidates+=("$HOME/some/linux/only/path")
+candidates+=("$HOME/.local/bin")
 
 export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
 

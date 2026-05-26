@@ -41,6 +41,7 @@ export LESSHISTFILE="$HOME/.local/state/less/history"
 
 # 4. Aliases (Shared between platforms)
 alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+alias dot-lazy='lazygit --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias a='ls -la --no-git'

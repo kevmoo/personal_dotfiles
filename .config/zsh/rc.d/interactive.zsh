@@ -23,3 +23,17 @@ bindkey '^ ' autosuggest-accept
 
 # Highlight color (subtle gray)
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
+
+# 4. Terminal Tab Title Configuration
+# Dynamic terminal tab/window titles representing current directory
+function set_terminal_title() {
+  # print -Pn evaluates Zsh prompt escapes like '%~' (replaces $HOME with '~')
+  # \e]0;... \a sets both window and tab titles in standard terminal emulators (Ptyxis, iTerm2, etc.)
+  print -Pn "\e]0;%~\a"
+}
+
+# Safely register the title function to Zsh hooks
+autoload -Uz add-zsh-hook
+add-zsh-hook chpwd set_terminal_title
+add-zsh-hook precmd set_terminal_title
+
