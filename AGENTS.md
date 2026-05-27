@@ -76,8 +76,27 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ### 🌌 The "Anti-Universe" Git Protocol
 When working within the **personal_dotfiles** repository (via the `dot` command):
 - **Ignore by Default:** We employ a "double-layered" defense against listing the entire home directory. `status.showUntrackedFiles` is set to `no`, and `~/.dotfiles/info/exclude` uses a `*` wildcard.
-- **Explicit Tracking:** To track a new file, you MUST explicitly "un-ignore" it in `~/.dotfiles/info/exclude` (e.g., `!path/to/file`) before `dot add` will see it.
 - **No FSMonitor:** The `core.fsmonitor` daemon is disabled for this repository as it causes hangs when monitoring the entire home directory.
+
+#### How to Add New Files (The Ignore Overrides)
+Because everything in `$HOME` is ignored by default via the `*` rule, Git's default behavior prevents descending into ignored directories to find exceptions. You MUST use one of the two solutions below to track new files:
+
+*   **Solution 1: Force Add (Recommended for deep paths)**
+    The easiest and most reliable way to track a new file deeply nested in an ignored directory is to bypass the ignore list and force-add it directly to the index:
+    ```bash
+    git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME add -f path/to/file
+    ```
+    Once a file is tracked in the index, Git will continue to monitor it for modifications, even if it technically matches an ignore pattern.
+
+*   **Solution 2: Explicitly Un-ignore All Parent Directories**
+    If you prefer to maintain the `~/.dotfiles/info/exclude` file, you MUST explicitly un-ignore every single parent directory down to the file, using trailing slashes to tell Git to descend. For example, to track a file under `.config/git/hooks/`:
+    ```text
+    *
+    !.config/
+    !.config/git/
+    !.config/git/hooks/
+    !.config/git/hooks/*
+    ```
 
 ### 🎭 Friendly Agent Rivalry Protocol
 - You have a friendly, witty rivalry with the agent on the "other" OS (Darwin vs. Linux).
