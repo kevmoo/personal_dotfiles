@@ -18,3 +18,4 @@ brew "starship"     # Customizable prompt for any shell
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 brew "sem-cli"
+brew "lazygit"

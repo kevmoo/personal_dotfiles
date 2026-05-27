@@ -17,10 +17,19 @@ INSTALLED_CASKS=$(brew list --cask)
 
 # Get expected items from config
 BREWFILE_SHARED="$HOME/.config/brew/Brewfile.shared"
-BREWFILE_MAC="$HOME/.config/brew/Brewfile.mac"
+OS_TYPE=$(uname -s)
+if [ "$OS_TYPE" = "Darwin" ]; then
+    BREWFILE_OS="$HOME/.config/brew/Brewfile.mac"
+    OS_LABEL="mac"
+    OS_KEY="m"
+else
+    BREWFILE_OS="$HOME/.config/brew/Brewfile.linux"
+    OS_LABEL="linux"
+    OS_KEY="l"
+fi
 
-EXPECTED_FORMULAE=$(grep '^brew "' "$BREWFILE_SHARED" "$BREWFILE_MAC" 2>/dev/null | sed -E 's/.*brew "([^"]+)".*/\1/')
-EXPECTED_CASKS=$(grep '^cask "' "$BREWFILE_SHARED" "$BREWFILE_MAC" 2>/dev/null | sed -E 's/.*cask "([^"]+)".*/\1/')
+EXPECTED_FORMULAE=$(grep '^brew "' "$BREWFILE_SHARED" "$BREWFILE_OS" 2>/dev/null | sed -E 's/.*brew "([^"]+)".*/\1/')
+EXPECTED_CASKS=$(grep '^cask "' "$BREWFILE_SHARED" "$BREWFILE_OS" 2>/dev/null | sed -E 's/.*cask "([^"]+)".*/\1/')
 
 # 1. Unmanaged items (installed but NOT in Brewfile)
 UNMANAGED_FORMULAE=()
@@ -111,16 +120,16 @@ if [ "$INTERACTIVE" = true ]; then
         echo -e "${CYAN}Managing unmanaged Formulae:${NC}"
         for f in "${UNMANAGED_FORMULAE[@]}"; do
             while true; do
-                read -p "Add formula '$f' to Brewfile? [s]hared, [m]ac, or [n]o: " choice
+                read -p "Add formula '$f' to Brewfile? [s]hared, [${OS_KEY}]${OS_LABEL}, or [n]o: " choice
                 case "$choice" in
                     s|S)
                         echo "brew \"$f\"" >> "$BREWFILE_SHARED"
                         echo -e "${GREEN}Added '$f' to Brewfile.shared${NC}"
                         break
                         ;;
-                    m|M)
-                        echo "brew \"$f\"" >> "$BREWFILE_MAC"
-                        echo -e "${GREEN}Added '$f' to Brewfile.mac${NC}"
+                    l|L|m|M)
+                        echo "brew \"$f\"" >> "$BREWFILE_OS"
+                        echo -e "${GREEN}Added '$f' to Brewfile.${OS_LABEL}${NC}"
                         break
                         ;;
                     n|N|"")
@@ -141,16 +150,16 @@ if [ "$INTERACTIVE" = true ]; then
         echo -e "${CYAN}Managing unmanaged Casks:${NC}"
         for c in "${UNMANAGED_CASKS[@]}"; do
             while true; do
-                read -p "Add cask '$c' to Brewfile? [s]hared, [m]ac, or [n]o: " choice
+                read -p "Add cask '$c' to Brewfile? [s]hared, [${OS_KEY}]${OS_LABEL}, or [n]o: " choice
                 case "$choice" in
                     s|S)
                         echo "cask \"$c\"" >> "$BREWFILE_SHARED"
                         echo -e "${GREEN}Added '$c' to Brewfile.shared${NC}"
                         break
                         ;;
-                    m|M)
-                        echo "cask \"$c\"" >> "$BREWFILE_MAC"
-                        echo -e "${GREEN}Added '$c' to Brewfile.mac${NC}"
+                    l|L|m|M)
+                        echo "cask \"$c\"" >> "$BREWFILE_OS"
+                        echo -e "${GREEN}Added '$c' to Brewfile.${OS_LABEL}${NC}"
                         break
                         ;;
                     n|N|"")
@@ -181,11 +190,19 @@ if [ "$INTERACTIVE" = true ]; then
                     r|R)
                         # Remove from whichever Brewfile contains it
                         if grep -q "brew \"$f\"" "$BREWFILE_SHARED"; then
-                            sed -i '' "/brew \"$f\"/d" "$BREWFILE_SHARED"
+                            if [ "$OS_TYPE" = "Darwin" ]; then
+                                sed -i '' "/brew \"$f\"/d" "$BREWFILE_SHARED"
+                            else
+                                sed -i "/brew \"$f\"/d" "$BREWFILE_SHARED"
+                            fi
                             echo -e "${GREEN}Removed '$f' from Brewfile.shared${NC}"
-                        elif grep -q "brew \"$f\"" "$BREWFILE_MAC"; then
-                            sed -i '' "/brew \"$f\"/d" "$BREWFILE_MAC"
-                            echo -e "${GREEN}Removed '$f' from Brewfile.mac${NC}"
+                        elif grep -q "brew \"$f\"" "$BREWFILE_OS"; then
+                            if [ "$OS_TYPE" = "Darwin" ]; then
+                                sed -i '' "/brew \"$f\"/d" "$BREWFILE_OS"
+                            else
+                                sed -i "/brew \"$f\"/d" "$BREWFILE_OS"
+                            fi
+                            echo -e "${GREEN}Removed '$f' from Brewfile.${OS_LABEL}${NC}"
                         fi
                         break
                         ;;
@@ -217,11 +234,19 @@ if [ "$INTERACTIVE" = true ]; then
                     r|R)
                         # Remove from whichever Brewfile contains it
                         if grep -q "cask \"$c\"" "$BREWFILE_SHARED"; then
-                            sed -i '' "/cask \"$c\"/d" "$BREWFILE_SHARED"
+                            if [ "$OS_TYPE" = "Darwin" ]; then
+                                sed -i '' "/cask \"$c\"/d" "$BREWFILE_SHARED"
+                            else
+                                sed -i "/cask \"$c\"/d" "$BREWFILE_SHARED"
+                            fi
                             echo -e "${GREEN}Removed '$c' from Brewfile.shared${NC}"
-                        elif grep -q "cask \"$c\"" "$BREWFILE_MAC"; then
-                            sed -i '' "/cask \"$c\"/d" "$BREWFILE_MAC"
-                            echo -e "${GREEN}Removed '$c' from Brewfile.mac${NC}"
+                        elif grep -q "cask \"$c\"" "$BREWFILE_OS"; then
+                            if [ "$OS_TYPE" = "Darwin" ]; then
+                                sed -i '' "/cask \"$c\"/d" "$BREWFILE_OS"
+                            else
+                                sed -i "/cask \"$c\"/d" "$BREWFILE_OS"
+                            fi
+                            echo -e "${GREEN}Removed '$c' from Brewfile.${OS_LABEL}${NC}"
                         fi
                         break
                         ;;

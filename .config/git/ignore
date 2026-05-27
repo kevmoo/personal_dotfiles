@@ -15,3 +15,5 @@ config.local
 
 .antigravitycli/
 .jetskicli/
+
+**/.claude/settings.local.json

@@ -2,6 +2,8 @@
 
 tap "sinelaw/fresh"
 brew "fresh-editor"
+brew "gastownhall/gascity/gascity"
+cask "claude-code"
 
 cask "font-blex-mono-nerd-font"
 cask "font-caskaydia-mono-nerd-font"
