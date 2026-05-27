@@ -1,7 +1,6 @@
 # ~/.Brewfile.mac - macOS specific apps and tools
 
 # Programming Languages & Toolchains
-brew "go"           # Open source programming language
 brew "rustup"  # Rust toolchain installer
 
 # Development Utilities
