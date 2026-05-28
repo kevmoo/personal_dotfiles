@@ -8,7 +8,7 @@
 	c = "!f() { git switch -c \"$1\" origin/HEAD; }; f"
 	fa = fetch --all --prune
 	fp = "!git fa; git pull --ff-only"
-	frk = !gh repo fork --remote-name=kevmoo --remote && gh repo set-default origin
+	frk = !gh repo fork --remote-name=kevmoo --remote --default-branch-only && gh repo set-default origin
 	gp = grep -F
 	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
 
