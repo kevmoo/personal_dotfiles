@@ -9,3 +9,9 @@
 ; Mac-only: scope by absolute path so it never matches on Linux (/var/home or /home).
 [includeIf "gitdir:/Users/*/github/"]
 	path = config.mac
+[credential "https://github.com"]
+	helper = 
+	helper = !gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !gh auth git-credential
