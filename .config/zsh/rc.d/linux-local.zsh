@@ -29,14 +29,24 @@ elif [[ -f "$HOME/.local/share/flatpak/exports/bin/com.google.Chrome" ]]; then
   export CHROME_EXECUTABLE="$HOME/.local/share/flatpak/exports/bin/com.google.Chrome"
 fi
 
-# Editor: Fallback chain based on available tools
-if command -v code >/dev/null 2>&1; then
-  export EDITOR="code --wait"
-elif command -v flatpak >/dev/null 2>&1 && flatpak info com.vscodium.codium >/dev/null 2>&1; then
-  alias codium='flatpak run com.vscodium.codium'
-  export EDITOR="flatpak run com.vscodium.codium --wait"
+# Editor: Fallback chain based on session type (SSH vs Local) and available tools
+if [[ -n "$SSH_CONNECTION" || -n "$SSH_CLIENT" || -n "$SSH_TTY" ]]; then
+  # Connected via SSH: Always use a terminal-based editor
+  if command -v vim >/dev/null 2>&1; then
+    export EDITOR="vim"
+  else
+    export EDITOR="nano"
+  fi
 else
-  export EDITOR="vim"
+  # Local Session / CRD (Chrome Remote Desktop): Use GUI editor if available
+  if command -v code >/dev/null 2>&1; then
+    export EDITOR="code --wait"
+  elif command -v flatpak >/dev/null 2>&1 && flatpak info com.vscodium.codium >/dev/null 2>&1; then
+    alias codium='flatpak run com.vscodium.codium'
+    export EDITOR="flatpak run com.vscodium.codium --wait"
+  else
+    export EDITOR="vim"
+  fi
 fi
 
 # ---------------------------------------------------------
