@@ -9,7 +9,7 @@ candidates+=("$HOME/.local/bin")
 # ---------------------------------------------------------
 
 # Clipboard: Automatically handles Wayland (Home) vs X11 (Work)
-if [[ "$XDG_SESSION_TYPE" == "wayland" ]] && command -v wl-copy >/dev/null 2>&1; then
+if command -v wl-copy >/dev/null 2>&1; then
   alias pbcopy='wl-copy'
   alias pbpaste='wl-paste'
 elif command -v xclip >/dev/null 2>&1; then
@@ -25,6 +25,8 @@ if [[ -f "/usr/bin/google-chrome" ]]; then
   export CHROME_EXECUTABLE="/usr/bin/google-chrome"
 elif [[ -f "/var/lib/flatpak/exports/bin/com.google.Chrome" ]]; then
   export CHROME_EXECUTABLE="/var/lib/flatpak/exports/bin/com.google.Chrome"
+elif [[ -f "$HOME/.local/share/flatpak/exports/bin/com.google.Chrome" ]]; then
+  export CHROME_EXECUTABLE="$HOME/.local/share/flatpak/exports/bin/com.google.Chrome"
 fi
 
 # Editor: Fallback chain based on available tools
@@ -32,7 +34,7 @@ if command -v code >/dev/null 2>&1; then
   export EDITOR="code --wait"
 elif command -v flatpak >/dev/null 2>&1 && flatpak info com.vscodium.codium >/dev/null 2>&1; then
   alias codium='flatpak run com.vscodium.codium'
-  export EDITOR="codium --wait"
+  export EDITOR="flatpak run com.vscodium.codium --wait"
 else
   export EDITOR="vim"
 fi
