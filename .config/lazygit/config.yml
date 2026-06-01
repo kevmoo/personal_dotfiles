@@ -1,0 +1,14 @@
+keybinding:
+  universal:
+    push: '<disabled>'
+
+customCommands:
+  - key: 'P'
+    command: 'git push'
+    context: 'global'
+    loadingText: 'Pushing...'
+    description: 'Push with confirmation prompt'
+    prompts:
+      - type: 'confirm'
+        title: 'Confirm Push'
+        body: 'Are you sure you want to push?'
