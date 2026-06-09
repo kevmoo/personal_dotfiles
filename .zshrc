@@ -2,14 +2,8 @@
 
 # 1. Completion and Zsh options (Interactive only)
 if [[ -t 1 ]]; then
-  # Ensure XDG directories exist
-  mkdir -p "$HOME/.cache/zsh" "$HOME/.local/state/zsh"
-  export ZSH_COMPDUMP="$HOME/.cache/zsh/zcompdump"
-  autoload -Uz compinit && compinit -d "$ZSH_COMPDUMP"
-  zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # Case-insensitive completion
-  zstyle ':completion:*' menu select                 # Arrow-key selection menu
-  zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}" # Match LS_COLORS
-  zstyle ':completion:*:*:*:*:descriptions' format '%F{green}-- %d --%f' # Section headers
+  # Load modular completion configuration
+  source "$HOME/.config/zsh/completions.zsh"
 
   setopt AUTO_CD          # If a command is a path, CD to it
   setopt HIST_IGNORE_DUPS # Don't record duplicate history
