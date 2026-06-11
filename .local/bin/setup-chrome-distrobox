@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONTAINER_NAME="chrome-box"
+
+echo "Cleaning up any existing '$CONTAINER_NAME' container..."
+distrobox rm -f "$CONTAINER_NAME" || true
+
+echo "Creating Distrobox container '$CONTAINER_NAME'..."
+distrobox create -Y -n "$CONTAINER_NAME" -i registry.fedoraproject.org/fedora:40
+
+echo "Enabling Google Chrome repositories inside container..."
+distrobox enter "$CONTAINER_NAME" -- sudo dnf install -y fedora-workstation-repositories
+distrobox enter "$CONTAINER_NAME" -- sudo sed -i 's/enabled=0/enabled=1/g' /etc/yum.repos.d/google-chrome.repo
+
+echo "Installing Google Chrome..."
+distrobox enter "$CONTAINER_NAME" -- sudo dnf install -y google-chrome-stable
+
+echo "Exporting Google Chrome launcher to host..."
+distrobox enter "$CONTAINER_NAME" -- distrobox-export --app google-chrome
+
+echo "Done! You can now launch Google Chrome from your application menu."

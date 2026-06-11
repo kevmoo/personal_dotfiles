@@ -10,6 +10,7 @@
     2. Explicitly verify the user is ready to proceed.
     3. Do not take it upon yourself to freeze code progress into a repository graph implicitly.
 *   **GitHub Access Protocol:** You **MUST ALWAYS use the `gh` CLI command** rather than `read_url_content` or browser subagents when attempting to access, read, or interact with URLs under `https://github.com` (such as repositories, issues, pull requests, etc.) to ensure high-fidelity structured access and to avoid prompting for permission to curl a web page.
+*   **GitHub Write Prohibition (One Approval = One Action):** You are explicitly **PROHIBITED** from performing ANY outward-facing GitHub write — creating or editing issues, commenting, creating PRs, reviews, labels, releases, or anything else that publishes under the user's identity — without asking the user **explicitly, every single time**. A prior "yes" covers exactly the one action it approved; it does **NOT** extend to follow-ups, corrections, or edits of the same artifact. Read-only `gh` commands (`view`, `list`, `api` GETs) remain freely allowed.
 
 ## 🧠 Cognitive & Development Workflow
 ### 🔊 Say Things Out Loud
