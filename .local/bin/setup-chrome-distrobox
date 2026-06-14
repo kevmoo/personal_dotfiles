@@ -7,7 +7,7 @@ echo "Cleaning up any existing '$CONTAINER_NAME' container..."
 distrobox rm -f "$CONTAINER_NAME" || true
 
 echo "Creating Distrobox container '$CONTAINER_NAME'..."
-distrobox create -Y -n "$CONTAINER_NAME" -i registry.fedoraproject.org/fedora:40
+distrobox create -Y --no-entry -n "$CONTAINER_NAME" -i registry.fedoraproject.org/fedora:40
 
 echo "Enabling Google Chrome repositories inside container..."
 distrobox enter "$CONTAINER_NAME" -- sudo dnf install -y fedora-workstation-repositories
@@ -17,6 +17,39 @@ echo "Installing Google Chrome..."
 distrobox enter "$CONTAINER_NAME" -- sudo dnf install -y google-chrome-stable
 
 echo "Exporting Google Chrome launcher to host..."
-distrobox enter "$CONTAINER_NAME" -- distrobox-export --app google-chrome
+distrobox enter "$CONTAINER_NAME" -- distrobox-export --app google-chrome --extra-flags "--password-store=basic"
+
+# distrobox-export only applies --extra-flags to the main Exec line, not the
+# desktop actions (New Window / New Incognito Window), so patch those too.
+sed -i '/^Exec=.*google-chrome-stable/{/--password-store=basic/!s|google-chrome-stable|google-chrome-stable --password-store=basic|}' \
+  "$HOME/.local/share/applications/chrome-box-google-chrome.desktop"
+
+echo "Creating hidden default-browser handler stubs..."
+# mimeapps.list and xdg-settings reference google-chrome.desktop, so these
+# must exist — but NoDisplay keeps them out of the launcher (the visible
+# icon is chrome-box-google-chrome.desktop). Real files, not symlinks:
+# GNOME would show a symlink as a duplicate app.
+APPS_DIR="$HOME/.local/share/applications"
+cat > "$APPS_DIR/google-chrome.desktop" <<'EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Google Chrome
+GenericName=Web Browser
+Comment=Access the Internet
+# Hidden from the launcher: this entry exists only as the default-browser /
+# URL-handler target. The visible icon is chrome-box-google-chrome.desktop.
+NoDisplay=true
+Icon=google-chrome
+Terminal=false
+StartupNotify=true
+StartupWMClass=google-chrome
+Exec=/usr/bin/distrobox-enter -n chrome-box -- /usr/bin/google-chrome-stable --password-store=basic %U
+Categories=Network;WebBrowser;
+MimeType=x-scheme-handler/unknown;x-scheme-handler/about;application/pdf;application/rdf+xml;application/rss+xml;application/xhtml+xml;application/xhtml_xml;application/xml;image/gif;image/jpeg;image/png;image/webp;text/html;text/xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/google-chrome;
+EOF
+cp "$APPS_DIR/google-chrome.desktop" "$APPS_DIR/google-chrome-stable.desktop"
+
+update-desktop-database "$APPS_DIR" || true
 
 echo "Done! You can now launch Google Chrome from your application menu."
