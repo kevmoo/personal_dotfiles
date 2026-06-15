@@ -6,6 +6,26 @@
 
 export ZSH_COMPDUMP="$HOME/.cache/zsh/zcompdump"
 
+# Detect Homebrew and enable completions if available
+typeset -U fpath
+local brew_prefix
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  brew_prefix="/opt/homebrew"
+elif [[ -x /usr/local/bin/brew ]]; then
+  brew_prefix="/usr/local"
+elif [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+  brew_prefix="/home/linuxbrew/.linuxbrew"
+elif (( $+commands[brew] )); then
+  brew_prefix=$(brew --prefix)
+fi
+
+if [[ -n "$brew_prefix" ]]; then
+  local brew_fpath="$brew_prefix/share/zsh/site-functions"
+  if [[ -d "$brew_fpath" ]]; then
+    fpath=("$brew_fpath" $fpath)
+  fi
+fi
+
 # Highly optimized compinit loading (daily check + background compilation)
 autoload -Uz compinit
 if [[ -n "$ZSH_COMPDUMP"(N.m-1) ]]; then

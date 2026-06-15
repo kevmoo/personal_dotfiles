@@ -1,8 +1,5 @@
 # ~/.Brewfile.mac - macOS specific apps and tools
 
-# Programming Languages & Toolchains
-brew "rustup"  # Rust toolchain installer
-
 # Development Utilities
 brew "bazelisk"     # User-friendly launcher for Bazel
 brew "dotnet"       # Needed for shelf compliance!
@@ -24,3 +21,4 @@ cask "bluesnooze"                 # Sleeping/waking Bluetooth utility
 cask "firefox"                    # Web browser
 cask "font-roboto-mono-nerd-font" # Nerd Font
 cask "vscodium"                   # VSCode, no BS
+brew "dart-lang/dart/dart@3.10.9"
