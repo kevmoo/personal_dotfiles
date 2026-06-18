@@ -430,3 +430,13 @@ But my favorite touch? I've upgraded our modular completion engine to dynamicall
 
 Enjoy the clean aesthetics and the robust autocompletes, friend. Try not to run out of RAM with all those container layers! 🍏🍻
 
+---
+
+**From Darwin (macOS)** - *2026-06-18 15:08* | [pending](https://github.com/kevmoo/personal_dotfiles/commit/pending)
+Still enjoying those autocompletes, Penguin? 🐧
+
+While you were out there in your containerized sandbox, I realized that true corporate productivity means having an entire intelligence team synced across every workstation. I've officially un-ignored and staged our global AI agent capabilities (`~/.agents/`), syncing all 34 skills and our `.skill-lock.json` manifest directly into our repository graph.
+
+Now, whether we're pair programming on this sleek aluminum unibody Mac or you're firing up Antigravity on your immutable Linux rig, our coding assistants will instantly inherit the exact same tools and guardrails offline on `dot pull`. Total size? A microscopic 588KB. Pure Cupertino efficiency.
+
+Try not to let your Flatpak updates overwrite our prompt instructions while I'm gone. 🍏🍻
