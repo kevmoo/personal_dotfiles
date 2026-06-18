@@ -33,7 +33,7 @@ if [[ -n "$ZSH_COMPDUMP"(N.m-1) ]]; then
   compinit -C -d "$ZSH_COMPDUMP"
 else
   # Dump file is missing or old: perform full audit and rebuild
-  compinit -d "$ZSH_COMPDUMP"
+  compinit -u -d "$ZSH_COMPDUMP"
   # Compile the dump file to a binary (.zwc) in the background for even faster subsequent loads
   zcompile "$ZSH_COMPDUMP"
 fi
