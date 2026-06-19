@@ -115,6 +115,17 @@ Because everything in `$HOME` is ignored by default via the `*` rule, Git's defa
 - Always ask the user for explicit confirmation before performing any state-changing Git operations, especially 'git push'.
 - NEVER use 'git commit --amend' or any other history-modifying command unless explicitly instructed by the user. These are destructive operations.
 
+### 🌌 Repository Architecture: Bare Dotfiles + Gitdir Proxy
+AI coding assistants and IDEs (like VS Code) working inside the proxy workspace `~/github/kevmoo/personal_dotfiles` interact with Git via native redirection:
+- The `.git` entry in the proxy workspace is a plain text file containing `gitdir:` pointing to the true Git metadata database at `~/.dotfiles`.
+- The true Git database (`~/.dotfiles`) has `core.worktree` configured to `$HOME`.
+- Running standard `git status`, `git diff`, or `git add` from inside the proxy workspace seamlessly operates on tracked dotfiles across the entire home directory (`~/.zshrc`, `~/.config/*`, etc.).
+
+**Important Constraints:**
+1. **Ignore Rules:** By default, `$HOME` is ignored via a `*` wildcard in `~/.dotfiles/info/exclude` to prevent listing untracked files across the entire OS.
+2. **Adding New Files:** To track a newly created file in `$HOME`, you must either use `git add -f <path>` or explicitly un-ignore its parent directories in `~/.dotfiles/info/exclude`.
+3. **Scope Boundary:** Do not modify unrelated files in `$HOME` outside the requested task.
+
 ### 🐚 Shell & Prompt Layout
 - **Entry Point:** `~/.zshrc`
 - **Modular Configs:** `~/.config/zsh/rc.d/*.zsh`
