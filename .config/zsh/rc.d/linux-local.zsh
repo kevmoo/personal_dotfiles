@@ -53,25 +53,15 @@ else
 fi
 
 # ---------------------------------------------------------
-# 2. Environment Specifics (Immutable vs Standard)
+# 2. SSH Agent Symlink Alignment
 # ---------------------------------------------------------
-
-# NPM Wrapper to prevent global installs (only on ostree-based immutable systems like Bluefin)
-if [[ -f /run/ostree-booted ]]; then
-  eval '
-    unalias npm 2>/dev/null
-    function npm {
-      if [[ "$*" == *"install -g"* ]] || [[ "$*" == *"--global"* ]]; then
-        echo -e "\033[0;33m⚠️  Warning: You are trying to install a global NPM package.\033[0m"
-        echo "Consider using npx, volta install, or adding to ~/.Brewfile."
-        read -q "confirm?Do you still want to proceed? (y/N) "
-        echo
-        if [[ $confirm == [yY] ]]; then
-          command npm "$@"
-        fi
-      else
-        command npm "$@"
-      fi
-    }
-  '
+# Maintain a static symlink to the active SSH agent socket.
+# This allows background services (like Jetski) to access the agent
+# even if their environment doesn't inherit the dynamic SSH_AUTH_SOCK.
+if [[ -n "$SSH_AUTH_SOCK" && "$SSH_AUTH_SOCK" != "$HOME/.ssh/ssh_auth_sock" ]]; then
+  # Ensure the directory exists
+  mkdir -p "$HOME/.ssh"
+  # Update the symlink to point to the current active socket
+  ln -sf "$SSH_AUTH_SOCK" "$HOME/.ssh/ssh_auth_sock"
 fi
+

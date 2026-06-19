@@ -66,6 +66,8 @@ if [[ -d ~/.config/zsh/rc.d ]]; then
     # Skip platform-specific files that don't match the current OS
     if [[ "$rc" == *"mac-local.zsh"* && "$(uname)" != "Darwin" ]]; then continue; fi
     if [[ "$rc" == *"linux-local.zsh"* && "$(uname)" != "Linux" ]]; then continue; fi
+    if [[ "$rc" == *"cloudtop"* && ! -d /google/src ]]; then continue; fi
+    if [[ "$rc" == *"bluefin"* && ! -f /run/ostree-booted ]]; then continue; fi
     # Skip interactive-only configs in non-interactive shells
     if [[ "$rc" == *"interactive.zsh"* && ! -t 1 ]]; then continue; fi
 
