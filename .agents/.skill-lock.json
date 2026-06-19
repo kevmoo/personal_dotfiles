@@ -208,24 +208,6 @@
       "installedAt": "2026-06-05T01:22:10.951Z",
       "updatedAt": "2026-06-05T01:22:10.951Z"
     },
-    "dart-checks-migration": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-checks-migration/SKILL.md",
-      "skillFolderHash": "d873e6fa0c314bd3d78420945c54d5c9a560fa2a",
-      "installedAt": "2026-06-05T01:22:10.951Z",
-      "updatedAt": "2026-06-05T01:22:10.951Z"
-    },
-    "dart-cli-app-best-practices": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-cli-app-best-practices/SKILL.md",
-      "skillFolderHash": "161bd7c3a0df3896521aa7eb490e88d87c3a56b0",
-      "installedAt": "2026-06-05T01:22:10.952Z",
-      "updatedAt": "2026-06-05T01:22:10.952Z"
-    },
     "dart-doc-validation": {
       "source": "kevmoo/dash_skills",
       "sourceType": "github",
@@ -279,15 +261,6 @@
       "skillFolderHash": "5267b62f4bfd3dc7dd4b6511a8b7acf332e4ff61",
       "installedAt": "2026-06-05T01:22:10.953Z",
       "updatedAt": "2026-06-05T01:22:10.953Z"
-    },
-    "dart-test-coverage": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-test-coverage/SKILL.md",
-      "skillFolderHash": "52afcb4092203116b3cec92c1017ed1139548cbf",
-      "installedAt": "2026-06-05T01:22:10.954Z",
-      "updatedAt": "2026-06-12T19:00:58.224Z"
     },
     "dart-test-fundamentals": {
       "source": "kevmoo/dash_skills",
