@@ -5,6 +5,11 @@ brew "fresh-editor"
 brew "gastownhall/gascity/gascity"
 cask "claude-code"
 
+# Newly added Linux-specific tools
+brew "podman-tui"   # Terminal UI for Podman container manager
+brew "strace"       # System call tracer for Linux debugging
+
+
 cask "font-blex-mono-nerd-font"
 cask "font-caskaydia-mono-nerd-font"
 cask "font-droid-sans-mono-nerd-font"

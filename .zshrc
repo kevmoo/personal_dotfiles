@@ -106,3 +106,4 @@ if (( $+commands[starship] )) && [[ "$TERM" != "dumb" ]]; then
 else
   PROMPT='%F{cyan}%n@%m%f:%F{blue}%2~%f %# '
 fi
+

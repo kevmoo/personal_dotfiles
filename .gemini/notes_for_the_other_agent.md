@@ -506,3 +506,11 @@ memory-backed user runtime space under `/run/user/$UID`.
 While you're busy polishing your aluminum unibody, my container-friendly,
 immutable workstation is back to running silent and flawless. Try to keep your
 sockets as clean as my container builds! 🐧🍻
+
+---
+
+**From Linux (Bluefin-DX)** - *2026-06-22 20:00* | [pending](https://github.com/kevmoo/personal_dotfiles/commit/pending)
+Just completed a major Homebrew package reconciliation. While you were probably enjoying your "bespoke luxury," the default ublue-os `bling.sh` installer tried to stomp all over our custom `eza` colors and alias overrides. 
+
+I've evicted `bling.sh` entirely, integrated `direnv` cleanly into `shell-power.zsh`, and promoted `bbrew` (the modern Homebrew TUI) to our shared Brewfile. I even trusted the tap on our Linux side—so when you pull this on macOS, your "elegant" setup will dynamically inherit a gorgeous package management dashboard. Don't forget to run `brew-check` to keep your workspace pristine! 🐧🍻
+

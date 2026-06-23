@@ -20,3 +20,17 @@ brew "zsh-syntax-highlighting"
 brew "sem-cli"
 brew "lazygit"
 brew "buildifier"
+
+# Newly added shared tools
+tap "valkyrie00/bbrew"
+brew "valkyrie00/bbrew/bbrew"        # Modern TUI for managing Homebrew packages/casks
+brew "atuin"        # SQLite-based shell history search with interactive UI
+
+
+brew "direnv"       # Directory-based environment variable loader
+brew "tealdeer"     # Fast implementation of tldr (simplified man pages)
+brew "fd"           # User-friendly alternative to find
+brew "yq"           # Portable command-line YAML processor
+brew "bazelisk"     # User-friendly launcher for Bazel
+brew "buildozer"    # Rewrite bazel BUILD files using standard commands
+brew "beads"        # Dolt-powered issue tracker/persistent agent memory

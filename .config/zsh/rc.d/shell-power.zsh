@@ -10,6 +10,12 @@ if (( $+commands[zoxide] )); then
   eval "$(zoxide init zsh)"
 fi
 
+# Directory Environments
+if (( $+commands[direnv] )); then
+  eval "$(direnv hook zsh)"
+fi
+
+
 # Modern replacements
 if (( $+commands[eza] )); then
   # Synchronize LS_COLORS and EZA_COLORS for consistent cyan directories (di=01;36)
