@@ -168,9 +168,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/github-pr-triage/SKILL.md",
-      "skillFolderHash": "b3a4790dad3caadd77263e0d05db2288ed959a1f",
+      "skillFolderHash": "525409ca228ea75005636b4e399a7ce6e7874f0e",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-06-19T07:51:56.179Z"
+      "updatedAt": "2026-06-23T20:23:25.680Z"
     },
     "gob-curl": {
       "source": "kevmoo/kevmoo_skills",
@@ -231,9 +231,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-matcher-best-practices/SKILL.md",
-      "skillFolderHash": "f21d3f7b6f140501ec1b241af75d6a3cafd52aaa",
+      "skillFolderHash": "fa279e073e292911ee0b51bdfe83c27fb845b948",
       "installedAt": "2026-06-05T01:22:10.953Z",
-      "updatedAt": "2026-06-05T01:22:10.953Z"
+      "updatedAt": "2026-06-23T20:23:27.092Z"
     },
     "dart-modern-features": {
       "source": "kevmoo/dash_skills",
@@ -267,18 +267,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-test-fundamentals/SKILL.md",
-      "skillFolderHash": "161343782dc31bc3a634e35d0858c88c5df951a0",
+      "skillFolderHash": "1d66b18bb441ad527d4384a7f81822110a128083",
       "installedAt": "2026-06-05T01:22:10.954Z",
-      "updatedAt": "2026-06-05T01:22:10.954Z"
+      "updatedAt": "2026-06-23T20:23:28.775Z"
     },
     "beads": {
       "source": "steveyegge/beads",
       "sourceType": "github",
       "sourceUrl": "https://github.com/steveyegge/beads.git",
       "skillPath": "plugins/beads/skills/beads/SKILL.md",
-      "skillFolderHash": "223ecd668892f5604af5f823fe7a6a5deb86f5f9",
+      "skillFolderHash": "9b755d2305dd4feb0dd69325d9560925cb452c2b",
       "installedAt": "2026-06-06T06:11:00.629Z",
-      "updatedAt": "2026-06-06T06:11:00.629Z"
+      "updatedAt": "2026-06-23T20:23:31.496Z"
     }
   },
   "dismissed": {
