@@ -20,6 +20,24 @@ The shell automatically sources all `*.zsh` files in `~/.zshrc.d/`. Modular conf
 *   **`mac-local.zsh`**: (Tracked) Mac-specific PATH and environment overrides.
 *   **`secrets.zsh`**: (Untracked) Private API keys.
 
+### 🖥️ Native Git & IDE GUI Support (Gitdir Proxy Workspace)
+While the `dot` alias works great in the terminal, IDEs (like VS Code) and Git GUIs (like LazyGit or Sourcetree) expect standard Git repository structures. To make normal `git` commands and GUIs work seamlessly inside a dedicated workspace folder (e.g., `~/github/kevmoo/personal_dotfiles/`):
+
+1.  **Configure the bare repo's working tree**:
+    Ensure `core.worktree` points to `$HOME` and `core.bare` is `false` in `~/.dotfiles/config`:
+    ```bash
+    dot config --local core.worktree "$HOME"
+    dot config --local core.bare false
+    ```
+2.  **Create a proxy workspace directory**:
+    Create a folder wherever you want your IDE workspace to live, containing a plain text `.git` file with a `gitdir:` pointer to your bare repository:
+    ```bash
+    mkdir -p ~/github/kevmoo/personal_dotfiles
+    echo "gitdir: $HOME/.dotfiles" > ~/github/kevmoo/personal_dotfiles/.git
+    ```
+
+Now, running standard `git status`, `git diff`, or opening Git GUIs inside `~/github/kevmoo/personal_dotfiles` automatically redirects to `~/.dotfiles` and operates across your entire home directory.
+
 ---
 
 ## 🍺 Package Management (Homebrew)
@@ -59,7 +77,14 @@ Because the working tree is your entire `$HOME` directory, a standard `git statu
     git clone --bare <your-repo-url> $HOME/.dotfiles
     alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
     ```
-2.  **Restore the Exclude File**:
+2.  **Configure Core Worktree & Proxy Workspace** (Optional, for IDE/GUI support):
+    ```bash
+    dot config --local core.worktree "$HOME"
+    dot config --local core.bare false
+    mkdir -p ~/github/kevmoo/personal_dotfiles
+    echo "gitdir: $HOME/.dotfiles" > ~/github/kevmoo/personal_dotfiles/.git
+    ```
+3.  **Restore the Exclude File**:
     The tracked version of your ignore rules lives at `.config/dot/info-exclude.example`. Restore it manually:
     ```bash
     mkdir -p ~/.dotfiles/info
