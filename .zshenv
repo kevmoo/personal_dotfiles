@@ -21,6 +21,13 @@ if [[ -f "$HOME/.cargo/env" ]]; then
   . "$HOME/.cargo/env"
 fi
 
+if [[ "$(uname)" == "Darwin" ]]; then
+  export ELAN_HOME="$HOME/.local/share/elan"
+  if [[ -f "$ELAN_HOME/env" ]]; then
+    . "$ELAN_HOME/env"
+  fi
+fi
+
 # Disable formatting/styling and paging for the AI agent (needs to be in .zshenv for non-interactive shell commands)
 if [[ "$TERM" == "dumb" ]]; then
   export NO_COLOR=1
