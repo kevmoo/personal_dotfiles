@@ -159,9 +159,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/github-pr-triage/SKILL.md",
-      "skillFolderHash": "525409ca228ea75005636b4e399a7ce6e7874f0e",
+      "skillFolderHash": "230c0020dcd7729e7c388dd385c4dd048d905ed7",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-06-23T20:23:25.680Z"
+      "updatedAt": "2026-06-26T06:15:38.623Z"
     },
     "gob-curl": {
       "source": "kevmoo/kevmoo_skills",
@@ -276,9 +276,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/pr-loop/SKILL.md",
-      "skillFolderHash": "97ae4cf31b1c90ddad2df2a7d104fc39049913a9",
+      "skillFolderHash": "f1302edb29f6f336dcd4212d20108093617da1ea",
       "installedAt": "2026-06-25T18:17:01.797Z",
-      "updatedAt": "2026-06-25T18:17:01.797Z"
+      "updatedAt": "2026-06-26T06:15:40.229Z"
     },
     "grilling": {
       "source": "mattpocock/skills",
