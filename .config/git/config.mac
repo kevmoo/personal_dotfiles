@@ -1,7 +1,5 @@
 [protocol "sso"]
 	allow = always
-[http]
-	cookiefile = /Users/kevmoo/.gitcookies
 [url "sso://dart/"]
 	insteadOf = https://dart.googlesource.com/
 	insteadOf = https://dart-review.googlesource.com/
@@ -9,4 +7,5 @@
 	insteadOf = http://dart-review.googlesource.com/
 	insteadOf = https://dart.googlesource.com
 	insteadOf = https://dart-review.googlesource.com
+
 
