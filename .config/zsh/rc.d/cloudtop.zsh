@@ -6,3 +6,9 @@
 # ---------------------------------------------------------
 # Set the persistent identity for Beads audit trail on this machine
 export BEADS_ACTOR="kevmoo@glinux-cloudtop"
+
+# ---------------------------------------------------------
+# 2. Prompt Configuration
+# ---------------------------------------------------------
+export PROMPT_PREFIX="☁️  "
+

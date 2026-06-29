@@ -1,4 +1,5 @@
 format = """
+${custom.cloudtop}\
  $directory\
 $git_branch\
 $git_commit\
@@ -12,3 +13,9 @@ add_newline = false
 [directory]
 truncation_length = 2
 truncate_to_repo = false
+
+[custom.cloudtop]
+symbol = "☁️ "
+when = "test -d /google/src"
+format = "$symbol"
+
