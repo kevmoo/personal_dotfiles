@@ -16,6 +16,6 @@ truncate_to_repo = false
 
 [custom.cloudtop]
 symbol = "☁️ "
-when = "test -d /google/src"
+when = 'test -n "$PROMPT_PREFIX"'
 format = "$symbol"
 
