@@ -96,3 +96,23 @@ For multi-step tasks, state a brief plan before starting:
 ```
 Strong success criteria let you loop independently. Weak criteria ("make it
 work") require constant clarification.
+
+## 🐙 GitHub PR & Commit Message Workflow
+
+### 1. PR Creation Default (`gh pr create -f`)
+* **ALWAYS** use `gh pr create -f` (or `--fill`) when creating a new Pull Request, **EXCEPT**:
+  1. When updating an existing PR (editing metadata, title, or body).
+  2. When the branch has **more than one commit** ahead of `origin/HEAD` (or the base branch). In this case, construct explicit `--title` and `--body` flags instead.
+
+### 2. Dual-Purpose Commit Messages
+Because single-commit branches directly populate the PR title and description via `gh pr create -f`, agents MUST write commit messages structured to serve both Git history and PR reviews seamlessly:
+
+* **Subject Line (PR Title):** 
+  * Imperative mood, concise, under 70 characters (e.g., `feat(auth): support OAuth2 PKCE flow`).
+  * Avoid vague titles like `updates`, `fix bug`, or agent-centric internal summaries.
+* **Commit Body (PR Description):**
+  * **Context / Why:** Explain *why* the change is necessary.
+  * **Summary of Changes:** Concise bullet points detailing key additions or refactors.
+  * **Issue Links:** Include fix keywords if applicable (e.g., `Fixes #123`).
+  * **Clean Formatting:** Omit internal agent meta-commentary, scratch notes, or tool execution logs so the PR description remains clean and professional for human reviewers.
+
