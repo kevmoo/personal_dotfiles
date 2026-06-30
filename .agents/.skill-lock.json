@@ -186,72 +186,72 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-best-practices/SKILL.md",
-      "skillFolderHash": "2c4f98b362a92ca86c005f7972173cd3b573291d",
+      "skillFolderHash": "f07cf2349edeaf3ee3efe88405db3a08f12b411f",
       "installedAt": "2026-06-05T01:22:10.951Z",
-      "updatedAt": "2026-06-05T01:22:10.951Z"
+      "updatedAt": "2026-06-29T22:40:58.134Z"
     },
     "dart-doc-validation": {
       "source": "kevmoo/dash_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-doc-validation/SKILL.md",
-      "skillFolderHash": "25e0c75abc61f6a584d5dfdffbf978760dc57ce1",
+      "skillFolderHash": "13e9355b7a50ec7ebb55eac6734e91edd3224b6a",
       "installedAt": "2026-06-05T01:22:10.952Z",
-      "updatedAt": "2026-06-05T01:22:10.952Z"
+      "updatedAt": "2026-06-29T22:40:59.418Z"
     },
     "dart-long-lines": {
       "source": "kevmoo/dash_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-long-lines/SKILL.md",
-      "skillFolderHash": "34514afe05b1b6d96a0d50ee637ce6e0a0c27da2",
+      "skillFolderHash": "31b5dec4d4a5a64fe9e4487c721f7f659a40c1d5",
       "installedAt": "2026-06-05T01:22:10.952Z",
-      "updatedAt": "2026-06-05T01:22:10.952Z"
+      "updatedAt": "2026-06-29T22:41:00.700Z"
     },
     "dart-matcher-best-practices": {
       "source": "kevmoo/dash_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-matcher-best-practices/SKILL.md",
-      "skillFolderHash": "fa279e073e292911ee0b51bdfe83c27fb845b948",
+      "skillFolderHash": "b6ae0b6114b7b56637d869e11202d57df100d88f",
       "installedAt": "2026-06-05T01:22:10.953Z",
-      "updatedAt": "2026-06-23T20:23:27.092Z"
+      "updatedAt": "2026-06-29T22:41:02.381Z"
     },
     "dart-modern-features": {
       "source": "kevmoo/dash_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-modern-features/SKILL.md",
-      "skillFolderHash": "24a243a39caea5aef8639f492d7a609fccd941d2",
+      "skillFolderHash": "a9d6f412e1bb0d6b4f13a14451b22d9766f5b6ec",
       "installedAt": "2026-06-05T01:22:10.953Z",
-      "updatedAt": "2026-06-05T01:22:10.953Z"
+      "updatedAt": "2026-06-29T22:41:03.791Z"
     },
     "dart-multiline-strings": {
       "source": "kevmoo/dash_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-multiline-strings/SKILL.md",
-      "skillFolderHash": "566a2a4fe850558a23a7edeb2a2c0b5fcfea311b",
+      "skillFolderHash": "71bba23e294d2e2cf8feac0417256ffccab46355",
       "installedAt": "2026-06-05T01:22:10.953Z",
-      "updatedAt": "2026-06-05T01:22:10.953Z"
+      "updatedAt": "2026-06-29T22:41:05.059Z"
     },
     "dart-package-maintenance": {
       "source": "kevmoo/dash_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-package-maintenance/SKILL.md",
-      "skillFolderHash": "5267b62f4bfd3dc7dd4b6511a8b7acf332e4ff61",
+      "skillFolderHash": "2ef4bd986ce57611337beb3d5e39e89739306c6b",
       "installedAt": "2026-06-05T01:22:10.953Z",
-      "updatedAt": "2026-06-05T01:22:10.953Z"
+      "updatedAt": "2026-06-29T22:41:06.327Z"
     },
     "dart-test-fundamentals": {
       "source": "kevmoo/dash_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
       "skillPath": "skills/dart-test-fundamentals/SKILL.md",
-      "skillFolderHash": "1d66b18bb441ad527d4384a7f81822110a128083",
+      "skillFolderHash": "4c1fd1357081b1681d4f1d283d097f15884506d7",
       "installedAt": "2026-06-05T01:22:10.954Z",
-      "updatedAt": "2026-06-23T20:23:28.775Z"
+      "updatedAt": "2026-06-29T22:41:08.222Z"
     },
     "beads": {
       "source": "steveyegge/beads",
