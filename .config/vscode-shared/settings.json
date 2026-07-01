@@ -6,7 +6,7 @@
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
   "security.workspace.trust.untrustedFiles": "open",
-  "workbench.colorTheme": "Light Modern",
+  "workbench.colorTheme": "Default Light Modern",
   "terminal.integrated.defaultProfile.osx": "zsh",
   "git.blame.editorDecoration.enabled": true,
   "git.blame.statusBarItem.enabled": false,
