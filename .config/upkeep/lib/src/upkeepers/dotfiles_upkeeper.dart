@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 
 import '../models.dart';
@@ -27,8 +28,11 @@ class DotfilesUpkeeper implements Upkeeper {
       final gitDir = _gitDir();
 
       // Fetch remote changes silently
-      await Process.run(
-          'git', ['--git-dir=$gitDir', '--work-tree=$home', 'fetch']);
+      await Process.run('git', [
+        '--git-dir=$gitDir',
+        '--work-tree=$home',
+        'fetch',
+      ]);
 
       // Compare HEAD vs upstream
       final revProc = await Process.run('git', [
@@ -36,7 +40,7 @@ class DotfilesUpkeeper implements Upkeeper {
         '--work-tree=$home',
         'rev-list',
         '--count',
-        'HEAD..@{u}'
+        'HEAD..@{u}',
       ]);
 
       if (revProc.exitCode != 0) {
@@ -85,8 +89,12 @@ class DotfilesUpkeeper implements Upkeeper {
       final gitDir = _gitDir();
 
       // Pull rebase
-      final pullProc = await Process.run('git',
-          ['--git-dir=$gitDir', '--work-tree=$home', 'pull', '--rebase']);
+      final pullProc = await Process.run('git', [
+        '--git-dir=$gitDir',
+        '--work-tree=$home',
+        'pull',
+        '--rebase',
+      ]);
 
       if (pullProc.exitCode != 0) {
         return UpkeepResult(
@@ -109,13 +117,19 @@ class DotfilesUpkeeper implements Upkeeper {
       final tmpExe = p.join(localBinDir.path, 'upkeep.tmp');
 
       if (Directory(upkeepPkgDir).existsSync()) {
+        // Run pub get first to ensure packages are resolved
+        await Process.run('dart', [
+          'pub',
+          'get',
+        ], workingDirectory: upkeepPkgDir);
+
         // Compile AOT executable
         final compileProc = await Process.run('dart', [
           'compile',
           'exe',
           p.join(upkeepPkgDir, 'bin', 'upkeep.dart'),
           '-o',
-          tmpExe
+          tmpExe,
         ]);
 
         if (compileProc.exitCode == 0 && File(tmpExe).existsSync()) {
@@ -137,8 +151,7 @@ class DotfilesUpkeeper implements Upkeeper {
               upkeeperId: id,
               displayName: displayName,
               success: true,
-              message:
-                  'Dotfiles updated (self-update binary verification failed, retained current binary)',
+              message: 'Dotfiles updated (self-update binary verification failed, retained current binary)',
             );
           }
         }

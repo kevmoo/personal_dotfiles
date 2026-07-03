@@ -3,7 +3,7 @@
 tap "sinelaw/fresh"
 brew "fresh-editor"
 brew "gastownhall/gascity/gascity"
-cask "claude-code"
+
 
 # Newly added Linux-specific tools
 brew "podman-tui"   # Terminal UI for Podman container manager

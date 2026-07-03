@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 
 import '../models.dart';
@@ -64,32 +65,43 @@ class BrewfileUpkeeper implements Upkeeper {
       };
 
       // Check installed items for missing comparison
-      final leavesResult = await Process.run('brew', ['leaves']);
+      final leavesResult = await Process.run('brew', ['list', '--formula']);
       final installedLeaves = leavesResult.exitCode == 0
           ? leavesResult.stdout
-              .toString()
-              .split('\n')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .toSet()
+                .toString()
+                .split('\n')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toSet()
           : <String>{};
 
-      final caskListResult = Platform.isMacOS
-          ? await Process.run('brew', ['list', '--cask'])
-          : null;
-      final installedCasks = (caskListResult?.exitCode == 0)
-          ? caskListResult!.stdout
-              .toString()
-              .split('\n')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .toSet()
+      final caskListResult = await Process.run('brew', ['list', '--cask']);
+      final installedCasks = (caskListResult.exitCode == 0)
+          ? caskListResult.stdout
+                .toString()
+                .split('\n')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toSet()
           : <String>{};
 
-      final missingFormulae =
-          expectedFormulae.where((f) => !installedLeaves.contains(f)).toList();
-      final missingCasks =
-          expectedCasks.where((c) => !installedCasks.contains(c)).toList();
+      final missingFormulae = expectedFormulae.where((f) {
+        if (installedLeaves.contains(f)) return false;
+        if (f.contains('/')) {
+          final shortName = f.split('/').last;
+          if (installedLeaves.contains(shortName)) return false;
+        }
+        return true;
+      }).toList();
+
+      final missingCasks = expectedCasks.where((c) {
+        if (installedCasks.contains(c)) return false;
+        if (c.contains('/')) {
+          final shortName = c.split('/').last;
+          if (installedCasks.contains(shortName)) return false;
+        }
+        return true;
+      }).toList();
 
       final List<String> details = [];
       for (final f in missingFormulae) {
@@ -133,8 +145,9 @@ class BrewfileUpkeeper implements Upkeeper {
     Directory? tempDir;
     try {
       final home = _homeDir();
-      final sharedBrewfile =
-          File(p.join(home, '.config', 'brew', 'Brewfile.shared'));
+      final sharedBrewfile = File(
+        p.join(home, '.config', 'brew', 'Brewfile.shared'),
+      );
       final osBrewfile = File(_getOsBrewfilePath());
 
       tempDir = Directory.systemTemp.createTempSync('brewfile_upkeep_');
@@ -149,10 +162,7 @@ class BrewfileUpkeeper implements Upkeeper {
       }
       tempBrewfile.writeAsStringSync(buffer.toString());
 
-      final bundleArgs = [
-        'bundle',
-        '--file=${tempBrewfile.path}',
-      ];
+      final bundleArgs = ['bundle', '--file=${tempBrewfile.path}'];
       final bundleProc = await Process.run('brew', bundleArgs);
       if (bundleProc.exitCode != 0) {
         return UpkeepResult(

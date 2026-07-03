@@ -17,11 +17,8 @@ class ScriptsDartUpkeeper implements Upkeeper {
   final ProcessRunner _processRunner;
   final Directory? _pubCacheDirOverride;
 
-  ScriptsDartUpkeeper({
-    ProcessRunner? processRunner,
-    Directory? pubCacheDirOverride,
-  })  : _processRunner = processRunner ?? Process.run,
-        _pubCacheDirOverride = pubCacheDirOverride;
+  ScriptsDartUpkeeper({ProcessRunner? processRunner, this._pubCacheDirOverride})
+    : _processRunner = processRunner ?? Process.run;
 
   @override
   String get id => 'scripts_dart';
@@ -40,12 +37,13 @@ class ScriptsDartUpkeeper implements Upkeeper {
   }
 
   Directory get _pubCacheDir {
-    if (_pubCacheDirOverride != null) return _pubCacheDirOverride!;
+    if (_pubCacheDirOverride != null) return _pubCacheDirOverride;
     final envCache = Platform.environment['PUB_CACHE'];
     if (envCache != null && envCache.isNotEmpty) {
       return Directory(envCache);
     }
-    final home = Platform.environment['HOME'] ??
+    final home =
+        Platform.environment['HOME'] ??
         Platform.environment['USERPROFILE'] ??
         '';
     return Directory(p.join(home, '.pub-cache'));
@@ -54,8 +52,9 @@ class ScriptsDartUpkeeper implements Upkeeper {
   /// Locate the installed git commit SHA from pubspec.lock in pub-cache.
   String? _findInstalledSha() {
     try {
-      final globalPackagesDir =
-          Directory(p.join(_pubCacheDir.path, 'global_packages'));
+      final globalPackagesDir = Directory(
+        p.join(_pubCacheDir.path, 'global_packages'),
+      );
       if (!globalPackagesDir.existsSync()) return null;
 
       for (final entity in globalPackagesDir.listSync()) {
@@ -167,8 +166,9 @@ class ScriptsDartUpkeeper implements Upkeeper {
           if (remoteParts.length >= 2) {
             final remoteSha = remoteParts[0];
             final remoteDate = remoteParts[1];
-            final shortRemote =
-                remoteSha.length >= 7 ? remoteSha.substring(0, 7) : remoteSha;
+            final shortRemote = remoteSha.length >= 7
+                ? remoteSha.substring(0, 7)
+                : remoteSha;
 
             if (installedSha == remoteSha ||
                 installedSha.startsWith(remoteSha) ||
@@ -198,8 +198,9 @@ class ScriptsDartUpkeeper implements Upkeeper {
             final behindMsg = count > 0
                 ? '$count commit${count == 1 ? '' : 's'} behind: '
                 : '';
-            final localPart =
-                localDate.isNotEmpty ? '$shortLocal ($localDate)' : shortLocal;
+            final localPart = localDate.isNotEmpty
+                ? '$shortLocal ($localDate)'
+                : shortLocal;
             final remotePart = remoteDate.isNotEmpty
                 ? '$shortRemote ($remoteDate)'
                 : shortRemote;
@@ -215,8 +216,11 @@ class ScriptsDartUpkeeper implements Upkeeper {
       }
 
       // Fallback if cache directory or git operations fail: fallback to git ls-remote SHA check
-      final gitResult =
-          await _processRunner('git', ['ls-remote', repoUrl, 'HEAD']);
+      final gitResult = await _processRunner('git', [
+        'ls-remote',
+        repoUrl,
+        'HEAD',
+      ]);
       if (gitResult.exitCode != 0) {
         return UpkeepStatus(
           upkeeperId: id,
@@ -238,8 +242,9 @@ class ScriptsDartUpkeeper implements Upkeeper {
         );
       }
 
-      final shortRemote =
-          remoteSha.length >= 7 ? remoteSha.substring(0, 7) : remoteSha;
+      final shortRemote = remoteSha.length >= 7
+          ? remoteSha.substring(0, 7)
+          : remoteSha;
 
       if (installedSha == remoteSha ||
           installedSha.startsWith(remoteSha) ||
