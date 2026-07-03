@@ -106,55 +106,12 @@ class DotfilesUpkeeper implements Upkeeper {
         );
       }
 
-      // Self-Update Compilation Step
       final upkeepPkgDir = p.join(home, '.config', 'upkeep');
-      final localBinDir = Directory(p.join(home, '.local', 'bin'));
-      if (!localBinDir.existsSync()) {
-        localBinDir.createSync(recursive: true);
-      }
-
-      final targetExe = p.join(localBinDir.path, 'upkeep');
-      final tmpExe = p.join(localBinDir.path, 'upkeep.tmp');
-
       if (Directory(upkeepPkgDir).existsSync()) {
-        // Run pub get first to ensure packages are resolved
         await Process.run('dart', [
           'pub',
-          'get',
+          'upgrade',
         ], workingDirectory: upkeepPkgDir);
-
-        // Compile AOT executable
-        final compileProc = await Process.run('dart', [
-          'compile',
-          'exe',
-          p.join(upkeepPkgDir, 'bin', 'upkeep.dart'),
-          '-o',
-          tmpExe,
-        ]);
-
-        if (compileProc.exitCode == 0 && File(tmpExe).existsSync()) {
-          // Verify version / health of new binary
-          final verifyProc = await Process.run(tmpExe, ['--version']);
-          if (verifyProc.exitCode == 0) {
-            // Atomic rename
-            File(tmpExe).renameSync(targetExe);
-            return UpkeepResult(
-              upkeeperId: id,
-              displayName: displayName,
-              success: true,
-              message:
-                  'Dotfiles updated and upkeep binary recompiled successfully',
-            );
-          } else {
-            File(tmpExe).deleteSync();
-            return UpkeepResult(
-              upkeeperId: id,
-              displayName: displayName,
-              success: true,
-              message: 'Dotfiles updated (self-update binary verification failed, retained current binary)',
-            );
-          }
-        }
       }
 
       return UpkeepResult(
