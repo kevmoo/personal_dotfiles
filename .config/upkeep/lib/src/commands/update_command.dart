@@ -16,17 +16,23 @@ class UpdateCommand extends Command<void> {
 
   UpdateCommand() {
     argParser
-      ..addFlag('yes',
-          abbr: 'y',
-          negatable: false,
-          help: 'Automatically apply updates for all outdated items')
-      ..addMultiOption('keeper',
-          abbr: 'k',
-          splitCommas: true,
-          help: 'Target specific upkeeper(s) by ID')
-      ..addFlag('verbose',
-          negatable: false,
-          help: 'Enable verbose command output during updates');
+      ..addFlag(
+        'yes',
+        abbr: 'y',
+        negatable: false,
+        help: 'Automatically apply updates for all outdated items',
+      )
+      ..addMultiOption(
+        'keeper',
+        abbr: 'k',
+        splitCommas: true,
+        help: 'Target specific upkeeper(s) by ID',
+      )
+      ..addFlag(
+        'verbose',
+        negatable: false,
+        help: 'Enable verbose command output during updates',
+      );
   }
 
   @override
@@ -70,9 +76,12 @@ class UpdateCommand extends Command<void> {
     }
 
     print(
-        '\n🚀 Applying updates for selected subsystems: ${toUpdate.join(', ')}...\n');
-    final updateResults =
-        await upkeepRunner.updateSelected(toUpdate, verbose: verbose);
+      '\n🚀 Applying updates for selected subsystems: ${toUpdate.join(', ')}...\n',
+    );
+    final updateResults = await upkeepRunner.updateSelected(
+      toUpdate,
+      verbose: verbose,
+    );
 
     print('\n═══ Update Execution Results ═══\n');
     for (final res in updateResults) {

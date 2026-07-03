@@ -56,39 +56,41 @@ void main() {
   });
 
   group('UpkeepRunner Concurrent Execution', () {
-    test('Runner filters unsupported upkeepers and checks in parallel',
-        () async {
-      final mock1 = MockUpkeeper(
-        id: 'supported_1',
-        displayName: 'Supported 1',
-        supported: true,
-        statusToReturn: const UpkeepStatus(
-          upkeeperId: 'supported_1',
+    test(
+      'Runner filters unsupported upkeepers and checks in parallel',
+      () async {
+        final mock1 = MockUpkeeper(
+          id: 'supported_1',
           displayName: 'Supported 1',
-          state: UpkeepState.upToDate,
-          summary: 'All clear',
-        ),
-      );
+          supported: true,
+          statusToReturn: const UpkeepStatus(
+            upkeeperId: 'supported_1',
+            displayName: 'Supported 1',
+            state: UpkeepState.upToDate,
+            summary: 'All clear',
+          ),
+        );
 
-      final mock2 = MockUpkeeper(
-        id: 'unsupported_1',
-        displayName: 'Unsupported 1',
-        supported: false,
-        statusToReturn: const UpkeepStatus(
-          upkeeperId: 'unsupported_1',
+        final mock2 = MockUpkeeper(
+          id: 'unsupported_1',
           displayName: 'Unsupported 1',
-          state: UpkeepState.skipped,
-          summary: 'Skipped',
-        ),
-      );
+          supported: false,
+          statusToReturn: const UpkeepStatus(
+            upkeeperId: 'unsupported_1',
+            displayName: 'Unsupported 1',
+            state: UpkeepState.skipped,
+            summary: 'Skipped',
+          ),
+        );
 
-      final runner = UpkeepRunner(upkeepers: [mock1, mock2]);
-      final statuses = await runner.checkAll();
+        final runner = UpkeepRunner(upkeepers: [mock1, mock2]);
+        final statuses = await runner.checkAll();
 
-      check(statuses.length).equals(1);
-      check(statuses.first.upkeeperId).equals('supported_1');
-      check(statuses.first.state).equals(UpkeepState.upToDate);
-    });
+        check(statuses.length).equals(1);
+        check(statuses.first.upkeeperId).equals('supported_1');
+        check(statuses.first.state).equals(UpkeepState.upToDate);
+      },
+    );
 
     test('Runner filters by targetIds in checkAll', () async {
       final mock1 = MockUpkeeper(
@@ -155,8 +157,9 @@ void main() {
     });
 
     void createMockLockFile(String resolvedRef) {
-      final pkgDir =
-          Directory('${tempPubCache.path}/global_packages/kevmoo_scripts');
+      final pkgDir = Directory(
+        '${tempPubCache.path}/global_packages/kevmoo_scripts',
+      );
       pkgDir.createSync(recursive: true);
       final lockFile = File('${pkgDir.path}/pubspec.lock');
       lockFile.writeAsStringSync('''
@@ -178,7 +181,11 @@ packages:
         processRunner: (executable, args) async {
           if (executable == 'git' && args.contains('ls-remote')) {
             return ProcessResult(
-                0, 0, 'ed6acf3d2e2482d0f750b97df8ddc00196a244fc\tHEAD', '');
+              0,
+              0,
+              'ed6acf3d2e2482d0f750b97df8ddc00196a244fc\tHEAD',
+              '',
+            );
           }
           return ProcessResult(0, 0, '', '');
         },
@@ -197,7 +204,11 @@ packages:
         processRunner: (executable, args) async {
           if (executable == 'git' && args.contains('ls-remote')) {
             return ProcessResult(
-                0, 0, 'ed6acf3d2e2482d0f750b97df8ddc00196a244fc\tHEAD', '');
+              0,
+              0,
+              'ed6acf3d2e2482d0f750b97df8ddc00196a244fc\tHEAD',
+              '',
+            );
           }
           return ProcessResult(0, 0, '', '');
         },
@@ -209,9 +220,7 @@ packages:
     });
 
     test('reports outdated if not activated globally', () async {
-      final upkeeper = ScriptsDartUpkeeper(
-        pubCacheDirOverride: tempPubCache,
-      );
+      final upkeeper = ScriptsDartUpkeeper(pubCacheDirOverride: tempPubCache);
 
       final status = await upkeeper.check();
       check(status.state).equals(UpkeepState.outdated);

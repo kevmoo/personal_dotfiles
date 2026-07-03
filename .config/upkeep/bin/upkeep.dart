@@ -6,13 +6,14 @@ import 'package:upkeep/upkeep.dart';
 const version = '0.1.0';
 
 Future<void> main(List<String> args) async {
-  final runner = CommandRunner<void>(
-    'upkeep',
-    'Cross-platform system status checker and updater.',
-  )
-    ..addCommand(CheckCommand())
-    ..addCommand(UpdateCommand())
-    ..addCommand(ListCommand());
+  final runner =
+      CommandRunner<void>(
+          'upkeep',
+          'Cross-platform system status checker and updater.',
+        )
+        ..addCommand(CheckCommand())
+        ..addCommand(UpdateCommand())
+        ..addCommand(ListCommand());
 
   runner.argParser.addFlag(
     'version',

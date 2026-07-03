@@ -13,8 +13,11 @@ class ListCommand extends Command<void> {
       'List all registered upkeepers and their platform support status.';
 
   ListCommand() {
-    argParser.addFlag('json',
-        negatable: false, help: 'Output list report as JSON');
+    argParser.addFlag(
+      'json',
+      negatable: false,
+      help: 'Output list report as JSON',
+    );
   }
 
   @override
@@ -33,16 +36,17 @@ class ListCommand extends Command<void> {
     }
 
     if (isJson) {
-      print(const JsonEncoder.withIndent('  ').convert({
-        'upkeepers': adapterList,
-      }));
+      print(
+        const JsonEncoder.withIndent('  ').convert({'upkeepers': adapterList}),
+      );
       return;
     }
 
     print('═══ Registered System Upkeepers ═══\n');
     for (final adapter in adapterList) {
-      final statusIcon =
-          adapter['supported'] as bool ? '🟢 Supported' : '⚪ Unsupported';
+      final statusIcon = adapter['supported'] as bool
+          ? '🟢 Supported'
+          : '⚪ Unsupported';
       final id = (adapter['id'] as String).padRight(15);
       final name = adapter['displayName'] as String;
       print(' • $id  $name ($statusIcon)');

@@ -16,10 +16,12 @@ class CheckCommand extends Command<void> {
 
   CheckCommand() {
     argParser
-      ..addMultiOption('keeper',
-          abbr: 'k',
-          splitCommas: true,
-          help: 'Target specific upkeeper(s) by ID')
+      ..addMultiOption(
+        'keeper',
+        abbr: 'k',
+        splitCommas: true,
+        help: 'Target specific upkeeper(s) by ID',
+      )
       ..addFlag('json', negatable: false, help: 'Output status report as JSON');
   }
 
@@ -34,7 +36,8 @@ class CheckCommand extends Command<void> {
     final upkeepRunner = UpkeepRunner();
     if (!isJson) {
       print(
-          '🔄 Checking system status across enabled upkeepers in parallel...');
+        '🔄 Checking system status across enabled upkeepers in parallel...',
+      );
     }
 
     final statuses = await upkeepRunner.checkAll(targetIds: targets);
@@ -62,7 +65,8 @@ class CheckCommand extends Command<void> {
       print('✨ Everything is up to date! No updates required.');
     } else {
       print(
-          'ℹ️  Check mode active. ${outdated.length} item(s) available for update.');
+        'ℹ️  Check mode active. ${outdated.length} item(s) available for update.',
+      );
     }
   }
 }

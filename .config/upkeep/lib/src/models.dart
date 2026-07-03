@@ -1,9 +1,4 @@
-enum UpkeepState {
-  upToDate,
-  outdated,
-  error,
-  skipped,
-}
+enum UpkeepState { upToDate, outdated, error, skipped }
 
 class UpkeepStatus {
   final String upkeeperId;
@@ -28,13 +23,13 @@ class UpkeepStatus {
   bool get isSkipped => state == UpkeepState.skipped;
 
   Map<String, dynamic> toJson() => {
-        'id': upkeeperId,
-        'displayName': displayName,
-        'state': state.name,
-        'summary': summary,
-        'details': details,
-        if (errorMessage != null) 'error': errorMessage,
-      };
+    'id': upkeeperId,
+    'displayName': displayName,
+    'state': state.name,
+    'summary': summary,
+    'details': details,
+    if (errorMessage != null) 'error': errorMessage,
+  };
 }
 
 class UpkeepResult {
@@ -53,10 +48,10 @@ class UpkeepResult {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': upkeeperId,
-        'displayName': displayName,
-        'success': success,
-        'message': message,
-        if (errorMessage != null) 'error': errorMessage,
-      };
+    'id': upkeeperId,
+    'displayName': displayName,
+    'success': success,
+    'message': message,
+    if (errorMessage != null) 'error': errorMessage,
+  };
 }

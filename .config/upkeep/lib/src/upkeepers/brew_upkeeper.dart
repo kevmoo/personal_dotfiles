@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 
 import '../models.dart';
@@ -98,11 +99,13 @@ class BrewUpkeeper implements Upkeeper {
               if (_isDirectlyInBrewfile(name, expectedFormulae)) {
                 directOutdatedCount++;
                 directOutdatedDetails.add(
-                    'Outdated Brewfile formula: $name ($current -> $latest)');
+                  'Outdated Brewfile formula: $name ($current -> $latest)',
+                );
               } else {
                 dependencyOutdatedCount++;
                 dependencyOutdatedDetails.add(
-                    'Outdated dependency formula: $name ($current -> $latest)');
+                  'Outdated dependency formula: $name ($current -> $latest)',
+                );
               }
             }
 
@@ -113,12 +116,14 @@ class BrewUpkeeper implements Upkeeper {
 
               if (_isDirectlyInBrewfile(name, expectedCasks)) {
                 directOutdatedCount++;
-                directOutdatedDetails
-                    .add('Outdated Brewfile cask: $name ($current -> $latest)');
+                directOutdatedDetails.add(
+                  'Outdated Brewfile cask: $name ($current -> $latest)',
+                );
               } else {
                 dependencyOutdatedCount++;
                 dependencyOutdatedDetails.add(
-                    'Outdated dependency cask: $name ($current -> $latest)');
+                  'Outdated dependency cask: $name ($current -> $latest)',
+                );
               }
             }
           }

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 
 import '../models.dart';
@@ -85,11 +86,10 @@ class SkillsUpkeeper implements Upkeeper {
       final home = _homeDir();
       bool localSuccess = true;
       if (Directory(p.join(home, '.agents')).existsSync()) {
-        final localProc = await Process.run(
-          'npx',
-          ['skills', 'update'],
-          workingDirectory: home,
-        );
+        final localProc = await Process.run('npx', [
+          'skills',
+          'update',
+        ], workingDirectory: home);
         localSuccess = localProc.exitCode == 0;
       }
 
