@@ -13,6 +13,7 @@ Future<void> main(List<String> args) async {
         )
         ..addCommand(CheckCommand())
         ..addCommand(UpdateCommand())
+        ..addCommand(TriageCommand())
         ..addCommand(ListCommand());
 
   runner.argParser.addFlag(

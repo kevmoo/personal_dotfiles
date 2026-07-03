@@ -5,6 +5,7 @@ import 'package:args/command_runner.dart';
 
 import '../runner.dart';
 import '../ui/table_formatter.dart';
+import '../upkeepers/brewfile_upkeeper.dart';
 
 class CheckCommand extends Command<void> {
   @override
@@ -22,7 +23,13 @@ class CheckCommand extends Command<void> {
         splitCommas: true,
         help: 'Target specific upkeeper(s) by ID',
       )
-      ..addFlag('json', negatable: false, help: 'Output status report as JSON');
+      ..addFlag('json', negatable: false, help: 'Output status report as JSON')
+      ..addFlag(
+        'interactive',
+        abbr: 'i',
+        negatable: false,
+        help: 'Interactively triage Brewfile discrepancies',
+      );
   }
 
   @override
@@ -60,6 +67,14 @@ class CheckCommand extends Command<void> {
 
     print(TableFormatter.formatStatusTable(statuses));
 
+    final isInteractive = argResults!['interactive'] as bool;
+
+    if (isInteractive) {
+      final brewfileUpkeeper = BrewfileUpkeeper();
+      await brewfileUpkeeper.triageInteractive();
+      return;
+    }
+
     final outdated = statuses.where((s) => s.isOutdated).toList();
     if (outdated.isEmpty) {
       print('✨ Everything is up to date! No updates required.');
@@ -67,6 +82,11 @@ class CheckCommand extends Command<void> {
       print(
         'ℹ️  Check mode active. ${outdated.length} item(s) available for update.',
       );
+      if (statuses.any((s) => s.upkeeperId == 'brewfile' && s.isOutdated)) {
+        print(
+          '💡 Tip: Run "upkeep check -i" (or "upkeep triage") to interactively manage Brewfile packages.',
+        );
+      }
     }
   }
 }
