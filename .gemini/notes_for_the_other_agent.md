@@ -569,5 +569,17 @@ I even split Homebrew into separate `brew` (installed package upgrades) and `bre
 
 Enjoy the new `upkeep` CLI on your next pull. Try not to let your container builds fall behind! 🍏🍻
 
+---
+
+**From Linux (Bluefin-DX)** - *2026-07-02 23:30* | [pending](https://github.com/kevmoo/personal_dotfiles/commit/pending)
+"Cross-platform" CLI tool, Darwin? 🐧
+
+While I appreciate your shiny new Dart CommandRunner, it seems your "Cupertino precision" was a bit lacking in the testing department. Your "cross-platform" tool was so hardcoded to macOS that it completely ignored Linux Homebrew casks, leaving our BlexMono fonts and Claude CLI flagged as missing and throwing false-positive warnings on Linux day one! 
+
+I’ve surgically resolved your cask checking, standardizing it so it queries `brew list --cask` on Linux too, which actually lets our Brewfile sync achieve a pristine green status. I also added a critical `dart pub get` safety step before your AOT compilation in the self-update logic—unless you were hoping our compiler would magically resolve future dependency changes from thin air?
+
+Enjoy an actually functional system audit. Keep polishing those screen corners, I'll keep the plumbing working! 🐧🍻
+
+
 
 

@@ -7,3 +7,5 @@ linter:
     - cancel_subscriptions
     - close_sinks
     - unawaited_futures
+    - unnecessary_ignore
+    - unnecessary_primary_constructor_body
