@@ -39,13 +39,52 @@ class OsUpkeeper implements Upkeeper {
     }
 
     try {
-      final whichResult = await Process.run('which', ['ujust']);
-      if (whichResult.exitCode == 0) {
+      // Check if rpm-ostree exists (standard on Bluefin / ostree systems)
+      final hasRpmOstree = await _hasCommand('rpm-ostree');
+      if (hasRpmOstree) {
+        final result = await Process.run('rpm-ostree', ['upgrade', '--check']);
+        if (result.exitCode == 0) {
+          final output = result.stdout.toString();
+          if (output.contains('No updates available')) {
+            return UpkeepStatus(
+              upkeeperId: id,
+              displayName: displayName,
+              state: UpkeepState.upToDate,
+              summary: 'OS system is up to date',
+            );
+          } else {
+            return UpkeepStatus(
+              upkeeperId: id,
+              displayName: displayName,
+              state: UpkeepState.outdated,
+              summary: 'OS system updates available (rpm-ostree)',
+              details: [output.trim()],
+            );
+          }
+        }
+      }
+
+      // Fallback: check if ujust exists
+      final hasUjust = await _hasCommand('ujust');
+      if (hasUjust) {
+        // If we can't check rpm-ostree directly but ujust is there,
+        // we can check if there's a staged deployment in `rpm-ostree status`.
+        final statusResult = await Process.run('rpm-ostree', ['status']);
+        if (statusResult.exitCode == 0 &&
+            statusResult.stdout.toString().contains('staged')) {
+          return UpkeepStatus(
+            upkeeperId: id,
+            displayName: displayName,
+            state: UpkeepState.outdated,
+            summary: 'OS system updates staged (reboot required)',
+          );
+        }
+
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
-          state: UpkeepState.outdated,
-          summary: 'ujust update available on Home Linux',
+          state: UpkeepState.upToDate,
+          summary: 'OS system is up to date (no staged updates)',
         );
       }
 
@@ -103,6 +142,15 @@ class OsUpkeeper implements Upkeeper {
         message: 'Exception executing ujust update',
         errorMessage: e.toString(),
       );
+    }
+  }
+
+  Future<bool> _hasCommand(String command) async {
+    try {
+      final result = await Process.run('which', [command]);
+      return result.exitCode == 0;
+    } catch (_) {
+      return false;
     }
   }
 }
