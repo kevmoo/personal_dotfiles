@@ -15,6 +15,11 @@ if (( $+commands[direnv] )); then
   eval "$(direnv hook zsh)"
 fi
 
+# Shell History (SQLite-backed)
+if (( $+commands[atuin] )); then
+  eval "$(atuin init zsh)"
+fi
+
 
 # Modern replacements
 if (( $+commands[eza] )); then
