@@ -30,7 +30,7 @@ echo "✨ Formatting staged Dart files..."
 dart format $staged_files
 
 # Add the formatted files back to the index
-git add $staged_files
+git add -f $staged_files
 
 # Fail if formatting the dirty Dart file yields a blank commit
 if [ -z "$(git diff --cached --name-only)" ]; then

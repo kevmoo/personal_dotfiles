@@ -227,4 +227,61 @@ packages:
       check(status.summary).equals('scripts package not activated globally');
     });
   });
+
+  group('OsUpkeeper & GlinuxOsStrategy', () {
+    test(
+      'GlinuxOsStrategy detects active gCert and returns upToDate',
+      () async {
+        final strategy = GlinuxOsStrategy(
+          processRunner: (executable, args) async {
+            if (executable == 'gcertstatus') {
+              return ProcessResult(0, 0, 'LOAS2 expires in 16h 53m', '');
+            }
+            return ProcessResult(0, 0, '', '');
+          },
+        );
+
+        final status = await strategy.check('os', 'OS System Updates');
+        check(status.state).equals(UpkeepState.upToDate);
+        check(status.summary).contains('gLinux Cloudtop system is up to date');
+      },
+    );
+
+    test(
+      'GlinuxOsStrategy flags actionRequired when gCert expires soon',
+      () async {
+        final strategy = GlinuxOsStrategy(
+          processRunner: (executable, args) async {
+            if (executable == 'gcertstatus') {
+              return ProcessResult(0, 0, 'LOAS2 expires in 2h 15m', '');
+            }
+            return ProcessResult(0, 0, '', '');
+          },
+        );
+
+        final status = await strategy.check('os', 'OS System Updates');
+        check(status.state).equals(UpkeepState.outdated);
+        check(status.summary)
+            .contains('gCert ticket expiring soon (2h remaining)');
+      },
+    );
+
+    test(
+      'GlinuxOsStrategy flags actionRequired when gCert check fails',
+      () async {
+        final strategy = GlinuxOsStrategy(
+          processRunner: (executable, args) async {
+            if (executable == 'gcertstatus') {
+              return ProcessResult(1, 1, '', 'No valid ticket found');
+            }
+            return ProcessResult(0, 0, '', '');
+          },
+        );
+
+        final status = await strategy.check('os', 'OS System Updates');
+        check(status.state).equals(UpkeepState.outdated);
+        check(status.summary).contains('gCert ticket inactive or expired');
+      },
+    );
+  });
 }

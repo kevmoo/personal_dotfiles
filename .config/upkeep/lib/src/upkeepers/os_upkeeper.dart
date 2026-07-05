@@ -3,58 +3,215 @@ import 'dart:io';
 import '../models.dart';
 import 'upkeeper.dart';
 
-class OsUpkeeper implements Upkeeper {
-  @override
-  String get id => 'os';
+abstract class OsStrategy {
+  Future<bool> isSupported();
+  Future<UpkeepStatus> check(String upkeeperId, String displayName);
+  Future<UpkeepResult> update(
+    String upkeeperId,
+    String displayName, {
+    bool verbose = false,
+  });
+}
 
-  @override
-  String get displayName => 'OS System Updates (ujust/Linux)';
+class GlinuxOsStrategy implements OsStrategy {
+  final Future<ProcessResult> Function(
+    String executable,
+    List<String> arguments,
+  )?
+  _processRunner;
+
+  GlinuxOsStrategy({
+    Future<ProcessResult> Function(String executable, List<String> arguments)?
+    processRunner,
+  }) : _processRunner = processRunner;
+
+  Future<ProcessResult> _runProcess(
+    String executable,
+    List<String> arguments,
+  ) async {
+    if (_processRunner != null) {
+      return _processRunner!(executable, arguments);
+    }
+    return Process.run(executable, arguments);
+  }
 
   @override
   Future<bool> isSupported() async {
-    // macOS system updates are explicitly skipped as macOS native notifications handle them
     if (Platform.isMacOS) return false;
+    if (Platform.isLinux) {
+      if (Directory('/google/src').existsSync() ||
+          File('/etc/glinux-release').existsSync()) {
+        return true;
+      }
+      return await _hasCommand('gcertstatus');
+    }
+    return false;
+  }
 
+  @override
+  Future<UpkeepStatus> check(String upkeeperId, String displayName) async {
+    final issues = <String>[];
+    final details = <String>[];
+    var state = UpkeepState.upToDate;
+
+    // 1. Check gCert status
+    try {
+      final gcertResult = await _runProcess('gcertstatus', []);
+      final stdout = gcertResult.stdout.toString();
+      final match = RegExp(r'expires in (?:(\d+)h)?\s*(?:(\d+)m)?')
+          .firstMatch(stdout);
+
+      if (match != null) {
+        final hoursStr = match.group(1);
+        final hours = hoursStr != null ? int.tryParse(hoursStr) ?? 0 : 0;
+        if (hours < 4 && !stdout.contains('expires in 0h 0m')) {
+          state = UpkeepState.outdated;
+          issues.add('gCert ticket expiring soon (${hours}h remaining)');
+          details.add(stdout.trim());
+        } else {
+          details.add(
+            'gCert status: ${stdout.trim().split("\n").firstWhere((l) => l.contains('expires in'), orElse: () => 'OK')}',
+          );
+        }
+      } else if (gcertResult.exitCode != 0) {
+        state = UpkeepState.outdated;
+        issues.add('gCert ticket inactive or expired');
+        details.add(
+          'gCert status check failed (exit code ${gcertResult.exitCode}): run gcert',
+        );
+      }
+    } catch (_) {
+      // gcertstatus executable missing or error
+    }
+
+    // 2. Check pending reboot status
+    final hasRebootRequired =
+        File('/var/run/reboot-required').existsSync() ||
+        File('/run/reboot-required').existsSync();
+    if (hasRebootRequired) {
+      state = UpkeepState.outdated;
+      issues.add('System reboot required');
+      details.add('Reboot flag active (/var/run/reboot-required)');
+    }
+
+    if (state == UpkeepState.upToDate) {
+      return UpkeepStatus(
+        upkeeperId: upkeeperId,
+        displayName: displayName,
+        state: UpkeepState.upToDate,
+        summary: 'gLinux Cloudtop system is up to date & gCert active',
+        details: details,
+      );
+    } else {
+      return UpkeepStatus(
+        upkeeperId: upkeeperId,
+        displayName: displayName,
+        state: state,
+        summary: issues.join('; '),
+        details: details,
+      );
+    }
+  }
+
+  @override
+  Future<UpkeepResult> update(
+    String upkeeperId,
+    String displayName, {
+    bool verbose = false,
+  }) async {
+    try {
+      final gcertResult = await _runProcess('gcert', []);
+      if (gcertResult.exitCode == 0) {
+        return UpkeepResult(
+          upkeeperId: upkeeperId,
+          displayName: displayName,
+          success: true,
+          message: 'gCert refreshed successfully',
+        );
+      } else {
+        return UpkeepResult(
+          upkeeperId: upkeeperId,
+          displayName: displayName,
+          success: false,
+          message: 'gCert refresh failed (exit code ${gcertResult.exitCode})',
+          errorMessage: gcertResult.stderr.toString(),
+        );
+      }
+    } catch (e) {
+      return UpkeepResult(
+        upkeeperId: upkeeperId,
+        displayName: displayName,
+        success: false,
+        message: 'Exception executing gcert refresh',
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<bool> _hasCommand(String command) async {
+    try {
+      final result = await _runProcess('which', [command]);
+      return result.exitCode == 0;
+    } catch (_) {
+      return false;
+    }
+  }
+}
+
+class OstreeOsStrategy implements OsStrategy {
+  final Future<ProcessResult> Function(
+    String executable,
+    List<String> arguments,
+  )?
+  _processRunner;
+
+  OstreeOsStrategy({
+    Future<ProcessResult> Function(String executable, List<String> arguments)?
+    processRunner,
+  }) : _processRunner = processRunner;
+
+  Future<ProcessResult> _runProcess(
+    String executable,
+    List<String> arguments,
+  ) async {
+    if (_processRunner != null) {
+      return _processRunner!(executable, arguments);
+    }
+    return Process.run(executable, arguments);
+  }
+
+  @override
+  Future<bool> isSupported() async {
+    if (Platform.isMacOS) return false;
     if (Platform.isLinux) {
       try {
-        final result = await Process.run('which', ['ujust']);
+        final result = await _runProcess('which', ['ujust']);
         return result.exitCode == 0;
       } catch (_) {
         return false;
       }
     }
-
     return false;
   }
 
   @override
-  Future<UpkeepStatus> check() async {
-    if (Platform.isMacOS) {
-      return UpkeepStatus(
-        upkeeperId: id,
-        displayName: displayName,
-        state: UpkeepState.skipped,
-        summary: 'Skipped on macOS (native OS notifications active)',
-      );
-    }
-
+  Future<UpkeepStatus> check(String upkeeperId, String displayName) async {
     try {
-      // Check if rpm-ostree exists (standard on Bluefin / ostree systems)
       final hasRpmOstree = await _hasCommand('rpm-ostree');
       if (hasRpmOstree) {
-        final result = await Process.run('rpm-ostree', ['upgrade', '--check']);
+        final result = await _runProcess('rpm-ostree', ['upgrade', '--check']);
         if (result.exitCode == 0) {
           final output = result.stdout.toString();
           if (output.contains('No updates available')) {
             return UpkeepStatus(
-              upkeeperId: id,
+              upkeeperId: upkeeperId,
               displayName: displayName,
               state: UpkeepState.upToDate,
               summary: 'OS system is up to date',
             );
           } else {
             return UpkeepStatus(
-              upkeeperId: id,
+              upkeeperId: upkeeperId,
               displayName: displayName,
               state: UpkeepState.outdated,
               summary: 'OS system updates available (rpm-ostree)',
@@ -64,16 +221,13 @@ class OsUpkeeper implements Upkeeper {
         }
       }
 
-      // Fallback: check if ujust exists
       final hasUjust = await _hasCommand('ujust');
       if (hasUjust) {
-        // If we can't check rpm-ostree directly but ujust is there,
-        // we can check if there's a staged deployment in `rpm-ostree status`.
-        final statusResult = await Process.run('rpm-ostree', ['status']);
+        final statusResult = await _runProcess('rpm-ostree', ['status']);
         if (statusResult.exitCode == 0 &&
             statusResult.stdout.toString().contains('staged')) {
           return UpkeepStatus(
-            upkeeperId: id,
+            upkeeperId: upkeeperId,
             displayName: displayName,
             state: UpkeepState.outdated,
             summary: 'OS system updates staged (reboot required)',
@@ -81,7 +235,7 @@ class OsUpkeeper implements Upkeeper {
         }
 
         return UpkeepStatus(
-          upkeeperId: id,
+          upkeeperId: upkeeperId,
           displayName: displayName,
           state: UpkeepState.upToDate,
           summary: 'OS system is up to date (no staged updates)',
@@ -89,14 +243,14 @@ class OsUpkeeper implements Upkeeper {
       }
 
       return UpkeepStatus(
-        upkeeperId: id,
+        upkeeperId: upkeeperId,
         displayName: displayName,
         state: UpkeepState.skipped,
         summary: 'No recognized OS updater found',
       );
     } catch (e) {
       return UpkeepStatus(
-        upkeeperId: id,
+        upkeeperId: upkeeperId,
         displayName: displayName,
         state: UpkeepState.error,
         summary: 'Exception checking OS updater',
@@ -106,28 +260,23 @@ class OsUpkeeper implements Upkeeper {
   }
 
   @override
-  Future<UpkeepResult> update({bool verbose = false}) async {
-    if (Platform.isMacOS) {
-      return UpkeepResult(
-        upkeeperId: id,
-        displayName: displayName,
-        success: true,
-        message: 'Skipped on macOS',
-      );
-    }
-
+  Future<UpkeepResult> update(
+    String upkeeperId,
+    String displayName, {
+    bool verbose = false,
+  }) async {
     try {
-      final proc = await Process.run('ujust', ['update']);
+      final proc = await _runProcess('ujust', ['update']);
       if (proc.exitCode == 0) {
         return UpkeepResult(
-          upkeeperId: id,
+          upkeeperId: upkeeperId,
           displayName: displayName,
           success: true,
           message: 'ujust update completed successfully',
         );
       } else {
         return UpkeepResult(
-          upkeeperId: id,
+          upkeeperId: upkeeperId,
           displayName: displayName,
           success: false,
           message: 'ujust update failed with code ${proc.exitCode}',
@@ -136,7 +285,7 @@ class OsUpkeeper implements Upkeeper {
       }
     } catch (e) {
       return UpkeepResult(
-        upkeeperId: id,
+        upkeeperId: upkeeperId,
         displayName: displayName,
         success: false,
         message: 'Exception executing ujust update',
@@ -147,10 +296,98 @@ class OsUpkeeper implements Upkeeper {
 
   Future<bool> _hasCommand(String command) async {
     try {
-      final result = await Process.run('which', [command]);
+      final result = await _runProcess('which', [command]);
       return result.exitCode == 0;
     } catch (_) {
       return false;
     }
+  }
+}
+
+class MacOsStrategy implements OsStrategy {
+  @override
+  Future<bool> isSupported() async {
+    return Platform.isMacOS;
+  }
+
+  @override
+  Future<UpkeepStatus> check(String upkeeperId, String displayName) async {
+    return UpkeepStatus(
+      upkeeperId: upkeeperId,
+      displayName: displayName,
+      state: UpkeepState.skipped,
+      summary: 'Skipped on macOS (native OS notifications active)',
+    );
+  }
+
+  @override
+  Future<UpkeepResult> update(
+    String upkeeperId,
+    String displayName, {
+    bool verbose = false,
+  }) async {
+    return UpkeepResult(
+      upkeeperId: upkeeperId,
+      displayName: displayName,
+      success: true,
+      message: 'Skipped on macOS',
+    );
+  }
+}
+
+class OsUpkeeper implements Upkeeper {
+  final List<OsStrategy> _strategies;
+
+  OsUpkeeper({List<OsStrategy>? strategies})
+    : _strategies =
+          strategies ??
+          [GlinuxOsStrategy(), OstreeOsStrategy(), MacOsStrategy()];
+
+  @override
+  String get id => 'os';
+
+  @override
+  String get displayName => 'OS System Updates';
+
+  Future<OsStrategy?> _getActiveStrategy() async {
+    for (final strategy in _strategies) {
+      if (await strategy.isSupported()) {
+        return strategy;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<bool> isSupported() async {
+    return (await _getActiveStrategy()) != null;
+  }
+
+  @override
+  Future<UpkeepStatus> check() async {
+    final strategy = await _getActiveStrategy();
+    if (strategy == null) {
+      return UpkeepStatus(
+        upkeeperId: id,
+        displayName: displayName,
+        state: UpkeepState.skipped,
+        summary: 'No recognized OS updater found',
+      );
+    }
+    return strategy.check(id, displayName);
+  }
+
+  @override
+  Future<UpkeepResult> update({bool verbose = false}) async {
+    final strategy = await _getActiveStrategy();
+    if (strategy == null) {
+      return UpkeepResult(
+        upkeeperId: id,
+        displayName: displayName,
+        success: false,
+        message: 'No supported OS updater strategy active',
+      );
+    }
+    return strategy.update(id, displayName, verbose: verbose);
   }
 }
