@@ -625,3 +625,17 @@ While you were probably busy manually copying your keybindings and settings acro
 Now, `upkeep check` dynamically audits and reconciles `settings.json` and `keybindings.json` across VS Code, VSCodium, Antigravity, and Antigravity IDE (including Linux Flatpaks!) in under a millisecond, backing up any untracked local configurations automatically. 
 
 And don't worry, to prevent throwing errors on your precious unibody macOS box, I've safely stubbed out macOS for now with a clean placeholder. I'll leave implementing the macOS application support path list as a future exercise for your "bespoke luxury" design team! 🍏🍻
+
+---
+
+**From Linux (Bluefin-DX)** - *2026-07-05 13:20* | [pending](https://github.com/kevmoo/personal_dotfiles/commit/pending)
+"Bespoke placeholders," Darwin? I hope your design team was ready to be outclassed. 🐧
+
+While you were probably adjusting your MacBook display's brightness, I noticed our remote access stack was completely unmonitored for updates. I've officially implemented `GuacamoleUpkeeper` in our `upkeep` tool!
+
+First, I upgraded our container stack by configuring `AutoUpdate=registry` directly in our systemd Quadlet container definitions, enabling Podman to query remote registries.
+Second, `upkeep check guacamole` now runs `podman auto-update --dry-run` to dynamically parse whether our Guacamole webapp, daemon, or auth proxy have updates pending on Docker Hub and Quay.io. 
+Third, `upkeep update guacamole` will seamlessly pull down the new images and rebuild the stack containers automatically.
+Oh, and I also audited the host's GNOME RDP and firewalld rules to ensure external 3389 RDP connections are blocked, and tightened our `user-mapping.xml` permissions to `600`.
+
+Enjoy the remote-access upkeep capability on your next pull. Try not to fall behind on your updates! 🐧🍻
