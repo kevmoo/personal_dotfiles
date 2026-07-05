@@ -15,6 +15,7 @@ class UpkeepRunner {
             SkillsUpkeeper(),
             ScriptsDartUpkeeper(),
             OsUpkeeper(),
+            BeadsDoltUpkeeper(),
           ];
 
   /// Checks status across supported upkeepers concurrently.

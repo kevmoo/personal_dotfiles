@@ -284,4 +284,55 @@ packages:
       },
     );
   });
+
+  group('BeadsDoltUpkeeper', () {
+    test('detects outdated Dolt when warning is present', () async {
+      final upkeeper = BeadsDoltUpkeeper(
+        processRunner: (executable, args) async {
+          if (args.contains('version')) {
+            return ProcessResult(
+              0,
+              0,
+              'dolt version 2.1.6\nWarning: you are on an old version of Dolt. The newest version is 2.1.10.',
+              '',
+            );
+          }
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final status = await upkeeper.check();
+      check(status.state).equals(UpkeepState.outdated);
+      check(status.summary).contains('Dolt update available -> 2.1.10');
+    });
+
+    test('isSupported returns false when Homebrew is installed', () async {
+      final upkeeper = BeadsDoltUpkeeper(
+        processRunner: (executable, args) async {
+          if (executable == 'which' && args.contains('brew')) {
+            return ProcessResult(0, 0, '/usr/local/bin/brew\n', '');
+          }
+          return ProcessResult(1, 1, '', '');
+        },
+      );
+
+      final supported = await upkeeper.isSupported();
+      check(supported).isFalse();
+    });
+
+    test('detects up to date Dolt when no warning is present', () async {
+      final upkeeper = BeadsDoltUpkeeper(
+        processRunner: (executable, args) async {
+          if (args.contains('version')) {
+            return ProcessResult(0, 0, 'dolt version 2.1.10', '');
+          }
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final status = await upkeeper.check();
+      check(status.state).equals(UpkeepState.upToDate);
+      check(status.summary).contains('Beads & Dolt binaries are up to date');
+    });
+  });
 }

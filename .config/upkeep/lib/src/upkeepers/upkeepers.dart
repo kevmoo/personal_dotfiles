@@ -1,3 +1,4 @@
+export 'beads_dolt_upkeeper.dart';
 export 'brew_upkeeper.dart';
 export 'brewfile_upkeeper.dart';
 export 'dotfiles_upkeeper.dart';
