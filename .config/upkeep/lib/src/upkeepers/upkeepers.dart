@@ -7,3 +7,4 @@ export 'os_upkeeper.dart';
 export 'scripts_dart_upkeeper.dart';
 export 'skills_upkeeper.dart';
 export 'upkeeper.dart';
+export 'vscode_upkeeper.dart';

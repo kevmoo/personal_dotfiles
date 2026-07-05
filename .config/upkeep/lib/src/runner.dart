@@ -16,6 +16,7 @@ class UpkeepRunner {
             ScriptsDartUpkeeper(),
             OsUpkeeper(),
             BeadsDoltUpkeeper(),
+            VscodeUpkeeper(),
           ];
 
   /// Checks status across supported upkeepers concurrently.
