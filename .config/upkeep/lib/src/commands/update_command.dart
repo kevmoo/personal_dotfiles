@@ -32,6 +32,11 @@ class UpdateCommand extends Command<void> {
         'verbose',
         negatable: false,
         help: 'Enable verbose command output during updates',
+      )
+      ..addFlag(
+        'cleanup',
+        negatable: false,
+        help: 'Cleanup unmanaged packages during Brewfile sync',
       );
   }
 
@@ -43,6 +48,7 @@ class UpdateCommand extends Command<void> {
 
     final autoYes = argResults!['yes'] as bool;
     final verbose = argResults!['verbose'] as bool;
+    final cleanup = argResults!['cleanup'] as bool;
 
     final upkeepRunner = UpkeepRunner();
     print('🔄 Checking system status across enabled upkeepers in parallel...');
@@ -81,6 +87,7 @@ class UpdateCommand extends Command<void> {
     final updateResults = await upkeepRunner.updateSelected(
       toUpdate,
       verbose: verbose,
+      cleanup: cleanup,
     );
 
     print('\n═══ Update Execution Results ═══\n');

@@ -75,6 +75,19 @@ class BrewfileUpkeeper implements Upkeeper {
                 .toSet()
           : <String>{};
 
+      final allFormulaeResult = await Process.run('brew', [
+        'list',
+        '--formula',
+      ]);
+      final allFormulae = allFormulaeResult.exitCode == 0
+          ? allFormulaeResult.stdout
+                .toString()
+                .split('\n')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toSet()
+          : <String>{};
+
       final caskListResult = await Process.run('brew', ['list', '--cask']);
       final installedCasks = (caskListResult.exitCode == 0)
           ? caskListResult.stdout
@@ -86,10 +99,10 @@ class BrewfileUpkeeper implements Upkeeper {
           : <String>{};
 
       final missingFormulae = expectedFormulae.where((f) {
-        if (installedLeaves.contains(f)) return false;
+        if (allFormulae.contains(f)) return false;
         if (f.contains('/')) {
           final shortName = f.split('/').last;
-          if (installedLeaves.contains(shortName)) return false;
+          if (allFormulae.contains(shortName)) return false;
         }
         return true;
       }).toList();
@@ -373,7 +386,10 @@ class BrewfileUpkeeper implements Upkeeper {
   }
 
   @override
-  Future<UpkeepResult> update({bool verbose = false}) async {
+  Future<UpkeepResult> update({
+    bool verbose = false,
+    bool cleanup = false,
+  }) async {
     Directory? tempDir;
     try {
       final home = _homeDir();
@@ -394,7 +410,11 @@ class BrewfileUpkeeper implements Upkeeper {
       }
       tempBrewfile.writeAsStringSync(buffer.toString());
 
-      final bundleArgs = ['bundle', '--file=${tempBrewfile.path}'];
+      final bundleArgs = [
+        'bundle',
+        '--file=${tempBrewfile.path}',
+        if (cleanup) '--force-cleanup',
+      ];
       final bundleProc = await Process.run('brew', bundleArgs);
       if (bundleProc.exitCode != 0) {
         return UpkeepResult(

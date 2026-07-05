@@ -44,12 +44,15 @@ class UpkeepRunner {
   Future<List<UpkeepResult>> updateSelected(
     List<String> targetIds, {
     bool verbose = false,
+    bool cleanup = false,
   }) async {
     final results = <UpkeepResult>[];
     final selected = upkeepers.where((u) => targetIds.contains(u.id));
 
     for (final u in selected) {
-      final res = await u.update(verbose: verbose);
+      final res = u is BrewfileUpkeeper
+          ? await u.update(verbose: verbose, cleanup: cleanup)
+          : await u.update(verbose: verbose);
       results.add(res);
     }
 
