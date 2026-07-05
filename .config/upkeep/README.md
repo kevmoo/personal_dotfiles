@@ -1,8 +1,33 @@
 # System Upkeep (`upkeep`)
 
-`upkeep` is a cross-platform system status checker and updater designed to run across diverse machine environments (Mac workstation, Home Linux box with `ujust`, Corp Linux box).
+`upkeep` is a cross-platform system status checker and updater designed to run
+across diverse machine environments (Mac workstation, home Linux box with
+`ujust`, corp Linux box).
 
-It provides a unified terminal interface and an AI Agent Skill wrapper to rapidly check the status of core dev tools in parallel and interactively apply updates.
+It provides a unified terminal interface (and an AI-agent skill wrapper) to
+check the status of core dev tools in parallel and interactively apply updates.
+
+> [!NOTE]
+> This is a personal tool embedded in `personal_dotfiles`. The default set of
+> upkeepers is currently **hard-coded** and wired to this author's machines
+> (see [Upkeepers](#2-upkeepers)). Making it configurable and generally useful
+> is tracked in the repo's issues (Stages 1–3).
+
+---
+
+## Install
+
+Today `upkeep` runs from source via a small shim on `PATH`:
+
+```bash
+# ~/.local/bin/upkeep
+#!/bin/bash
+exec dart "$HOME/.config/upkeep/bin/upkeep.dart" "$@"
+```
+
+This requires the Dart SDK to be installed. (Shipping a `pub global activate`
+install and, later, standalone native binaries are tracked as follow-up
+issues.)
 
 ---
 
@@ -10,75 +35,81 @@ It provides a unified terminal interface and an AI Agent Skill wrapper to rapidl
 
 | Decision Area | Selected Approach | Key Benefit |
 | :--- | :--- | :--- |
-| **Language & Location** | Dart package embedded inside `personal_dotfiles` (`.config/upkeep`) | Fast execution, cross-platform, versioned directly with dotfiles, rich ecosystem for terminal UI. |
-| **Concurrency Model** | `Future.wait` parallel async checkers | All 6+ subsystem status checks complete in ~1 second rather than sequential shell delay. |
-| **Interaction Model** | Interactive Multi-Select Checkboxes in terminal | Scans state in parallel, displays a summary table, then presents checkboxes to pick which outdated tools to upgrade. |
-| **Self-Update Protocol** | Atomic AOT Binary Replacement (`upkeep.tmp` -> `upkeep`) | Compiles new binary, verifies health via `--version`, then atomically swaps target binary without breaking running session. |
-| **Machine Profiling** | Auto-detection + `~/.config/upkeep/config.yaml` overrides | Built-in platform adapters (`Platform.isMacOS`, `Platform.isLinux`, `ujust` detection) plus custom shell command overrides. |
-| **Agent Skill Integration** | Dual interface: CLI + `--json` mode + Agent Skill wrapper | LLMs can invoke `upkeep --json` to inspect state non-destructively or run unattended updates (`upkeep --yes`). |
+| **Language & Location** | Dart package embedded inside `personal_dotfiles` (`.config/upkeep`) | Fast execution, cross-platform, versioned directly with the dotfiles. |
+| **Concurrency Model** | `Future.wait` parallel async checkers | All subsystem status checks run concurrently rather than as sequential shell calls. |
+| **Interaction Model** | Interactive multi-select checkboxes (`upkeep update` with no flags) | Scans state in parallel, prints a summary table, then prompts to pick which outdated tools to upgrade. |
+| **Host Profiling** | Per-adapter `isSupported()` + `Platform` checks | Each upkeeper decides at runtime whether it applies to the current host (`Platform.isMacOS`, `Platform.isLinux`, tool detection). Adapters that don't apply are skipped. |
+| **Agent Skill Integration** | CLI + `upkeep check --json` + agent skill wrapper | LLMs can invoke `upkeep check --json` to inspect state non-destructively, or run `upkeep update --yes` unattended. |
 
 ---
 
-## 2. Core Subsystem Upkeepers
+## 2. Upkeepers
+
+Registered in `lib/src/runner.dart` (`UpkeepRunner`). Each is gated by
+`isSupported()`, so only the ones relevant to the current host run.
 
 ```mermaid
 flowchart TD
-    A[upkeep command] --> B[Upkeep Runner]
-    B -->|Future.wait| C[BrewUpkeeper]
-    B -->|Future.wait| D[MiseUpkeeper]
-    B -->|Future.wait| E[DotfilesUpkeeper]
-    B -->|Future.wait| F[SkillsUpkeeper]
-    B -->|Future.wait| G[ScriptsDartUpkeeper]
-    B -->|Future.wait| H[OsUpkeeper]
-
-    C -->|brew outdated & Brewfiles| C1[Status: Up to Date / Outdated]
-    D -->|mise outdated --json| D1[Status: Up to Date / Outdated]
-    E -->|git fetch / rev-parse| E1[Status: Up to Date / Behind]
-    F -->|npx skills check| F1[Status: Up to Date / Outdated]
-    G -->|dart pub global list| G1[Status: Up to Date / Outdated]
-    H -->|ujust update| H1[Status: Up to Date / Outdated]
+    A[upkeep command] --> B[UpkeepRunner]
+    B -->|Future.wait, isSupported| C[Upkeepers]
+    C --> C1[brew / brewfile]
+    C --> C2[mise]
+    C --> C3[dotfiles]
+    C --> C4[skills]
+    C --> C5[scripts_dart]
+    C --> C6[os]
+    C --> C7[beads / guacamole / vscode]
 ```
 
-### Subsystem Details:
-1. **`BrewUpkeeper`**: Absorbs and consolidates existing `brew-check` and `brewall` shell scripts into native Dart logic:
-   - Reads `~/.config/brew/Brewfile.shared` + `Brewfile.mac` / `Brewfile.linux`.
-   - Audits installed vs expected formulae/casks (detects missing & unmanaged items).
-   - Runs `brew bundle --upgrade --cleanup --force` + `brew upgrade` + `brew cleanup`.
-2. **`MiseUpkeeper`**: Checks `mise outdated --json`. Runs `mise upgrade` on selection.
-3. **`DotfilesUpkeeper`**: Performs background `git fetch` in `personal_dotfiles`. If behind, pulls changes and triggers self-update AOT compilation step.
-4. **`SkillsUpkeeper`**: Runs `npx skills check`. Runs `npx skills update -g` (global skills) + local dotfiles skills sync on selection.
-5. **`ScriptsDartUpkeeper`**: Checks git updates for `scripts.dart`. Always activates from GitHub (`dart pub global activate --source git https://github.com/kevmoo/scripts.dart.git`) — never local path.
-6. **`OsUpkeeper`**:
-   - **macOS**: Skipped / no-op (macOS native system notifications handle OS updates).
-   - **Home Linux**: Checks/runs `ujust update`.
-   - **Corp Linux**: Checks/runs corp-specific package updater scripts.
+| ID | Purpose |
+| :--- | :--- |
+| `brew` | Homebrew packages — audits installed vs. expected, runs `brew upgrade` / `brew cleanup`. |
+| `brewfile` | Reconciles `~/.config/brew/Brewfile.shared` + `Brewfile.mac` / `Brewfile.linux`; supports interactive management via `upkeep triage`. |
+| `mise` | Checks `mise outdated --json`; runs `mise upgrade`. |
+| `dotfiles` | `git fetch` on the `personal_dotfiles` repo; reports/pulls when behind. |
+| `skills` | Runs `npx skills check`; on update, runs `npx skills update -g` + local sync and reconciles skill symlinks. |
+| `scripts_dart` | Checks/activates `scripts.dart` from GitHub (`dart pub global activate --source git …`). |
+| `os` | OS updates — e.g. `ujust update` on the home Linux box; no-op on macOS. |
+| `beads` | `beads` / Dolt-backed issue store upkeep. |
+| `guacamole` | Apache Guacamole (personal Linux host). |
+| `vscode` | VS Code extension updates. |
+
+> Several upkeepers (`scripts_dart`, `guacamole`, `beads`, `os`, `skills`,
+> `vscode`) are specific to this author's setup. `isSupported()` hides them on
+> hosts where they don't apply, but they're still shipped by default until the
+> configurable-adapter work lands.
 
 ---
 
-## 3. Self-Update & Atomic Compilation Hand-Over
+## 3. CLI
 
-When `DotfilesUpkeeper` detects changes to `tools/upkeep` (or `.config/upkeep`):
+`upkeep` uses a subcommand interface (`package:args` `CommandRunner`).
+
+| Command | Description |
+| :--- | :--- |
+| `upkeep check` | Non-destructive status scan; renders a status table. |
+| `upkeep update` | Checks status, then applies updates (interactive by default). |
+| `upkeep triage` | Interactive Brewfile package management. |
+| `upkeep list` | Lists registered upkeepers and host-support status. |
+| `upkeep --version` | Prints the version. |
+
+**`check` flags:** `--json` (machine-readable output), `-i`/`--interactive`,
+`-k`/`--keeper <id,…>`, plus positional IDs.
+**`update` flags:** `-y`/`--yes` (apply all outdated non-interactively),
+`-k`/`--keeper <id,…>`, `--verbose`, `--cleanup` (Brewfile), plus positional IDs.
+
+```bash
+upkeep check                 # status table for all supported upkeepers
+upkeep check --json          # machine-readable status (for agents)
+upkeep check brew mise       # only these; also: upkeep check -k brew,mise
+upkeep update                # interactive multi-select of outdated items
+upkeep update --yes          # update everything outdated, no prompts
+upkeep update brew           # update a specific upkeeper
+upkeep list                  # registered upkeepers + support status
 ```
-[upkeep] Dotfiles updated! Compiling new version of upkeep...
-1. Executing: dart compile exe bin/upkeep.dart -o ~/.local/bin/upkeep.tmp
-2. Verification: ~/.local/bin/upkeep.tmp --version
-3. Atomic swap: mv ~/.local/bin/upkeep.tmp ~/.local/bin/upkeep
-4. Result: Successfully upgraded upkeep executable.
-```
-If compilation fails, `~/.local/bin/upkeep.tmp` is deleted, the existing executable is retained, and a clear error report is displayed.
 
----
+### `upkeep check --json` sample
 
-## 4. CLI Execution & Agent Skill Interfaces
-
-### Terminal CLI Commands
-- `upkeep`: Scans all tools in parallel, renders status table, prompts with interactive multi-select checkbox menu.
-- `upkeep --check` (`-c`): Non-destructive status scan only (displays tabular overview).
-- `upkeep --yes` (`-y`): Non-interactive mode (updates all outdated items automatically).
-- `upkeep --json`: Emits machine-readable JSON status report for agent parsing.
-- `upkeep --verbose`: Shows detailed subprocess stdout/stderr during updates.
-
-### JSON Schema Output Sample (`upkeep --json`)
 ```json
 {
   "version": "0.1.0",
@@ -89,14 +120,14 @@ If compilation fails, `~/.local/bin/upkeep.tmp` is deleted, the existing executa
     { "id": "mise", "displayName": "Mise Tool Versions", "state": "outdated", "summary": "3 tool version(s) outdated" },
     { "id": "dotfiles", "displayName": "Personal Dotfiles Repository", "state": "upToDate", "summary": "Dotfiles repository is up to date" },
     { "id": "skills", "displayName": "Agent Skills", "state": "upToDate", "summary": "Agent skills up to date" },
-    { "id": "scripts_dart", "displayName": "Scripts.dart Package (GitHub)", "state": "outdated", "summary": "Activated globally (click update to sync latest GitHub HEAD)" }
+    { "id": "scripts_dart", "displayName": "Scripts.dart Package (GitHub)", "state": "outdated", "summary": "Click update to sync latest GitHub HEAD" }
   ]
 }
 ```
 
 ---
 
-## 5. Project Directory Structure
+## 4. Project Directory Structure
 
 ```
 .config/upkeep/
@@ -110,6 +141,12 @@ If compilation fails, `~/.local/bin/upkeep.tmp` is deleted, the existing executa
 │   └── src/
 │       ├── models.dart
 │       ├── runner.dart
+│       ├── commands/
+│       │   ├── commands.dart
+│       │   ├── check_command.dart
+│       │   ├── update_command.dart
+│       │   ├── triage_command.dart
+│       │   └── list_command.dart
 │       ├── ui/
 │       │   ├── table_formatter.dart
 │       │   └── interactive_select.dart
@@ -117,11 +154,15 @@ If compilation fails, `~/.local/bin/upkeep.tmp` is deleted, the existing executa
 │           ├── upkeeper.dart
 │           ├── upkeepers.dart
 │           ├── brew_upkeeper.dart
+│           ├── brewfile_upkeeper.dart
 │           ├── mise_upkeeper.dart
 │           ├── dotfiles_upkeeper.dart
 │           ├── skills_upkeeper.dart
 │           ├── scripts_dart_upkeeper.dart
-│           └── os_upkeeper.dart
+│           ├── os_upkeeper.dart
+│           ├── beads_dolt_upkeeper.dart
+│           ├── guacamole_upkeeper.dart
+│           └── vscode_upkeeper.dart
 └── test/
     └── upkeep_test.dart
 ```
