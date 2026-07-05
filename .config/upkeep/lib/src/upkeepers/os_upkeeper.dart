@@ -94,6 +94,51 @@ class GlinuxOsStrategy implements OsStrategy {
       details.add('Reboot flag active (/var/run/reboot-required)');
     }
 
+    // 3. Check APT package upgrades
+    try {
+      final aptResult = await _runProcess('apt-get', ['-s', 'upgrade']);
+      if (aptResult.exitCode == 0) {
+        final stdout = aptResult.stdout.toString();
+        final match = RegExp(r'(\d+)\s+upgraded,\s+(\d+)\s+newly installed')
+            .firstMatch(stdout);
+        if (match != null) {
+          final count = int.tryParse(match.group(1) ?? '0') ?? 0;
+          if (count > 0) {
+            state = UpkeepState.outdated;
+            issues.add('$count APT package update(s) available');
+            final lines = stdout.split('\n');
+            final upgradedPackages = <String>[];
+            bool inUpgradedSection = false;
+            for (final line in lines) {
+              if (line.contains('The following packages will be upgraded:')) {
+                inUpgradedSection = true;
+                continue;
+              }
+              if (inUpgradedSection) {
+                if (line.trim().isEmpty ||
+                    line.startsWith('The following') ||
+                    line.contains('upgraded,')) {
+                  break;
+                }
+                upgradedPackages.addAll(
+                  line.trim().split(RegExp(r'\s+')).where((s) => s.isNotEmpty),
+                );
+              }
+            }
+            if (upgradedPackages.isNotEmpty) {
+              details.add(
+                'APT updates: ${upgradedPackages.take(5).join(', ')}${upgradedPackages.length > 5 ? ' (+${upgradedPackages.length - 5} more)' : ''}',
+              );
+            } else {
+              details.add('APT updates: $count package(s) ready to upgrade');
+            }
+          }
+        }
+      }
+    } catch (_) {
+      // apt-get not available or error
+    }
+
     if (state == UpkeepState.upToDate) {
       return UpkeepStatus(
         upkeeperId: upkeeperId,
