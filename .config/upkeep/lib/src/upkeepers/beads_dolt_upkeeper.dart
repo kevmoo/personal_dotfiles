@@ -12,9 +12,14 @@ class BeadsDoltUpkeeper implements Upkeeper {
   )?
   _processRunner;
 
+  final String? doltPathOverride;
+  final String? bdPathOverride;
+
   BeadsDoltUpkeeper({
     Future<ProcessResult> Function(String executable, List<String> arguments)?
     processRunner,
+    this.doltPathOverride,
+    this.bdPathOverride,
   }) : _processRunner = processRunner;
 
   Future<ProcessResult> _runProcess(
@@ -35,8 +40,8 @@ class BeadsDoltUpkeeper implements Upkeeper {
 
   String _homeDir() => Platform.environment['HOME'] ?? Directory.current.path;
 
-  String _doltPath() => p.join(_homeDir(), 'go', 'bin', 'dolt');
-  String _bdPath() => p.join(_homeDir(), 'go', 'bin', 'bd');
+  String _doltPath() => doltPathOverride ?? p.join(_homeDir(), 'go', 'bin', 'dolt');
+  String _bdPath() => bdPathOverride ?? p.join(_homeDir(), 'go', 'bin', 'bd');
 
   @override
   Future<bool> isSupported() async {
