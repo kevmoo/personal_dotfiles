@@ -27,6 +27,13 @@ Future<void> main(List<String> args) async {
     exit(0);
   }
 
+  if (args.isEmpty ||
+      (!runner.commands.containsKey(args.first) &&
+          args.first != '-h' &&
+          args.first != '--help')) {
+    args = ['check', ...args];
+  }
+
   try {
     await runner.run(args);
   } on UsageException catch (e) {

@@ -1,3 +1,5 @@
+import 'package:io/ansi.dart';
+
 import '../models.dart';
 
 class TableFormatter {
@@ -11,6 +13,13 @@ class TableFormatter {
       buffer.writeln('$icon ${s.displayName}');
       buffer.writeln('   State:   $badge');
       buffer.writeln('   Summary: ${s.summary}');
+      if (s.isOutdated) {
+        final formattedCmd = wrapWith('upkeep update ${s.upkeeperId}', [
+          styleBold,
+          blue,
+        ]);
+        buffer.writeln('   Command: $formattedCmd');
+      }
 
       if (s.details.isNotEmpty) {
         for (final d in s.details) {
@@ -40,21 +49,15 @@ class TableFormatter {
   }
 
   static String _statusBadge(UpkeepState state) {
-    const cyan = '\x1B[36m';
-    const green = '\x1B[32m';
-    const yellow = '\x1B[33m';
-    const red = '\x1B[31m';
-    const reset = '\x1B[0m';
-
     switch (state) {
       case UpkeepState.upToDate:
-        return '${green}Up to date$reset';
+        return green.wrap('Up to date')!;
       case UpkeepState.outdated:
-        return '${yellow}Outdated / Action Required$reset';
+        return yellow.wrap('Outdated / Action Required')!;
       case UpkeepState.error:
-        return '${red}Error$reset';
+        return red.wrap('Error')!;
       case UpkeepState.skipped:
-        return '${cyan}Skipped$reset';
+        return cyan.wrap('Skipped')!;
     }
   }
 }
