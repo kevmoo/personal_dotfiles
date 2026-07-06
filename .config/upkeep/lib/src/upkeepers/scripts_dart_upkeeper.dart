@@ -27,14 +27,7 @@ class ScriptsDartUpkeeper implements Upkeeper {
   String get displayName => 'Scripts.dart Package (GitHub)';
 
   @override
-  Future<bool> isSupported() async {
-    try {
-      final result = await _processRunner('which', ['dart']);
-      return result.exitCode == 0;
-    } catch (_) {
-      return false;
-    }
-  }
+  Future<bool> isSupported() async => _findInstalledSha() != null;
 
   Directory get _pubCacheDir {
     if (_pubCacheDirOverride != null) return _pubCacheDirOverride;

@@ -6,6 +6,10 @@ import '../models.dart';
 import 'upkeeper.dart';
 
 class SkillsUpkeeper implements Upkeeper {
+  final String? homeDirOverride;
+
+  SkillsUpkeeper({this.homeDirOverride});
+
   @override
   String get id => 'skills';
 
@@ -15,6 +19,11 @@ class SkillsUpkeeper implements Upkeeper {
   @override
   Future<bool> isSupported() async {
     try {
+      final home = _homeDir();
+      final configured =
+          Directory(p.join(home, '.agents', 'skills')).existsSync() ||
+          File(p.join(home, '.agents', '.skill-lock.json')).existsSync();
+      if (!configured) return false;
       final result = await Process.run('which', ['npx']);
       return result.exitCode == 0;
     } catch (_) {
@@ -22,7 +31,8 @@ class SkillsUpkeeper implements Upkeeper {
     }
   }
 
-  String _homeDir() => Platform.environment['HOME'] ?? Directory.current.path;
+  String _homeDir() =>
+      homeDirOverride ?? Platform.environment['HOME'] ?? Directory.current.path;
 
   @override
   Future<UpkeepStatus> check() async {

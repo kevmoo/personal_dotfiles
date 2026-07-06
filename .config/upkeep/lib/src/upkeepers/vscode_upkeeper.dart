@@ -23,7 +23,16 @@ class VscodeUpkeeper implements Upkeeper {
   String get displayName => 'VS Code & Editor Settings';
 
   @override
-  Future<bool> isSupported() async => true;
+  Future<bool> isSupported() async {
+    final home = _homeDir();
+    final settings = File(
+      p.join(home, '.config', 'vscode-shared', 'settings.json'),
+    );
+    final keybindings = File(
+      p.join(home, '.config', 'vscode-shared', 'keybindings.json'),
+    );
+    return settings.existsSync() && keybindings.existsSync();
+  }
 
   String _homeDir() =>
       homeDirOverride ?? Platform.environment['HOME'] ?? Directory.current.path;

@@ -226,6 +226,19 @@ packages:
       check(status.state).equals(UpkeepState.outdated);
       check(status.summary).equals('scripts package not activated globally');
     });
+
+    test('isSupported is false when not activated globally', () async {
+      final upkeeper = ScriptsDartUpkeeper(pubCacheDirOverride: tempPubCache);
+
+      check(await upkeeper.isSupported()).isFalse();
+    });
+
+    test('isSupported is true when activated globally', () async {
+      createMockLockFile('ed6acf3d2e2482d0f750b97df8ddc00196a244fc');
+      final upkeeper = ScriptsDartUpkeeper(pubCacheDirOverride: tempPubCache);
+
+      check(await upkeeper.isSupported()).isTrue();
+    });
   });
 
   group('OsUpkeeper & GlinuxOsStrategy', () {
@@ -448,6 +461,43 @@ packages:
       // Now check() should return upToDate
       final status2 = await upkeeper.check();
       check(status2.state).equals(UpkeepState.upToDate);
+    });
+
+    test('isSupported is false without shared vscode config', () async {
+      final upkeeper = VscodeUpkeeper(homeDirOverride: tempHome.path);
+
+      check(await upkeeper.isSupported()).isFalse();
+    });
+
+    test('isSupported is true when shared vscode config exists', () async {
+      final sharedDir = Directory('${tempHome.path}/.config/vscode-shared');
+      sharedDir.createSync(recursive: true);
+      File('${sharedDir.path}/settings.json').writeAsStringSync('{}');
+      File('${sharedDir.path}/keybindings.json').writeAsStringSync('[]');
+
+      final upkeeper = VscodeUpkeeper(homeDirOverride: tempHome.path);
+
+      check(await upkeeper.isSupported()).isTrue();
+    });
+  });
+
+  group('SkillsUpkeeper', () {
+    late Directory tempHome;
+
+    setUp(() async {
+      tempHome = await Directory.systemTemp.createTemp('skills_upkeep_test_');
+    });
+
+    tearDown(() async {
+      if (tempHome.existsSync()) {
+        await tempHome.delete(recursive: true);
+      }
+    });
+
+    test('isSupported is false when no skills setup exists', () async {
+      final upkeeper = SkillsUpkeeper(homeDirOverride: tempHome.path);
+
+      check(await upkeeper.isSupported()).isFalse();
     });
   });
 
