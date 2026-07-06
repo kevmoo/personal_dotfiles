@@ -258,9 +258,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/steveyegge/beads.git",
       "skillPath": "plugins/beads/skills/beads/SKILL.md",
-      "skillFolderHash": "9b755d2305dd4feb0dd69325d9560925cb452c2b",
+      "skillFolderHash": "e319f4d24f1c958940c1d7f51c44de0a0d6e3fd0",
       "installedAt": "2026-06-06T06:11:00.629Z",
-      "updatedAt": "2026-06-23T20:23:31.496Z"
+      "updatedAt": "2026-07-06T18:01:57.287Z"
     },
     "pr-loop": {
       "source": "kevmoo/kevmoo_skills",
@@ -276,9 +276,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "8b14ca97479f518f3f1ced6a35bf591554d7e0cb",
+      "skillFolderHash": "0ace40ac10f5c0b1534324e4e109ebfa831fb361",
       "installedAt": "2026-06-25T18:29:07.130Z",
-      "updatedAt": "2026-07-03T23:16:02.880Z"
+      "updatedAt": "2026-07-06T18:01:54.823Z"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
