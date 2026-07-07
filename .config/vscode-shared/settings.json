@@ -8,7 +8,7 @@
   "security.workspace.trust.untrustedFiles": "open",
   "update.mode": "none",
   "window.titleBarStyle": "custom",
-  "workbench.colorTheme": "Light Modern",
+  "workbench.colorTheme": "Visual Studio Light",
   "editor.fontFamily": "'Cascadia Code', 'Droid Sans Mono', 'monospace', monospace, 'Symbols Nerd Font Mono'",
   "terminal.integrated.defaultProfile.osx": "zsh",
   "git.blame.editorDecoration.enabled": true,
