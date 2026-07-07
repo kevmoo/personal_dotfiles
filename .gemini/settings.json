@@ -16,6 +16,13 @@
       "selectedType": "oauth-personal"
     }
   },
+  "tools": {
+    "exclude": [
+      "run_shell_command(git push --force)",
+      "run_shell_command(git push -f)",
+      "run_shell_command(git reset --hard)"
+    ]
+  },
   "ide": {
     "hasSeenNudge": true,
     "enabled": true
