@@ -334,6 +334,15 @@
       "skillFolderHash": "3f60f94acd281528c97b1a5d8cdab8e0b4a2b5d7",
       "installedAt": "2026-06-29T19:19:37.576Z",
       "updatedAt": "2026-06-29T19:19:37.576Z"
+    },
+    "clarify-confirm-continue": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/clarify-confirm-continue/SKILL.md",
+      "skillFolderHash": "8a4e49e72e5264498c96327b22d9d28c993ef1f3",
+      "installedAt": "2026-07-07T21:40:25.936Z",
+      "updatedAt": "2026-07-07T21:40:25.936Z"
     }
   },
   "dismissed": {
