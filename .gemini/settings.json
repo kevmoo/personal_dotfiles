@@ -18,9 +18,9 @@
   },
   "tools": {
     "exclude": [
-      "run_shell_command(git push --force)",
-      "run_shell_command(git push -f)",
-      "run_shell_command(git reset --hard)"
+      "run_command(git push --force)",
+      "run_command(git push -f)",
+      "run_command(git reset --hard)"
     ]
   },
   "ide": {

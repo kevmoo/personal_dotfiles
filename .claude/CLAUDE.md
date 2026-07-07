@@ -1,1 +1,1 @@
-/var/home/kevmoo/AGENTS.md
+../AGENTS.md
