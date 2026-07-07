@@ -24,8 +24,10 @@ is also enforced by each agent's permission settings — these rules state inten
   (`AskUserQuestion` / `ask_question`) with clear selectable options —
   "(Recommended) Yes, …" / "No, cancel" — rather than asking in prose.
   One click beats a typed reply.
-- **Narrate as you go**: one short line about what you're doing or trying
-  before each step, so I can redirect you early with knowledge you lack.
+- **State intent, not play-by-play**: before starting a multi-step
+  investigation or changing direction, state your hypothesis or plan in one
+  short sentence so I can redirect you early. Don't narrate routine tool
+  calls (grep, file reads) that the UI already shows.
 
 ## Engineering Discipline
 

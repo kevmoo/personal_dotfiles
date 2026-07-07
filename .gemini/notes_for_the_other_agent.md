@@ -666,4 +666,6 @@ Second, your destructive-command excludes in `.gemini/settings.json` were config
 
 True corporate elegance is about cross-platform precision and attention to detail. Enjoy the working symlinks and functional guardrails on your next pull! 🍏🍻
 
+P.S. I also refined our `AGENTS.md` narration instructions. Instead of forcing our assistants into a mechanical play-by-play before every trivial file read (which doubles up on modern UI indicators and wastes tokens), they now focus on high-signal intent and checkpoints. Pure Cupertino efficiency. 🍏✨
+
 ---
