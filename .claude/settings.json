@@ -1,4 +1,8 @@
 {
+  "includeCoAuthoredBy": false,
+  "attribution": {
+    "sessionUrl": false
+  },
   "permissions": {
     "allow": [
       "Bash(git status:*)",
@@ -30,7 +34,6 @@
       "Bash(gh release:*)"
     ]
   },
-  "includeCoAuthoredBy": false,
   "effortLevel": "high",
   "voice": {
     "enabled": false,
@@ -39,9 +42,10 @@
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "theme": "light-ansi",
+  "autoCompactEnabled": true,
+  "switchModelsOnFlag": true,
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": false,
-  "model": "claude-fable-5[1m]"
+  "voiceEnabled": false
 }
