@@ -6,14 +6,26 @@ import '../models.dart';
 import 'upkeeper.dart';
 
 class BrewfileUpkeeper implements Upkeeper {
+  final bool? isCloudtopOverride;
+
+  BrewfileUpkeeper({this.isCloudtopOverride});
+
   @override
   String get id => 'brewfile';
 
   @override
   String get displayName => 'Homebrew Brewfile Sync';
 
+  bool _isCloudtop() {
+    if (isCloudtopOverride != null) return isCloudtopOverride!;
+    return Platform.isLinux &&
+        (Directory('/google/src').existsSync() ||
+            File('/etc/glinux-release').existsSync());
+  }
+
   @override
   Future<bool> isSupported() async {
+    if (_isCloudtop()) return false;
     try {
       final result = await Process.run('which', ['brew']);
       return result.exitCode == 0;

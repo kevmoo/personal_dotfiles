@@ -282,6 +282,7 @@ packages:
       'GlinuxOsStrategy detects active gCert and returns upToDate',
       () async {
         final strategy = GlinuxOsStrategy(
+          rebootRequiredChecker: () => false,
           processRunner: (executable, args) async {
             if (executable == 'gcertstatus') {
               return ProcessResult(0, 0, 'LOAS2 expires in 16h 53m', '');
@@ -300,6 +301,7 @@ packages:
       'GlinuxOsStrategy flags actionRequired when gCert expires soon',
       () async {
         final strategy = GlinuxOsStrategy(
+          rebootRequiredChecker: () => false,
           processRunner: (executable, args) async {
             if (executable == 'gcertstatus') {
               return ProcessResult(0, 0, 'LOAS2 expires in 2h 15m', '');
@@ -319,6 +321,7 @@ packages:
       'GlinuxOsStrategy flags actionRequired when gCert check fails',
       () async {
         final strategy = GlinuxOsStrategy(
+          rebootRequiredChecker: () => false,
           processRunner: (executable, args) async {
             if (executable == 'gcertstatus') {
               return ProcessResult(1, 1, '', 'No valid ticket found');
@@ -332,6 +335,38 @@ packages:
         check(status.summary).contains('gCert ticket inactive or expired');
       },
     );
+
+    test('GlinuxOsStrategy flags actionRequired when reboot required flag is active', () async {
+      final strategy = GlinuxOsStrategy(
+        rebootRequiredChecker: () => true,
+        processRunner: (executable, args) async {
+          if (executable == 'gcertstatus') {
+            return ProcessResult(0, 0, 'LOAS2 expires in 16h 53m', '');
+          }
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final status = await strategy.check('os', 'OS System Updates');
+      check(status.state).equals(UpkeepState.outdated);
+      check(status.summary).contains('System reboot required');
+    });
+
+    test('GlinuxOsStrategy update runs sudo apt-get upgrade -y and reports reboot warning if required', () async {
+      final commandsRun = <String>[];
+      final strategy = GlinuxOsStrategy(
+        rebootRequiredChecker: () => true,
+        processRunner: (executable, args) async {
+          commandsRun.add('$executable ${args.join(' ')}'.trim());
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final result = await strategy.update('os', 'OS System Updates');
+      check(result.success).isTrue();
+      check(commandsRun).deepEquals(['gcert', 'sudo apt-get upgrade -y']);
+      check(result.message).contains('WARNING: System reboot required');
+    });
   });
 
   group('BeadsDoltUpkeeper', () {
@@ -370,22 +405,62 @@ packages:
       check(status.summary).contains('Dolt update available -> 2.1.10');
     });
 
-    test('isSupported returns false when Homebrew is installed', () async {
-      final dummyDolt = File('${tempHome.path}/dolt')
-        ..createSync(recursive: true);
-      final upkeeper = BeadsDoltUpkeeper(
-        doltPathOverride: dummyDolt.path,
-        processRunner: (executable, args) async {
-          if (executable == 'which' && args.contains('brew')) {
-            return ProcessResult(0, 0, '/usr/local/bin/brew\n', '');
-          }
-          return ProcessResult(1, 1, '', '');
-        },
-      );
+    test(
+      'isSupported returns false when Homebrew is installed on non-cloudtop',
+      () async {
+        final dummyDolt = File('${tempHome.path}/dolt')
+          ..createSync(recursive: true);
+        final upkeeper = BeadsDoltUpkeeper(
+          doltPathOverride: dummyDolt.path,
+          isCloudtopOverride: false,
+          processRunner: (executable, args) async {
+            if (executable == 'which' && args.contains('brew')) {
+              return ProcessResult(0, 0, '/usr/local/bin/brew\n', '');
+            }
+            return ProcessResult(1, 1, '', '');
+          },
+        );
 
-      final supported = await upkeeper.isSupported();
-      check(supported).isFalse();
-    });
+        final supported = await upkeeper.isSupported();
+        check(supported).isFalse();
+      },
+    );
+
+    test(
+      'isSupported returns true on cloudtop even when Homebrew is installed',
+      () async {
+        final dummyDolt = File('${tempHome.path}/dolt')
+          ..createSync(recursive: true);
+        final upkeeper = BeadsDoltUpkeeper(
+          doltPathOverride: dummyDolt.path,
+          isCloudtopOverride: true,
+          processRunner: (executable, args) async {
+            if (executable == 'which' && args.contains('brew')) {
+              return ProcessResult(0, 0, '/usr/local/bin/brew\n', '');
+            }
+            return ProcessResult(1, 1, '', '');
+          },
+        );
+
+        final supported = await upkeeper.isSupported();
+        check(supported).isTrue();
+      },
+    );
+
+    test(
+      'check returns outdated on cloudtop when binaries are missing',
+      () async {
+        final upkeeper = BeadsDoltUpkeeper(
+          doltPathOverride: '${tempHome.path}/nonexistent_dolt',
+          bdPathOverride: '${tempHome.path}/nonexistent_bd',
+          isCloudtopOverride: true,
+        );
+
+        final status = await upkeeper.check();
+        check(status.state).equals(UpkeepState.outdated);
+        check(status.summary).contains('Beads and Dolt binaries not installed');
+      },
+    );
 
     test('detects up to date Dolt when no warning is present', () async {
       final dummyDolt = File('${tempHome.path}/dolt')
@@ -424,6 +499,7 @@ packages:
         homeDirOverride: tempHome.path,
         isLinuxOverride: false,
         isMacOverride: true,
+        isCloudtopOverride: false,
       );
 
       final status = await upkeeper.check();
@@ -440,6 +516,7 @@ packages:
         homeDirOverride: tempHome.path,
         isLinuxOverride: true,
         isMacOverride: false,
+        isCloudtopOverride: false,
       );
 
       final status = await upkeeper.check();
@@ -466,6 +543,7 @@ packages:
         homeDirOverride: tempHome.path,
         isLinuxOverride: true,
         isMacOverride: false,
+        isCloudtopOverride: false,
       );
 
       // check() should report outdated because settings.json is a regular file and keybindings.json is missing
@@ -500,7 +578,10 @@ packages:
     });
 
     test('isSupported is false without shared vscode config', () async {
-      final upkeeper = VscodeUpkeeper(homeDirOverride: tempHome.path);
+      final upkeeper = VscodeUpkeeper(
+        homeDirOverride: tempHome.path,
+        isCloudtopOverride: false,
+      );
 
       check(await upkeeper.isSupported()).isFalse();
     });
@@ -511,7 +592,10 @@ packages:
       File('${sharedDir.path}/settings.json').writeAsStringSync('{}');
       File('${sharedDir.path}/keybindings.json').writeAsStringSync('[]');
 
-      final upkeeper = VscodeUpkeeper(homeDirOverride: tempHome.path);
+      final upkeeper = VscodeUpkeeper(
+        homeDirOverride: tempHome.path,
+        isCloudtopOverride: false,
+      );
 
       check(await upkeeper.isSupported()).isTrue();
     });
@@ -588,6 +672,23 @@ packages:
       final status = await upkeeper.check();
       check(status.state).equals(UpkeepState.upToDate);
       check(status.summary).contains('Guacamole stack is up to date');
+    });
+  });
+
+  group('Cloudtop Upkeepers Gating', () {
+    test('BrewUpkeeper isSupported returns false on cloudtop', () async {
+      final upkeeper = BrewUpkeeper(isCloudtopOverride: true);
+      check(await upkeeper.isSupported()).isFalse();
+    });
+
+    test('BrewfileUpkeeper isSupported returns false on cloudtop', () async {
+      final upkeeper = BrewfileUpkeeper(isCloudtopOverride: true);
+      check(await upkeeper.isSupported()).isFalse();
+    });
+
+    test('VscodeUpkeeper isSupported returns false on cloudtop', () async {
+      final upkeeper = VscodeUpkeeper(isCloudtopOverride: true);
+      check(await upkeeper.isSupported()).isFalse();
     });
   });
 }

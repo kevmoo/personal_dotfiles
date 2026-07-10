@@ -19,11 +19,14 @@ class GlinuxOsStrategy implements OsStrategy {
     List<String> arguments,
   )?
   _processRunner;
+  final bool Function()? _rebootRequiredChecker;
 
   GlinuxOsStrategy({
     Future<ProcessResult> Function(String executable, List<String> arguments)?
     processRunner,
-  }) : _processRunner = processRunner;
+    bool Function()? rebootRequiredChecker,
+  }) : _processRunner = processRunner,
+       _rebootRequiredChecker = rebootRequiredChecker;
 
   Future<ProcessResult> _runProcess(
     String executable,
@@ -85,9 +88,10 @@ class GlinuxOsStrategy implements OsStrategy {
     }
 
     // 2. Check pending reboot status
-    final hasRebootRequired =
-        File('/var/run/reboot-required').existsSync() ||
-        File('/run/reboot-required').existsSync();
+    final hasRebootRequired = _rebootRequiredChecker != null
+        ? _rebootRequiredChecker!()
+        : (File('/var/run/reboot-required').existsSync() ||
+              File('/run/reboot-required').existsSync());
     if (hasRebootRequired) {
       state = UpkeepState.outdated;
       issues.add('System reboot required');
@@ -96,47 +100,36 @@ class GlinuxOsStrategy implements OsStrategy {
 
     // 3. Check APT package upgrades
     try {
-      final aptResult = await _runProcess('apt-get', ['-s', 'upgrade']);
+      final aptResult = await _runProcess('apt', ['list', '--upgradable']);
       if (aptResult.exitCode == 0) {
         final stdout = aptResult.stdout.toString();
-        final match = RegExp(r'(\d+)\s+upgraded,\s+(\d+)\s+newly installed')
-            .firstMatch(stdout);
-        if (match != null) {
-          final count = int.tryParse(match.group(1) ?? '0') ?? 0;
-          if (count > 0) {
-            state = UpkeepState.outdated;
-            issues.add('$count APT package update(s) available');
-            final lines = stdout.split('\n');
-            final upgradedPackages = <String>[];
-            bool inUpgradedSection = false;
-            for (final line in lines) {
-              if (line.contains('The following packages will be upgraded:')) {
-                inUpgradedSection = true;
-                continue;
-              }
-              if (inUpgradedSection) {
-                if (line.trim().isEmpty ||
-                    line.startsWith('The following') ||
-                    line.contains('upgraded,')) {
-                  break;
-                }
-                upgradedPackages.addAll(
-                  line.trim().split(RegExp(r'\s+')).where((s) => s.isNotEmpty),
-                );
-              }
-            }
-            if (upgradedPackages.isNotEmpty) {
-              details.add(
-                'APT updates: ${upgradedPackages.take(5).join(', ')}${upgradedPackages.length > 5 ? ' (+${upgradedPackages.length - 5} more)' : ''}',
-              );
-            } else {
-              details.add('APT updates: $count package(s) ready to upgrade');
-            }
+        final lines = stdout.split('\n');
+        final upgradedPackages = <String>[];
+        for (final line in lines) {
+          final trimmed = line.trim();
+          if (trimmed.isEmpty ||
+              trimmed.startsWith('WARNING:') ||
+              trimmed.startsWith('Listing...') ||
+              !trimmed.contains('[upgradable from:')) {
+            continue;
           }
+          final pkgName = trimmed.split('/').first.trim();
+          if (pkgName.isNotEmpty) {
+            upgradedPackages.add(pkgName);
+          }
+        }
+        if (upgradedPackages.isNotEmpty) {
+          state = UpkeepState.outdated;
+          issues.add(
+            '${upgradedPackages.length} APT package update(s) available',
+          );
+          details.add(
+            'APT updates: ${upgradedPackages.take(5).join(', ')}${upgradedPackages.length > 5 ? ' (+${upgradedPackages.length - 5} more)' : ''}',
+          );
         }
       }
     } catch (_) {
-      // apt-get not available or error
+      // apt not available or error
     }
 
     if (state == UpkeepState.upToDate) {
@@ -166,14 +159,7 @@ class GlinuxOsStrategy implements OsStrategy {
   }) async {
     try {
       final gcertResult = await _runProcess('gcert', []);
-      if (gcertResult.exitCode == 0) {
-        return UpkeepResult(
-          upkeeperId: upkeeperId,
-          displayName: displayName,
-          success: true,
-          message: 'gCert refreshed successfully',
-        );
-      } else {
+      if (gcertResult.exitCode != 0) {
         return UpkeepResult(
           upkeeperId: upkeeperId,
           displayName: displayName,
@@ -182,12 +168,45 @@ class GlinuxOsStrategy implements OsStrategy {
           errorMessage: gcertResult.stderr.toString(),
         );
       }
+
+      final aptResult = await _runProcess('sudo', ['apt-get', 'upgrade', '-y']);
+      if (aptResult.exitCode != 0) {
+        return UpkeepResult(
+          upkeeperId: upkeeperId,
+          displayName: displayName,
+          success: false,
+          message:
+              'APT upgrade failed after refreshing gCert (exit code ${aptResult.exitCode})',
+          errorMessage: aptResult.stderr.toString(),
+        );
+      }
+
+      final hasRebootRequired = _rebootRequiredChecker != null
+          ? _rebootRequiredChecker!()
+          : (File('/var/run/reboot-required').existsSync() ||
+                File('/run/reboot-required').existsSync());
+
+      if (hasRebootRequired) {
+        return UpkeepResult(
+          upkeeperId: upkeeperId,
+          displayName: displayName,
+          success: true,
+          message: 'gCert refreshed and APT packages upgraded successfully. WARNING: System reboot required (/var/run/reboot-required) — run "sudo reboot" when ready.',
+        );
+      } else {
+        return UpkeepResult(
+          upkeeperId: upkeeperId,
+          displayName: displayName,
+          success: true,
+          message: 'gCert refreshed and APT packages upgraded successfully',
+        );
+      }
     } catch (e) {
       return UpkeepResult(
         upkeeperId: upkeeperId,
         displayName: displayName,
         success: false,
-        message: 'Exception executing gcert refresh',
+        message: 'Exception executing gcert refresh and APT upgrade',
         errorMessage: e.toString(),
       );
     }

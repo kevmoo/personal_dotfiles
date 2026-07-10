@@ -14,12 +14,14 @@ class BeadsDoltUpkeeper implements Upkeeper {
 
   final String? doltPathOverride;
   final String? bdPathOverride;
+  final bool? isCloudtopOverride;
 
   BeadsDoltUpkeeper({
     Future<ProcessResult> Function(String executable, List<String> arguments)?
     processRunner,
     this.doltPathOverride,
     this.bdPathOverride,
+    this.isCloudtopOverride,
   }) : _processRunner = processRunner;
 
   Future<ProcessResult> _runProcess(
@@ -40,18 +42,27 @@ class BeadsDoltUpkeeper implements Upkeeper {
 
   String _homeDir() => Platform.environment['HOME'] ?? Directory.current.path;
 
-  String _doltPath() => doltPathOverride ?? p.join(_homeDir(), 'go', 'bin', 'dolt');
+  String _doltPath() =>
+      doltPathOverride ?? p.join(_homeDir(), 'go', 'bin', 'dolt');
   String _bdPath() => bdPathOverride ?? p.join(_homeDir(), 'go', 'bin', 'bd');
+
+  bool _isCloudtop() {
+    if (isCloudtopOverride != null) return isCloudtopOverride!;
+    return Platform.isLinux &&
+        (Directory('/google/src').existsSync() ||
+            File('/etc/glinux-release').existsSync());
+  }
 
   @override
   Future<bool> isSupported() async {
-    // On systems with Homebrew (macOS / Bluefin), brew upkeepers manage dolt & beads.
+    // On systems with Homebrew (macOS / Bluefin), brew upkeepers manage dolt & beads,
+    // unless on cloudtop where we skip Homebrew and manage them via Go.
     final hasBrew = await _hasCommand('brew');
-    if (hasBrew) return false;
+    if (hasBrew && !_isCloudtop()) return false;
 
     final doltExists = File(_doltPath()).existsSync();
     final bdExists = File(_bdPath()).existsSync();
-    return doltExists || bdExists;
+    return doltExists || bdExists || (_isCloudtop() && await _hasCommand('go'));
   }
 
   @override
@@ -60,8 +71,21 @@ class BeadsDoltUpkeeper implements Upkeeper {
     final outdatedItems = <String>[];
     var isOutdated = false;
 
-    // 1. Audit Dolt
     final doltFile = File(_doltPath());
+    final bdFile = File(_bdPath());
+
+    if (!doltFile.existsSync() && !bdFile.existsSync()) {
+      if (_isCloudtop()) {
+        return UpkeepStatus(
+          upkeeperId: id,
+          displayName: displayName,
+          state: UpkeepState.outdated,
+          summary: 'Beads and Dolt binaries not installed (run update to install via go)',
+        );
+      }
+    }
+
+    // 1. Audit Dolt
     if (doltFile.existsSync()) {
       try {
         final result = await _runProcess(_doltPath(), ['version']);
@@ -80,10 +104,13 @@ class BeadsDoltUpkeeper implements Upkeeper {
       } catch (e) {
         details.add('Dolt: Error running version check ($e)');
       }
+    } else if (_isCloudtop()) {
+      isOutdated = true;
+      outdatedItems.add('Dolt binary not installed -> install via go');
+      details.add('Dolt: missing binary at ${_doltPath()}');
     }
 
     // 2. Audit Beads (bd)
-    final bdFile = File(_bdPath());
     if (bdFile.existsSync()) {
       try {
         final result = await _runProcess(_bdPath(), ['--version']);
@@ -92,6 +119,10 @@ class BeadsDoltUpkeeper implements Upkeeper {
       } catch (e) {
         details.add('Beads (bd): Error checking version ($e)');
       }
+    } else if (_isCloudtop()) {
+      isOutdated = true;
+      outdatedItems.add('Beads (bd) binary not installed -> install via go');
+      details.add('Beads (bd): missing binary at ${_bdPath()}');
     }
 
     if (isOutdated) {
@@ -118,8 +149,8 @@ class BeadsDoltUpkeeper implements Upkeeper {
     final updated = <String>[];
     final errors = <String>[];
 
-    // Update Dolt if installed
-    if (File(_doltPath()).existsSync()) {
+    // Update Dolt if installed or on cloudtop
+    if (File(_doltPath()).existsSync() || _isCloudtop()) {
       var res = await _runProcess('go', [
         'install',
         'github.com/dolthub/dolt/go/cmd/dolt@latest',
@@ -137,8 +168,8 @@ class BeadsDoltUpkeeper implements Upkeeper {
       }
     }
 
-    // Update Beads if installed
-    if (File(_bdPath()).existsSync()) {
+    // Update Beads if installed or on cloudtop
+    if (File(_bdPath()).existsSync() || _isCloudtop()) {
       final res = await _runProcess('go', [
         'install',
         'github.com/steveyegge/beads/cmd/bd@latest',

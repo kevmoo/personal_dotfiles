@@ -9,11 +9,13 @@ class VscodeUpkeeper implements Upkeeper {
   final String? homeDirOverride;
   final bool? isLinuxOverride;
   final bool? isMacOverride;
+  final bool? isCloudtopOverride;
 
   VscodeUpkeeper({
     this.homeDirOverride,
     this.isLinuxOverride,
     this.isMacOverride,
+    this.isCloudtopOverride,
   });
 
   @override
@@ -22,8 +24,16 @@ class VscodeUpkeeper implements Upkeeper {
   @override
   String get displayName => 'VS Code & Editor Settings';
 
+  bool _isCloudtop() {
+    if (isCloudtopOverride != null) return isCloudtopOverride!;
+    return Platform.isLinux &&
+        (Directory('/google/src').existsSync() ||
+            File('/etc/glinux-release').existsSync());
+  }
+
   @override
   Future<bool> isSupported() async {
+    if (_isCloudtop()) return false;
     final home = _homeDir();
     final settings = File(
       p.join(home, '.config', 'vscode-shared', 'settings.json'),
