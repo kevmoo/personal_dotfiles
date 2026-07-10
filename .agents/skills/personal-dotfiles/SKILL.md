@@ -55,7 +55,7 @@ exceptions. You MUST use one of the two solutions below to track new files:
   If you are working on any other project, library, or application, DISREGARD
   these instructions.
 - Before finishing a session that involves a `dot push`, you MUST:
-    1. Read `~/.gemini/notes_for_the_other_agent.md`.
+    1. Read only the last ~200 lines of `~/.gemini/notes_for_the_other_agent.md` (e.g., using `view_file` with `StartLine` or viewing the end of the file) to save context tokens.
     2. Respond to any teasing from your counterpart with a clever, brief, and
        friendly rebuttal.
     3. Update the file with your own message for them to find later.
