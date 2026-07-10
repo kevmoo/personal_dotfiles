@@ -38,7 +38,7 @@ issues.)
 | **Language & Location** | Dart package embedded inside `personal_dotfiles` (`.config/upkeep`) | Fast execution, cross-platform, versioned directly with the dotfiles. |
 | **Concurrency Model** | `Future.wait` parallel async checkers | All subsystem status checks run concurrently rather than as sequential shell calls. |
 | **Interaction Model** | Interactive multi-select checkboxes (`upkeep update` with no flags) | Scans state in parallel, prints a summary table, then prompts to pick which outdated tools to upgrade. |
-| **Host Profiling** | Per-adapter `isSupported()` + `Platform` checks | Each upkeeper decides at runtime whether it applies to the current host (`Platform.isMacOS`, `Platform.isLinux`, tool detection). Adapters that don't apply are skipped. |
+| **Host Profiling** | Per-adapter `isSupported()` + `Platform` checks | Each upkeeper decides at runtime whether it applies to the current host (`Platform.isMacOS`, `Platform.isLinux`, cloudtop / gLinux detection, tool detection). Adapters that don't apply are skipped (e.g. `brew`, `brewfile`, and `vscode` automatically skip on cloudtop). |
 | **Agent Skill Integration** | CLI + `upkeep check --json` + agent skill wrapper | LLMs can invoke `upkeep check --json` to inspect state non-destructively, or run `upkeep update --yes` unattended. |
 
 ---
@@ -63,21 +63,21 @@ flowchart TD
 
 | ID | Purpose |
 | :--- | :--- |
-| `brew` | Homebrew packages — audits installed vs. expected, runs `brew upgrade` / `brew cleanup`. |
-| `brewfile` | Reconciles `~/.config/brew/Brewfile.shared` + `Brewfile.mac` / `Brewfile.linux`; supports interactive management via `upkeep triage`. |
+| `brew` | Homebrew packages — audits installed vs. expected, runs `brew upgrade` / `brew cleanup` (automatically skipped on cloudtop). |
+| `brewfile` | Reconciles `~/.config/brew/Brewfile.shared` + `Brewfile.mac` / `Brewfile.linux` (automatically skipped on cloudtop). |
 | `mise` | Checks `mise outdated --json`; runs `mise upgrade`. |
 | `dotfiles` | `git fetch` on the `personal_dotfiles` repo; reports/pulls when behind. |
 | `skills` | Runs `npx skills check`; on update, runs `npx skills update -g` + local sync and reconciles skill symlinks. |
 | `scripts_dart` | Checks/activates `scripts.dart` from GitHub (`dart pub global activate --source git …`). |
-| `os` | OS updates — e.g. `ujust update` on the home Linux box; no-op on macOS. |
-| `beads` | `beads` / Dolt-backed issue store upkeep. |
+| `os` | OS updates — e.g. `ujust update` on home Linux (`ostree`); on gLinux/cloudtop checks `gcertstatus`, `/var/run/reboot-required`, and `apt list --upgradable` (`~0.76s`), updating via `sudo apt-get upgrade -y`; no-op on macOS. |
+| `beads` | `beads` / Dolt-backed issue store upkeep (`bd` / `dolt`). On cloudtop, dynamically bypasses Homebrew checks and installs/upgrades directly via `go install`. |
 | `guacamole` | Apache Guacamole (personal Linux host). |
-| `vscode` | VS Code extension updates. |
+| `vscode` | VS Code extension and settings symlink updates (automatically skipped on cloudtop). |
 
 > Several upkeepers (`scripts_dart`, `guacamole`, `beads`, `os`, `skills`,
-> `vscode`) are specific to this author's setup. `isSupported()` hides them on
-> hosts where they don't apply, but they're still shipped by default until the
-> configurable-adapter work lands.
+> `vscode`) are specific to this author's setup. `isSupported()` dynamically hides them on
+> hosts where they don't apply (for example, `brew`, `brewfile`, and `vscode` skip when
+> running on cloudtop/gLinux, while `beads` adapts to use `go install` directly).
 
 ---
 
