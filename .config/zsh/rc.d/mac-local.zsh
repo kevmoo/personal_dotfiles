@@ -15,3 +15,6 @@ export RBE_cache_dir='/tmp/rbe'
 
 # Increase open file descriptor limit
 ulimit -n 10240
+
+# Aliases
+alias corp-ssh='gcertstatus --check_remaining=1h --quiet || gcert; ssh kevmoo.c.googlers.com'

@@ -12,3 +12,10 @@ export BEADS_ACTOR="kevmoo@glinux-cloudtop"
 # ---------------------------------------------------------
 export PROMPT_PREFIX="☁️  "
 
+# ---------------------------------------------------------
+# 3. Security & Certificates
+# ---------------------------------------------------------
+if [[ -n "$SSH_CONNECTION" && -t 1 ]] && command -v gcertstatus >/dev/null; then
+  gcertstatus --check_remaining=1h --quiet || gcert
+fi
+
