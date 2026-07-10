@@ -21,13 +21,14 @@ class UpkeepRunner {
           ];
 
   /// Checks status across supported upkeepers concurrently.
-  /// Option to filter by [targetIds] (case-insensitive substring match).
+  /// Checks status across supported upkeepers concurrently.
+  /// Option to filter by [targetIds] (case-insensitive exact match).
   Future<List<UpkeepStatus>> checkAll({List<String>? targetIds}) async {
     final supportedList = <Upkeeper>[];
     for (final u in upkeepers) {
       if (targetIds != null && targetIds.isNotEmpty) {
         final matches = targetIds.any(
-          (t) => u.id.toLowerCase().contains(t.toLowerCase()),
+          (t) => u.id.toLowerCase() == t.toLowerCase(),
         );
         if (!matches) continue;
       }
@@ -41,14 +42,16 @@ class UpkeepRunner {
     return results;
   }
 
-  /// Runs update on specified upkeeper IDs sequentially.
+  /// Runs update on specified upkeeper IDs sequentially (case-insensitive exact match).
   Future<List<UpkeepResult>> updateSelected(
     List<String> targetIds, {
     bool verbose = false,
     bool cleanup = false,
   }) async {
     final results = <UpkeepResult>[];
-    final selected = upkeepers.where((u) => targetIds.contains(u.id));
+    final selected = upkeepers.where(
+      (u) => targetIds.any((t) => u.id.toLowerCase() == t.toLowerCase()),
+    );
 
     for (final u in selected) {
       final res = u is BrewfileUpkeeper

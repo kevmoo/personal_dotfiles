@@ -158,6 +158,39 @@ void main() {
       check(statuses.first.upkeeperId).equals('brew');
     });
 
+    test(
+      'Runner strict exact matching does not select brewfile for target brew',
+      () async {
+        final mockBrew = MockUpkeeper(
+          id: 'brew',
+          displayName: 'Brew Subsystem',
+          statusToReturn: const UpkeepStatus(
+            upkeeperId: 'brew',
+            displayName: 'Brew Subsystem',
+            state: UpkeepState.upToDate,
+            summary: 'All clear',
+          ),
+        );
+
+        final mockBrewfile = MockUpkeeper(
+          id: 'brewfile',
+          displayName: 'Brewfile Subsystem',
+          statusToReturn: const UpkeepStatus(
+            upkeeperId: 'brewfile',
+            displayName: 'Brewfile Subsystem',
+            state: UpkeepState.upToDate,
+            summary: 'All clear',
+          ),
+        );
+
+        final runner = UpkeepRunner(upkeepers: [mockBrew, mockBrewfile]);
+        final statuses = await runner.checkAll(targetIds: ['brew']);
+
+        check(statuses.length).equals(1);
+        check(statuses.first.upkeeperId).equals('brew');
+      },
+    );
+
     test('Runner executes selected updates', () async {
       final mock1 = MockUpkeeper(
         id: 'sub1',
