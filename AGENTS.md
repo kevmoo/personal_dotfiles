@@ -63,3 +63,10 @@ Verify before declaring victory:
   OAuth2 PKCE flow`, never `updates`/`fix bug`). Body: why the change is
   needed, bulleted summary, `Fixes #123` links — no agent meta-commentary
   or tool logs.
+
+## Workspace & Repository Layout
+
+- **External Repos (`~/github`)**: Sync and open all external GitHub repositories under `~/github`.
+  - Repositories from my personal GitHub org (`github.com/kevmoo`) live under `~/github/kevmoo/<repo_name>`.
+  - `~/github/dart-sdk` has custom agent setup; always check `~/github/dart-sdk/.agents/` when working in that directory.
+- **Dotfiles (`~/.dotfiles`)**: My home directory (`~/.zshrc`, `~/.config/*`) is managed by a bare repository at `~/.dotfiles`. Whenever inspecting or editing dotfiles in `$HOME`, consult the `personal-dotfiles` skill (`~/.agents/skills/personal-dotfiles/SKILL.md`) for the required Anti-Universe bare-repo protocol and ignore rules.
