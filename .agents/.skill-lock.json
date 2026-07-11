@@ -15,9 +15,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/vercel-labs/skills.git",
       "skillPath": "skills/find-skills/SKILL.md",
-      "skillFolderHash": "eb6a23305aea6e340d14b9de3766e721f9f4861b",
+      "skillFolderHash": "76a98a285cb0434f3d39e1a873823556330e398b",
       "installedAt": "2026-05-07T17:47:45.888Z",
-      "updatedAt": "2026-06-24T23:35:29.412Z"
+      "updatedAt": "2026-07-11T03:33:07.812Z"
     },
     "dart-build-cli-app": {
       "source": "dart-lang/skills",
@@ -159,9 +159,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/github-pr-triage/SKILL.md",
-      "skillFolderHash": "4ac93c7eaa8795cfea5586a005d11cbf4cd8e992",
+      "skillFolderHash": "e2f7f315335952ca09e88e67cd5d1d7ec26dc659",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-07-03T08:36:58.536Z"
+      "updatedAt": "2026-07-11T03:33:08.976Z"
     },
     "gob-curl": {
       "source": "kevmoo/kevmoo_skills",
@@ -267,9 +267,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/pr-loop/SKILL.md",
-      "skillFolderHash": "4b0f20b5f6281a9508e061549af4936e23b046f1",
+      "skillFolderHash": "54e05ca88fef6cbeccab2fdafbfe7cdfc42f7104",
       "installedAt": "2026-06-25T18:17:01.797Z",
-      "updatedAt": "2026-07-03T08:36:59.661Z"
+      "updatedAt": "2026-07-11T03:33:10.573Z"
     },
     "grilling": {
       "source": "mattpocock/skills",
