@@ -168,18 +168,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/gob-curl/SKILL.md",
-      "skillFolderHash": "93d10fc7ac8207d69687ab5b34afb1a5a370d35b",
+      "skillFolderHash": "6e7e323bb2b3e2e6215362aaab65b894510968cc",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-06-29T19:19:37.576Z"
+      "updatedAt": "2026-07-12T06:51:13.279Z"
     },
     "sem-semantic-diff": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sem-semantic-diff/SKILL.md",
-      "skillFolderHash": "196a20e4f115dbe03bc23080ce69543a357e78fb",
+      "skillFolderHash": "55572bbd0e6d7af0b78f8863d66d4f8c00d5edb8",
       "installedAt": "2026-06-05T01:21:48.063Z",
-      "updatedAt": "2026-06-29T19:19:37.577Z"
+      "updatedAt": "2026-07-12T06:51:14.352Z"
     },
     "dart-best-practices": {
       "source": "kevmoo/dash_skills",
@@ -267,9 +267,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/pr-loop/SKILL.md",
-      "skillFolderHash": "54e05ca88fef6cbeccab2fdafbfe7cdfc42f7104",
+      "skillFolderHash": "64d6d10eb1572815fba0d84713b3e5e050fd1240",
       "installedAt": "2026-06-25T18:17:01.797Z",
-      "updatedAt": "2026-07-11T03:33:10.573Z"
+      "updatedAt": "2026-07-12T06:51:15.606Z"
     },
     "grilling": {
       "source": "mattpocock/skills",
@@ -295,9 +295,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/just-brainstorm/SKILL.md",
-      "skillFolderHash": "751f298fe311a3349a8b4b5da34f33bb3aac3b41",
+      "skillFolderHash": "1196317e57c4665f6a550c0f09ade9bf30327ece",
       "installedAt": "2026-06-29T19:19:37.574Z",
-      "updatedAt": "2026-06-29T19:19:37.574Z"
+      "updatedAt": "2026-07-12T06:51:16.812Z"
     },
     "markdown-long-lines": {
       "source": "kevmoo/kevmoo_skills",
@@ -322,9 +322,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/what-if/SKILL.md",
-      "skillFolderHash": "c130a4c6fee30339bd34f3117e6b0033c7cb55be",
+      "skillFolderHash": "aecba2122602df24130e170193479329365910c4",
       "installedAt": "2026-06-29T19:19:37.575Z",
-      "updatedAt": "2026-06-29T19:19:37.575Z"
+      "updatedAt": "2026-07-12T06:51:18.592Z"
     },
     "encapsulated-method-object": {
       "source": "kevmoo/kevmoo_skills",
@@ -340,18 +340,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/clarify-confirm-continue/SKILL.md",
-      "skillFolderHash": "8a4e49e72e5264498c96327b22d9d28c993ef1f3",
+      "skillFolderHash": "617c86b7ce2e799f769f9d905638850bbdc655a5",
       "installedAt": "2026-07-07T21:40:25.936Z",
-      "updatedAt": "2026-07-07T21:40:25.936Z"
+      "updatedAt": "2026-07-12T06:51:20.154Z"
     },
     "sidequest": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "41f1e65ab71d8427ee0c116436202fbcc026012a",
+      "skillFolderHash": "e4955bf2b7d49c00608626b4b5fec4cd2a0d8080",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-07-12T04:00:27.412Z"
+      "updatedAt": "2026-07-12T06:51:21.197Z"
     },
     "github-issues": {
       "source": "github/awesome-copilot",
