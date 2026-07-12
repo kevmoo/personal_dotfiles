@@ -343,6 +343,15 @@
       "skillFolderHash": "8a4e49e72e5264498c96327b22d9d28c993ef1f3",
       "installedAt": "2026-07-07T21:40:25.936Z",
       "updatedAt": "2026-07-07T21:40:25.936Z"
+    },
+    "sidequest": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/sidequest/SKILL.md",
+      "skillFolderHash": "6d0623ec4b6cb4a047854ee1bbee46fc7230150d",
+      "installedAt": "2026-07-12T03:02:22.429Z",
+      "updatedAt": "2026-07-12T03:02:22.429Z"
     }
   },
   "dismissed": {
