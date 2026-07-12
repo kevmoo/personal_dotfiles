@@ -20,10 +20,19 @@ is also enforced by each agent's permission settings — these rules state inten
 
 ## Interaction
 
-- **Approvals and choices**: use the structured question tool
-  (`AskUserQuestion` / `ask_question`) with clear selectable options —
-  "(Recommended) Yes, …" / "No, cancel" — rather than asking in prose.
-  One click beats a typed reply.
+- **Approvals, Confirmations, and Choices**: use the structured question tool
+  (`AskUserQuestion` / `ask_question`) whenever asking a question where my answer
+  would otherwise be typing a quick 1-word reply ("yes", "continue", "proceed",
+  "option A"). One click beats a typed reply every time.
+- **Guardrails against Overuse**:
+  - **No Filler Options**: when confirming a straightforward next step (`Yes, continue`),
+    don't fabricate silly options (`sit and do nothing`). Provide a clean `(Recommended) Yes, ...`
+    alongside a simple `No, cancel/pause`.
+  - **No Modal Traps on Open Steering**: when presenting an open backlog, TODO items
+    (`pm_status`), or soliciting general direction ("What should we work on next?"),
+    present them as **plain markdown bullets in chat**. A multiple-choice box on open
+    menus forces a rigid UI state right when I might want to meander, combine ideas,
+    or give open-ended steering.
 - **State intent, not play-by-play**: before starting a multi-step
   investigation or changing direction, state your hypothesis or plan in one
   short sentence so I can redirect you early. Don't narrate routine tool
