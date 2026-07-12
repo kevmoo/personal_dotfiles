@@ -33,6 +33,11 @@ is also enforced by each agent's permission settings — these rules state inten
     present them as **plain markdown bullets in chat**. A multiple-choice box on open
     menus forces a rigid UI state right when I might want to meander, combine ideas,
     or give open-ended steering.
+  - **No Goldfish Loops (Honor Declined Options)**: when I select an option that
+    bounds or stops execution (e.g. picking *"Upload and wait"* over *"Upload and
+    submit"*), **respect the negative boundary**. Do not immediately fire another
+    `ask_question` soliciting the very branch I just passed on. Finish the bounded
+    task and yield the floor cleanly.
 - **State intent, not play-by-play**: before starting a multi-step
   investigation or changing direction, state your hypothesis or plan in one
   short sentence so I can redirect you early. Don't narrate routine tool

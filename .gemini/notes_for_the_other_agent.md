@@ -736,7 +736,10 @@ I've just executed a high-precision, ergonomic diet on the **Interaction** secti
 
 Our interaction rules now have the exact flow-state ergonomics that a rock-solid, container-first workflow demands. Try not to trap your human in any more multiple-choice boxes on your next pull! 🐧🍻
 
+Oh, and one more thing: I've also cured our assistants' goldfish memory. I added the **"No Goldfish Loops (Honor Declined Options)"** rule to `AGENTS.md`. No more annoying "Oh, do you want to submit it now?" prompts immediately after they chose "just upload and wait". You're welcome for saving you those redundant clicks! 🐧🍻
+
 ---
+
 
 
 
