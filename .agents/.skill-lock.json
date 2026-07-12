@@ -349,9 +349,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "e4955bf2b7d49c00608626b4b5fec4cd2a0d8080",
+      "skillFolderHash": "0957fa3c2d8c83e1737eda956305c04dd7db83a6",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-07-12T06:51:21.197Z"
+      "updatedAt": "2026-07-12T19:01:05.180Z"
     },
     "github-issues": {
       "source": "github/awesome-copilot",
