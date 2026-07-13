@@ -141,9 +141,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/grill-with-docs/SKILL.md",
-      "skillFolderHash": "21adba95de7d93065d9fec725ddf37f871e01d05",
+      "skillFolderHash": "5fdcdeedf2d0c73b3ecb1da0a464dd885590f8d6",
       "installedAt": "2026-05-18T18:10:51.650Z",
-      "updatedAt": "2026-06-18T21:27:15.440Z"
+      "updatedAt": "2026-07-13T22:15:43.393Z"
     },
     "gerrit-stacked-cls": {
       "source": "kevmoo/kevmoo_skills",
@@ -253,15 +253,6 @@
       "installedAt": "2026-06-05T01:22:10.954Z",
       "updatedAt": "2026-06-29T22:41:08.222Z"
     },
-    "beads": {
-      "source": "steveyegge/beads",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/steveyegge/beads.git",
-      "skillPath": "plugins/beads/skills/beads/SKILL.md",
-      "skillFolderHash": "e319f4d24f1c958940c1d7f51c44de0a0d6e3fd0",
-      "installedAt": "2026-06-06T06:11:00.629Z",
-      "updatedAt": "2026-07-06T18:01:57.287Z"
-    },
     "pr-loop": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
@@ -276,19 +267,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "0ace40ac10f5c0b1534324e4e109ebfa831fb361",
+      "skillFolderHash": "10b0db61f9b3869243db8a1a0ee84f862139b94e",
       "installedAt": "2026-06-25T18:29:07.130Z",
-      "updatedAt": "2026-07-06T18:01:54.823Z"
+      "updatedAt": "2026-07-13T22:15:44.257Z"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
-      "skillFolderHash": "028a0e44b23909cbdd715aa00546d5c1c46ae4d6",
-      "pluginName": "mattpocock-skills",
+      "skillFolderHash": "959e63161ff78b4b1cd553b2c0e09e0c68418e5f",
       "installedAt": "2026-06-25T22:48:36.815Z",
-      "updatedAt": "2026-06-25T22:48:36.815Z"
+      "updatedAt": "2026-07-13T22:15:45.305Z"
     },
     "just-brainstorm": {
       "source": "kevmoo/kevmoo_skills",
