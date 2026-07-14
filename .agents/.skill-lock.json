@@ -285,9 +285,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/just-brainstorm/SKILL.md",
-      "skillFolderHash": "1196317e57c4665f6a550c0f09ade9bf30327ece",
+      "skillFolderHash": "5892d36af4fba2885dfc6b4a70392ec77c4aed20",
       "installedAt": "2026-06-29T19:19:37.574Z",
-      "updatedAt": "2026-07-12T06:51:16.812Z"
+      "updatedAt": "2026-07-14T19:02:02.525Z"
     },
     "markdown-long-lines": {
       "source": "kevmoo/kevmoo_skills",
@@ -306,15 +306,6 @@
       "skillFolderHash": "64ccdc6596bacce0d87694aa31f67f79f8ad94c4",
       "installedAt": "2026-06-29T19:19:37.575Z",
       "updatedAt": "2026-06-29T19:19:37.575Z"
-    },
-    "what-if": {
-      "source": "kevmoo/kevmoo_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
-      "skillPath": "skills/what-if/SKILL.md",
-      "skillFolderHash": "aecba2122602df24130e170193479329365910c4",
-      "installedAt": "2026-06-29T19:19:37.575Z",
-      "updatedAt": "2026-07-12T06:51:18.592Z"
     },
     "encapsulated-method-object": {
       "source": "kevmoo/kevmoo_skills",
