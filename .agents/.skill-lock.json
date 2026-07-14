@@ -258,9 +258,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/pr-loop/SKILL.md",
-      "skillFolderHash": "64d6d10eb1572815fba0d84713b3e5e050fd1240",
+      "skillFolderHash": "80c503ad21759909030b594330f1a0a75ef64dd4",
       "installedAt": "2026-06-25T18:17:01.797Z",
-      "updatedAt": "2026-07-12T06:51:15.606Z"
+      "updatedAt": "2026-07-14T04:48:11.816Z"
     },
     "grilling": {
       "source": "mattpocock/skills",
