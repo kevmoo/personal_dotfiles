@@ -225,28 +225,19 @@ void main() {
       }
     });
 
-    void createMockLockFile(String resolvedRef) {
-      final pkgDir = Directory(
-        '${tempPubCache.path}/global_packages/kevmoo_scripts',
+    void createMockInstallDir(String resolvedRef) {
+      final gitDir = Directory(
+        '${tempPubCache.path}/app-bundles/kevmoo_scripts/git/$resolvedRef',
       );
-      pkgDir.createSync(recursive: true);
-      final lockFile = File('${pkgDir.path}/pubspec.lock');
-      lockFile.writeAsStringSync('''
-packages:
-  kevmoo_scripts:
-    description:
-      resolved-ref: "$resolvedRef"
-      url: "https://github.com/kevmoo/scripts.dart"
-    source: git
-    version: "0.0.0"
-''');
+      gitDir.createSync(recursive: true);
     }
 
     test('detects update available when local SHA != remote SHA', () async {
-      createMockLockFile('b798a52a0d713b5369d02ee30600482826481146');
+      createMockInstallDir('b798a52a0d713b5369d02ee30600482826481146');
 
       final upkeeper = ScriptsDartUpkeeper(
         pubCacheDirOverride: tempPubCache,
+        installDirOverride: tempPubCache,
         processRunner: (executable, args) async {
           if (executable == 'git' && args.contains('ls-remote')) {
             return ProcessResult(
@@ -266,10 +257,11 @@ packages:
     });
 
     test('detects up to date when local SHA == remote SHA', () async {
-      createMockLockFile('ed6acf3d2e2482d0f750b97df8ddc00196a244fc');
+      createMockInstallDir('ed6acf3d2e2482d0f750b97df8ddc00196a244fc');
 
       final upkeeper = ScriptsDartUpkeeper(
         pubCacheDirOverride: tempPubCache,
+        installDirOverride: tempPubCache,
         processRunner: (executable, args) async {
           if (executable == 'git' && args.contains('ls-remote')) {
             return ProcessResult(
@@ -289,22 +281,31 @@ packages:
     });
 
     test('reports outdated if not activated globally', () async {
-      final upkeeper = ScriptsDartUpkeeper(pubCacheDirOverride: tempPubCache);
+      final upkeeper = ScriptsDartUpkeeper(
+        pubCacheDirOverride: tempPubCache,
+        installDirOverride: tempPubCache,
+      );
 
       final status = await upkeeper.check();
       check(status.state).equals(UpkeepState.outdated);
-      check(status.summary).equals('scripts package not activated globally');
+      check(status.summary).equals('scripts package not installed');
     });
 
     test('isSupported is false when not activated globally', () async {
-      final upkeeper = ScriptsDartUpkeeper(pubCacheDirOverride: tempPubCache);
+      final upkeeper = ScriptsDartUpkeeper(
+        pubCacheDirOverride: tempPubCache,
+        installDirOverride: tempPubCache,
+      );
 
       check(await upkeeper.isSupported()).isFalse();
     });
 
     test('isSupported is true when activated globally', () async {
-      createMockLockFile('ed6acf3d2e2482d0f750b97df8ddc00196a244fc');
-      final upkeeper = ScriptsDartUpkeeper(pubCacheDirOverride: tempPubCache);
+      createMockInstallDir('ed6acf3d2e2482d0f750b97df8ddc00196a244fc');
+      final upkeeper = ScriptsDartUpkeeper(
+        pubCacheDirOverride: tempPubCache,
+        installDirOverride: tempPubCache,
+      );
 
       check(await upkeeper.isSupported()).isTrue();
     });

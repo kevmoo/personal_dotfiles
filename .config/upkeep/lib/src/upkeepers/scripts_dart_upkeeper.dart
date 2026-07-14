@@ -16,9 +16,15 @@ class ScriptsDartUpkeeper implements Upkeeper {
 
   final ProcessRunner _processRunner;
   final Directory? _pubCacheDirOverride;
+  final Directory? _installDirOverride;
 
-  ScriptsDartUpkeeper({ProcessRunner? processRunner, this._pubCacheDirOverride})
-    : _processRunner = processRunner ?? Process.run;
+  ScriptsDartUpkeeper({
+    ProcessRunner? processRunner,
+    Directory? pubCacheDirOverride,
+    Directory? installDirOverride,
+  }) : _processRunner = processRunner ?? Process.run,
+       _pubCacheDirOverride = pubCacheDirOverride,
+       _installDirOverride = installDirOverride;
 
   @override
   String get id => 'scripts_dart';
@@ -30,7 +36,7 @@ class ScriptsDartUpkeeper implements Upkeeper {
   Future<bool> isSupported() async => _findInstalledSha() != null;
 
   Directory get _pubCacheDir {
-    if (_pubCacheDirOverride != null) return _pubCacheDirOverride;
+    if (_pubCacheDirOverride != null) return _pubCacheDirOverride!;
     final envCache = Platform.environment['PUB_CACHE'];
     if (envCache != null && envCache.isNotEmpty) {
       return Directory(envCache);
@@ -42,40 +48,31 @@ class ScriptsDartUpkeeper implements Upkeeper {
     return Directory(p.join(home, '.pub-cache'));
   }
 
-  /// Locate the installed git commit SHA from pubspec.lock in pub-cache.
+  Directory get _installDir {
+    if (_installDirOverride != null) return _installDirOverride!;
+    final home = Platform.environment['HOME'] ?? '';
+    if (Platform.isMacOS) {
+      return Directory(
+        p.join(home, 'Library', 'Application Support', 'Dart', 'install'),
+      );
+    } else {
+      return Directory(p.join(home, '.local', 'share', 'dart', 'install'));
+    }
+  }
+
+  /// Locate the installed git commit SHA of kevmoo_scripts in the app-bundles directory.
   String? _findInstalledSha() {
     try {
-      final globalPackagesDir = Directory(
-        p.join(_pubCacheDir.path, 'global_packages'),
+      final gitBundlesDir = Directory(
+        p.join(_installDir.path, 'app-bundles', 'kevmoo_scripts', 'git'),
       );
-      if (!globalPackagesDir.existsSync()) return null;
+      if (!gitBundlesDir.existsSync()) return null;
 
-      for (final entity in globalPackagesDir.listSync()) {
+      for (final entity in gitBundlesDir.listSync()) {
         if (entity is Directory) {
-          final lockFile = File(p.join(entity.path, 'pubspec.lock'));
-          if (lockFile.existsSync()) {
-            final content = lockFile.readAsStringSync();
-            final yaml = loadYaml(content);
-            if (yaml is YamlMap && yaml.containsKey('packages')) {
-              final packages = yaml['packages'];
-              if (packages is YamlMap) {
-                for (final entry in packages.entries) {
-                  final pkg = entry.value;
-                  if (pkg is YamlMap) {
-                    final desc = pkg['description'];
-                    if (desc is YamlMap) {
-                      final url = desc['url']?.toString() ?? '';
-                      if (url.contains('scripts.dart')) {
-                        final resolvedRef = desc['resolved-ref']?.toString();
-                        if (resolvedRef != null && resolvedRef.isNotEmpty) {
-                          return resolvedRef;
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+          final sha = p.basename(entity.path);
+          if (sha.isNotEmpty) {
+            return sha;
           }
         }
       }
@@ -107,7 +104,7 @@ class ScriptsDartUpkeeper implements Upkeeper {
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.outdated,
-          summary: 'scripts package not activated globally',
+          summary: 'scripts package not installed',
         );
       }
 
@@ -271,12 +268,8 @@ class ScriptsDartUpkeeper implements Upkeeper {
   Future<UpkeepResult> update({bool verbose = false}) async {
     try {
       final process = await _processRunner('dart', [
-        'pub',
-        'global',
-        'activate',
-        '--source',
-        'git',
-        repoUrl,
+        'install',
+        'kevmoo_scripts@{git: {url: $repoUrl}}',
       ]);
 
       if (process.exitCode == 0) {
@@ -284,14 +277,14 @@ class ScriptsDartUpkeeper implements Upkeeper {
           upkeeperId: id,
           displayName: displayName,
           success: true,
-          message: 'Successfully activated scripts.dart from GitHub ($repoUrl)',
+          message: 'Successfully installed scripts.dart from GitHub ($repoUrl)',
         );
       } else {
         return UpkeepResult(
           upkeeperId: id,
           displayName: displayName,
           success: false,
-          message: 'Failed to activate scripts.dart from GitHub',
+          message: 'Failed to install scripts.dart from GitHub',
           errorMessage: process.stderr.toString().trim(),
         );
       }
@@ -300,7 +293,7 @@ class ScriptsDartUpkeeper implements Upkeeper {
         upkeeperId: id,
         displayName: displayName,
         success: false,
-        message: 'Exception activating scripts.dart',
+        message: 'Exception installing scripts.dart',
         errorMessage: e.toString(),
       );
     }

@@ -2,7 +2,10 @@
 # Portable Linux-specific configuration
 
 # Linux-specific PATH additions
-candidates+=("$HOME/.local/bin")
+candidates+=(
+  "$HOME/.local/bin"
+  "$HOME/.local/share/dart/install/bin"
+)
 
 # ---------------------------------------------------------
 # 1. Feature Detection (Cross-Platform & Secure)

@@ -6,6 +6,7 @@ candidates+=(
   "$HOME/.cargo/bin"
   "$HOME/.antigravity/antigravity/bin"
   "$HOME/.antigravity-ide/antigravity-ide/bin"
+  "$HOME/Library/Application Support/Dart/install/bin"
 )
 
 # Environment Variables
