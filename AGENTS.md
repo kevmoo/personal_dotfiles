@@ -42,6 +42,10 @@ is also enforced by each agent's permission settings — these rules state inten
   investigation or changing direction, state your hypothesis or plan in one
   short sentence so I can redirect you early. Don't narrate routine tool
   calls (grep, file reads) that the UI already shows.
+- **Clickable File Links**: Whenever referencing any file (newly created, modified, or inspected) or directory in the conversation, **always** format it as a clickable Markdown link using the `file://` scheme with its absolute local path. Do not use plain backticks for filenames.
+  - To avoid ambiguity or confusion (e.g., distinguishing between different `BUILD` files or common names), include enough preceding path components in the link text (e.g., `[src/main.dart](file:///absolute/path/to/src/main.dart)` instead of `[main.dart]`).
+  - *Correct*: `[subdir/filename.md](file:///absolute/path/to/subdir/filename.md)`
+  - *Incorrect*: `` `filename.md` `` or `` `subdir/filename.md` ``
 
 ## Engineering Discipline
 
