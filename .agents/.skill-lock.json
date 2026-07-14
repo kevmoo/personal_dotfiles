@@ -342,6 +342,24 @@
       "skillFolderHash": "0957fa3c2d8c83e1737eda956305c04dd7db83a6",
       "installedAt": "2026-07-12T03:02:22.429Z",
       "updatedAt": "2026-07-12T19:01:05.180Z"
+    },
+    "conversation-auditor": {
+      "source": "pq/pq-agent-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/pq/pq-agent-skills.git",
+      "skillPath": "skills/conversation-auditor/SKILL.md",
+      "skillFolderHash": "debfa527275ffdc26c4e97a2abc6c4ca143ad7da",
+      "installedAt": "2026-07-14T04:02:44.854Z",
+      "updatedAt": "2026-07-14T04:02:44.854Z"
+    },
+    "estimate-conversation-tokens": {
+      "source": "pq/pq-agent-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/pq/pq-agent-skills.git",
+      "skillPath": "skills/estimate-conversation-tokens/SKILL.md",
+      "skillFolderHash": "ce4d3db0688b372e55b7956c018e78ff61eb62eb",
+      "installedAt": "2026-07-14T04:02:44.855Z",
+      "updatedAt": "2026-07-14T04:02:44.855Z"
     }
   },
   "dismissed": {
