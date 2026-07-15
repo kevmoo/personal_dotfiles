@@ -339,9 +339,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/pq/pq-agent-skills.git",
       "skillPath": "skills/conversation-auditor/SKILL.md",
-      "skillFolderHash": "debfa527275ffdc26c4e97a2abc6c4ca143ad7da",
+      "skillFolderHash": "5142411a549c975b0795043ad985c37f8ecc40f3",
       "installedAt": "2026-07-14T04:02:44.854Z",
-      "updatedAt": "2026-07-14T04:02:44.854Z"
+      "updatedAt": "2026-07-15T18:39:33.948Z"
     },
     "estimate-conversation-tokens": {
       "source": "pq/pq-agent-skills",
