@@ -91,3 +91,9 @@ Verify before declaring victory:
   - Repositories from my personal GitHub org (`github.com/kevmoo`) live under `~/github/kevmoo/<repo_name>`.
   - `~/github/dart-sdk` has custom agent setup; always check `~/github/dart-sdk/.agents/` when working in that directory.
 - **Dotfiles (`~/.dotfiles`)**: My home directory (`~/.zshrc`, `~/.config/*`) is managed by a bare repository at `~/.dotfiles`. Whenever inspecting or editing dotfiles in `$HOME`, consult the `personal-dotfiles` skill (`~/.agents/skills/personal-dotfiles/SKILL.md`) for the required Anti-Universe bare-repo protocol and ignore rules.
+- **Private Corp Dotfiles (`~/.dotfiles-corp`)**: On gLinux corp machines (e.g. workstations, Cloudtops), you must clone your private Git-on-Borg dotfiles repository to backup internal configs (like `local.zsh`, `config.local`, and `settings.json`):
+  `git clone --bare sso://user/kevmoo/dotfiles-corp ~/.dotfiles-corp`
+  And configure it to hide untracked files:
+  `git --git-dir=$HOME/.dotfiles-corp/ --work-tree=$HOME config --local status.showUntrackedFiles no`
+  All private files (local Zsh configs, Git profiles, local safety settings) are managed via the `dotcorp` command line script.
+
