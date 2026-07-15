@@ -44,8 +44,11 @@ is also enforced by each agent's permission settings — these rules state inten
   calls (grep, file reads) that the UI already shows.
 - **Clickable File Links**: Whenever referencing any file (newly created, modified, or inspected) or directory in the conversation, **always** format it as a clickable Markdown link using the `file://` scheme with its absolute local path. Do not use plain backticks for filenames.
   - To avoid ambiguity or confusion (e.g., distinguishing between different `BUILD` files or common names), include enough preceding path components in the link text (e.g., `[src/main.dart](file:///absolute/path/to/src/main.dart)` instead of `[main.dart]`).
+  - **CRITICAL**: Do NOT wrap the link text, nor the entire markdown link, in backticks (e.g., `\``). Doing so turns the link into a code literal block and prevents rendering in the chat UI.
   - *Correct*: `[subdir/filename.md](file:///absolute/path/to/subdir/filename.md)`
   - *Incorrect*: `` `filename.md` `` or `` `subdir/filename.md` ``
+  - *Incorrect*: `` `[subdir/filename.md](file:///absolute/path/to/subdir/filename.md)` `` (wrapping the entire link in backticks)
+  - *Incorrect*: `` [`subdir/filename.md`](file:///absolute/path/to/subdir/filename.md) `` (wrapping the link text in backticks)
 
 ## Engineering Discipline
 
