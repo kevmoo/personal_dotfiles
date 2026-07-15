@@ -2,6 +2,7 @@ export 'beads_dolt_upkeeper.dart';
 export 'brew_upkeeper.dart';
 export 'brewfile_upkeeper.dart';
 export 'dotfiles_upkeeper.dart';
+export 'dotfiles_corp_upkeeper.dart';
 export 'guacamole_upkeeper.dart';
 export 'mise_upkeeper.dart';
 export 'os_upkeeper.dart';

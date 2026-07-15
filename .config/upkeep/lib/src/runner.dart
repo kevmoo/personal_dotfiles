@@ -12,6 +12,7 @@ class UpkeepRunner {
             BrewfileUpkeeper(),
             MiseUpkeeper(),
             DotfilesUpkeeper(),
+            DotfilesCorpUpkeeper(),
             GuacamoleUpkeeper(),
             SkillsUpkeeper(),
             ScriptsDartUpkeeper(),
