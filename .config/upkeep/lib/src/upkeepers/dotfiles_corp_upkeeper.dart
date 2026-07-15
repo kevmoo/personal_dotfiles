@@ -12,13 +12,49 @@ class DotfilesCorpUpkeeper implements Upkeeper {
   @override
   String get displayName => 'Private Corp Dotfiles Repository';
 
-  String _homeDir() => Platform.environment['HOME'] ?? Directory.current.path;
+  final bool? isCloudtopOverride;
+  final String Function()? homeDirOverride;
+  final Future<ProcessResult> Function(
+    String executable,
+    List<String> arguments,
+  )?
+  processRunner;
+
+  DotfilesCorpUpkeeper({
+    this.isCloudtopOverride,
+    this.homeDirOverride,
+    this.processRunner,
+  });
+
+  String _homeDir() => homeDirOverride != null
+      ? homeDirOverride!()
+      : (Platform.environment['HOME'] ?? Directory.current.path);
 
   String _gitDir() => p.join(_homeDir(), '.dotfiles-corp');
 
+  Future<ProcessResult> _run(String executable, List<String> arguments) {
+    if (processRunner != null) {
+      return processRunner!(executable, arguments);
+    }
+    return Process.run(executable, arguments);
+  }
+
   @override
   Future<bool> isSupported() async {
-    return Directory(_gitDir()).existsSync();
+    if (isCloudtopOverride != null) return isCloudtopOverride!;
+    if (Platform.isLinux) {
+      if (Directory('/google/src').existsSync() ||
+          File('/etc/glinux-release').existsSync()) {
+        return true;
+      }
+      try {
+        final result = await _run('which', ['gcertstatus']);
+        return result.exitCode == 0;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
   }
 
   @override
@@ -27,8 +63,19 @@ class DotfilesCorpUpkeeper implements Upkeeper {
       final home = _homeDir();
       final gitDir = _gitDir();
 
+      if (!Directory(gitDir).existsSync()) {
+        return UpkeepStatus(
+          upkeeperId: id,
+          displayName: displayName,
+          state: UpkeepState.error,
+          summary: 'Private dotfiles directory not found at $gitDir',
+          errorMessage:
+              'Run dotcorp setup to initialize the private repository.',
+        );
+      }
+
       // 1. Check for local modifications (dirty status)
-      final statusProc = await Process.run('git', [
+      final statusProc = await _run('git', [
         '--git-dir=$gitDir',
         '--work-tree=$home',
         'status',
@@ -46,30 +93,33 @@ class DotfilesCorpUpkeeper implements Upkeeper {
       }
 
       final statusOutput = statusProc.stdout.toString().trim();
-      if (statusOutput.isNotEmpty) {
-        final dirtyFiles = statusOutput
-            .split('\n')
-            .map((line) => line.trim())
-            .toList();
+      final isDirty = statusOutput.isNotEmpty;
+      final dirtyFiles = isDirty
+          ? statusOutput.split('\n').map((line) => line.trim()).toList()
+          : <String>[];
 
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: UpkeepState.outdated,
-          summary: 'Local private dotfiles have uncommitted changes',
-          details: dirtyFiles,
-        );
-      }
-
-      // Fetch remote changes silently
-      await Process.run('git', [
+      // 2. Fetch remote changes
+      final fetchProc = await _run('git', [
         '--git-dir=$gitDir',
         '--work-tree=$home',
         'fetch',
       ]);
 
+      if (fetchProc.exitCode != 0) {
+        return UpkeepStatus(
+          upkeeperId: id,
+          displayName: displayName,
+          state: isDirty ? UpkeepState.outdated : UpkeepState.error,
+          summary: isDirty
+              ? 'Local private dotfiles have uncommitted changes (Fetch failed)'
+              : 'Error fetching remote updates for private dotfiles',
+          errorMessage: fetchProc.stderr.toString(),
+          details: isDirty ? dirtyFiles : const [],
+        );
+      }
+
       // Check if there is an upstream branch configured
-      final upstreamProc = await Process.run('git', [
+      final upstreamProc = await _run('git', [
         '--git-dir=$gitDir',
         '--work-tree=$home',
         'rev-parse',
@@ -81,13 +131,16 @@ class DotfilesCorpUpkeeper implements Upkeeper {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
-          state: UpkeepState.upToDate,
-          summary: 'Private dotfiles up to date (no upstream branch tracked)',
+          state: isDirty ? UpkeepState.outdated : UpkeepState.upToDate,
+          summary: isDirty
+              ? 'Local private dotfiles have uncommitted changes (No upstream branch)'
+              : 'Private dotfiles up to date (no upstream branch tracked)',
+          details: isDirty ? dirtyFiles : const [],
         );
       }
 
-      // 2. Check behind count
-      final behindProc = await Process.run('git', [
+      // 3. Check behind count
+      final behindProc = await _run('git', [
         '--git-dir=$gitDir',
         '--work-tree=$home',
         'rev-list',
@@ -98,8 +151,8 @@ class DotfilesCorpUpkeeper implements Upkeeper {
       final behindCount =
           int.tryParse(behindProc.stdout.toString().trim()) ?? 0;
 
-      // 3. Check ahead count
-      final aheadProc = await Process.run('git', [
+      // 4. Check ahead count
+      final aheadProc = await _run('git', [
         '--git-dir=$gitDir',
         '--work-tree=$home',
         'rev-list',
@@ -109,8 +162,12 @@ class DotfilesCorpUpkeeper implements Upkeeper {
 
       final aheadCount = int.tryParse(aheadProc.stdout.toString().trim()) ?? 0;
 
-      if (behindCount > 0 || aheadCount > 0) {
+      if (isDirty || behindCount > 0 || aheadCount > 0) {
         final details = <String>[];
+        if (isDirty) {
+          details.add('Local modifications:');
+          details.addAll(dirtyFiles.map((f) => '  $f'));
+        }
         if (behindCount > 0) {
           details.add('$behindCount new commit(s) available on remote');
         }
@@ -119,6 +176,7 @@ class DotfilesCorpUpkeeper implements Upkeeper {
         }
 
         final summaryList = <String>[];
+        if (isDirty) summaryList.add('dirty');
         if (behindCount > 0) summaryList.add('$behindCount behind');
         if (aheadCount > 0) summaryList.add('$aheadCount ahead');
 
@@ -154,8 +212,17 @@ class DotfilesCorpUpkeeper implements Upkeeper {
       final home = _homeDir();
       final gitDir = _gitDir();
 
+      if (!Directory(gitDir).existsSync()) {
+        return UpkeepResult(
+          upkeeperId: id,
+          displayName: displayName,
+          success: false,
+          message: 'Private dotfiles directory not found at $gitDir',
+        );
+      }
+
       // Check if dirty before modifying anything
-      final statusProc = await Process.run('git', [
+      final statusProc = await _run('git', [
         '--git-dir=$gitDir',
         '--work-tree=$home',
         'status',
@@ -182,7 +249,7 @@ class DotfilesCorpUpkeeper implements Upkeeper {
       }
 
       // Check upstream
-      final upstreamProc = await Process.run('git', [
+      final upstreamProc = await _run('git', [
         '--git-dir=$gitDir',
         '--work-tree=$home',
         'rev-parse',
@@ -194,7 +261,7 @@ class DotfilesCorpUpkeeper implements Upkeeper {
 
       if (hasUpstream) {
         // Pull rebase
-        final pullProc = await Process.run('git', [
+        final pullProc = await _run('git', [
           '--git-dir=$gitDir',
           '--work-tree=$home',
           'pull',
@@ -212,7 +279,7 @@ class DotfilesCorpUpkeeper implements Upkeeper {
         }
 
         // Push
-        final pushProc = await Process.run('git', [
+        final pushProc = await _run('git', [
           '--git-dir=$gitDir',
           '--work-tree=$home',
           'push',
