@@ -321,18 +321,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/clarify-confirm-continue/SKILL.md",
-      "skillFolderHash": "617c86b7ce2e799f769f9d905638850bbdc655a5",
+      "skillFolderHash": "a895304be8541cd85645151bea967c305d1761cb",
       "installedAt": "2026-07-07T21:40:25.936Z",
-      "updatedAt": "2026-07-12T06:51:20.154Z"
+      "updatedAt": "2026-07-16T04:21:17.582Z"
     },
     "sidequest": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "0957fa3c2d8c83e1737eda956305c04dd7db83a6",
+      "skillFolderHash": "a96b6ec635e8cdcd1bc4663ad6cc68ba3e126f1a",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-07-12T19:01:05.180Z"
+      "updatedAt": "2026-07-16T04:21:19.256Z"
     },
     "conversation-auditor": {
       "source": "pq/pq-agent-skills",
