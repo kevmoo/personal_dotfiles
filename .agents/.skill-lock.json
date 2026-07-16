@@ -351,6 +351,15 @@
       "skillFolderHash": "ce4d3db0688b372e55b7956c018e78ff61eb62eb",
       "installedAt": "2026-07-14T04:02:44.855Z",
       "updatedAt": "2026-07-14T04:02:44.855Z"
+    },
+    "gws-calendar": {
+      "source": "googleworkspace/cli",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/googleworkspace/cli.git",
+      "skillPath": "skills/gws-calendar/SKILL.md",
+      "skillFolderHash": "62a27859dbdf798c1f7288d04750e743283a6b4f",
+      "installedAt": "2026-07-16T04:42:12.466Z",
+      "updatedAt": "2026-07-16T04:43:09.393Z"
     }
   },
   "dismissed": {
