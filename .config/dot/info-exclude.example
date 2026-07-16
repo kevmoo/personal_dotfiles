@@ -39,3 +39,6 @@
 .config/zsh/rc.d/local.zsh
 !.config/git/hooks/
 !.config/git/hooks/*
+
+!.agents/
+!.agents/skills/**
