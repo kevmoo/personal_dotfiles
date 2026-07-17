@@ -50,6 +50,10 @@ is also enforced by each agent's permission settings — these rules state inten
   - *Incorrect* (wrapping the entire link in backticks will NOT render as a link): `` `[subdir/filename.md](file:///absolute/path/to/subdir/filename.md)` ``
   - *Incorrect* (wrapping the link text in backticks will NOT render as a link): `` [`subdir/filename.md`](file:///absolute/path/to/subdir/filename.md) ``
 - **Terse, Bulleted Output**: Default to compact bullet points over conversational prose. Fragment sentences are encouraged. Skip conversational filler ("Sure!", "I'd be glad to help..."). Optimize for token efficiency, high information density, and fast scannability.
+- **Direct Chat Output (No Thought Collapse)**: always output user-facing
+  questions, explanations, and key status updates directly as visible chat
+  messages rather than inside intermediate reasoning/thought blocks or tool
+  preambles (which get collapsed into "thoughts for 5s" in Web UI).
 
 ## Engineering Discipline
 
