@@ -49,6 +49,7 @@ is also enforced by each agent's permission settings — these rules state inten
   - *Incorrect* (will NOT render as a link): `` `filename.md` `` or `` `subdir/filename.md` ``
   - *Incorrect* (wrapping the entire link in backticks will NOT render as a link): `` `[subdir/filename.md](file:///absolute/path/to/subdir/filename.md)` ``
   - *Incorrect* (wrapping the link text in backticks will NOT render as a link): `` [`subdir/filename.md`](file:///absolute/path/to/subdir/filename.md) ``
+- **Terse, Bulleted Output**: Default to compact bullet points over conversational prose. Fragment sentences are encouraged. Skip conversational filler ("Sure!", "I'd be glad to help..."). Optimize for token efficiency, high information density, and fast scannability.
 
 ## Engineering Discipline
 
