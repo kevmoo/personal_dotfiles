@@ -1,2 +1,31 @@
 #!/bin/sh
-exec flatpak run com.vscodium.codium "$@"
+
+# macOS (Darwin)
+if [ "$(uname)" = "Darwin" ]; then
+  if [ -x "/Applications/VSCodium.app/Contents/Resources/app/bin/codium" ]; then
+    exec "/Applications/VSCodium.app/Contents/Resources/app/bin/codium" "$@"
+  elif [ -x "$HOME/Applications/VSCodium.app/Contents/Resources/app/bin/codium" ]; then
+    exec "$HOME/Applications/VSCodium.app/Contents/Resources/app/bin/codium" "$@"
+  elif command -v open >/dev/null 2>&1; then
+    exec open -a VSCodium "$@"
+  else
+    echo "Error: VSCodium not found on macOS" >&2
+    exit 1
+  fi
+fi
+
+# Linux / Flatpak
+if command -v flatpak >/dev/null 2>&1 && flatpak info com.vscodium.codium >/dev/null 2>&1; then
+  exec flatpak run com.vscodium.codium "$@"
+fi
+
+# Fallback: look for codium binary elsewhere in PATH (avoiding self-reference loop)
+PATH_WITHOUT_LOCAL=$(echo "$PATH" | sed -e 's|[^:]*/\.local/bin:[^:]*||g' -e 's|[^:]*/\.local/bin$||g' -e 's|^[^:]*/\.local/bin:||g')
+REAL_CODIUM=$(PATH="$PATH_WITHOUT_LOCAL" command -v codium 2>/dev/null)
+if [ -n "$REAL_CODIUM" ] && [ "$REAL_CODIUM" != "$0" ]; then
+  exec "$REAL_CODIUM" "$@"
+fi
+
+echo "Error: codium executable or Flatpak not found." >&2
+exit 1
+
