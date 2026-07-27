@@ -98,38 +98,29 @@ class GlinuxOsStrategy implements OsStrategy {
       details.add('Reboot flag active (/var/run/reboot-required)');
     }
 
-    // 3. Check APT package upgrades
+    // 3. Check gLinux updater status
     try {
-      final aptResult = await _runProcess('apt', ['list', '--upgradable']);
-      if (aptResult.exitCode == 0) {
-        final stdout = aptResult.stdout.toString();
-        final lines = stdout.split('\n');
-        final upgradedPackages = <String>[];
-        for (final line in lines) {
-          final trimmed = line.trim();
-          if (trimmed.isEmpty ||
-              trimmed.startsWith('WARNING:') ||
-              trimmed.startsWith('Listing...') ||
-              !trimmed.contains('[upgradable from:')) {
-            continue;
-          }
-          final pkgName = trimmed.split('/').first.trim();
-          if (pkgName.isNotEmpty) {
-            upgradedPackages.add(pkgName);
-          }
-        }
-        if (upgradedPackages.isNotEmpty) {
+      final updaterResult = await _runProcess('glinux-updater', ['--check']);
+      if (updaterResult.exitCode == 0) {
+        final stdout = updaterResult.stdout.toString().trim();
+        if (stdout.isNotEmpty && !stdout.contains('completed successfully')) {
           state = UpkeepState.outdated;
-          issues.add(
-            '${upgradedPackages.length} APT package update(s) available',
-          );
+          issues.add('gLinux system updates required or pending');
+          details.add(stdout);
+        } else {
           details.add(
-            'APT updates: ${upgradedPackages.take(5).join(', ')}${upgradedPackages.length > 5 ? ' (+${upgradedPackages.length - 5} more)' : ''}',
+            stdout.isNotEmpty ? 'gLinux status: $stdout' : 'gLinux status: OK',
           );
         }
+      } else {
+        state = UpkeepState.outdated;
+        issues.add('gLinux system check failed or outdated');
+        details.add(
+          'glinux-updater --check failed (exit code ${updaterResult.exitCode})',
+        );
       }
     } catch (_) {
-      // apt not available or error
+      // glinux-updater not available or error
     }
 
     if (state == UpkeepState.upToDate) {
@@ -169,15 +160,18 @@ class GlinuxOsStrategy implements OsStrategy {
         );
       }
 
-      final aptResult = await _runProcess('sudo', ['apt-get', 'upgrade', '-y']);
-      if (aptResult.exitCode != 0) {
+      final updaterResult = await _runProcess('sudo', [
+        'glinux-updater',
+        '-vF',
+      ]);
+      if (updaterResult.exitCode != 0) {
         return UpkeepResult(
           upkeeperId: upkeeperId,
           displayName: displayName,
           success: false,
           message:
-              'APT upgrade failed after refreshing gCert (exit code ${aptResult.exitCode})',
-          errorMessage: aptResult.stderr.toString(),
+              'gLinux updater failed after refreshing gCert (exit code ${updaterResult.exitCode})',
+          errorMessage: updaterResult.stderr.toString(),
         );
       }
 
@@ -191,14 +185,14 @@ class GlinuxOsStrategy implements OsStrategy {
           upkeeperId: upkeeperId,
           displayName: displayName,
           success: true,
-          message: 'gCert refreshed and APT packages upgraded successfully. WARNING: System reboot required (/var/run/reboot-required) — run "sudo reboot" when ready.',
+          message: 'gCert refreshed and gLinux system updated successfully. WARNING: System reboot required (/var/run/reboot-required) — run "sudo reboot" when ready.',
         );
       } else {
         return UpkeepResult(
           upkeeperId: upkeeperId,
           displayName: displayName,
           success: true,
-          message: 'gCert refreshed and APT packages upgraded successfully',
+          message: 'gCert refreshed and gLinux system updated successfully',
         );
       }
     } catch (e) {
@@ -206,7 +200,7 @@ class GlinuxOsStrategy implements OsStrategy {
         upkeeperId: upkeeperId,
         displayName: displayName,
         success: false,
-        message: 'Exception executing gcert refresh and APT upgrade',
+        message: 'Exception executing gcert refresh and gLinux update',
         errorMessage: e.toString(),
       );
     }

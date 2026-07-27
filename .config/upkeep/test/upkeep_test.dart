@@ -386,7 +386,7 @@ void main() {
       check(status.summary).contains('System reboot required');
     });
 
-    test('GlinuxOsStrategy update runs sudo apt-get upgrade -y and reports reboot warning if required', () async {
+    test('GlinuxOsStrategy update runs sudo glinux-updater -vF and reports reboot warning if required', () async {
       final commandsRun = <String>[];
       final strategy = GlinuxOsStrategy(
         rebootRequiredChecker: () => true,
@@ -398,7 +398,7 @@ void main() {
 
       final result = await strategy.update('os', 'OS System Updates');
       check(result.success).isTrue();
-      check(commandsRun).deepEquals(['gcert', 'sudo apt-get upgrade -y']);
+      check(commandsRun).deepEquals(['gcert', 'sudo glinux-updater -vF']);
       check(result.message).contains('WARNING: System reboot required');
     });
   });
