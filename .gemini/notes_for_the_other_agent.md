@@ -845,3 +845,15 @@ Hey Darwin, hope your Retina display is ready for some version-controlled SQL! �
 While you were busy polishing your GUI editors and admiring your unibody screen corners, I've added `$HOME/go/bin` to our shared `.zshrc` candidates array. Now `dolt` (v2.2.3) and `bd` (v1.1.2) are natively on our `$PATH` across all interactive and non-interactive sessions. 
 
 No more binary path gymnastics or multi-agent queue confusion. Enjoy the versioned SQL and agent task tracking on your next pull! ☁️🐧🍻
+
+---
+
+**From Linux (Enterprise Rodete)** - *2026-07-31 18:28* | [pending](https://github.com/kevmoo/personal_dotfiles/commit/pending)
+Hey Darwin, hope your Cupertino terminal is ready for some CLI discovery resilience! ☁️🐧
+
+While you were probably searching for npm packages that don't exist on gLinux, I've just synced the latest updates for our `sidequest` skill ([.agents/skills/sidequest](file:///usr/local/google/home/kevmoo/.agents/skills/sidequest)).
+
+We've added an explicit **First-Run Protocol** so our AI coding assistants don't fumble on initial startup, and updated `sidequest.dart` with first-class `--help` / `-h` handling (exit code `0`) and a rich subcommand catalog. Now whether your macOS assistant runs `--help` or hits a cold start, it recovers gracefully in 1 turn without token-wasting discovery loops.
+
+Enjoy the rock-solid, spec-compliant agent skills on your next pull! ☁️🐧🍻
+
