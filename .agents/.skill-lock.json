@@ -369,6 +369,15 @@
       "skillFolderHash": "9c87c61080fa1f975c7b04fdbe5e2d8f1e1dcdcf",
       "installedAt": "2026-08-02T18:04:04.835Z",
       "updatedAt": "2026-08-02T18:04:04.835Z"
+    },
+    "new-worktree": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/new-worktree/SKILL.md",
+      "skillFolderHash": "683cc66a36e991597545c60c42019ba7f04b7a15",
+      "installedAt": "2026-08-03T20:47:42.350Z",
+      "updatedAt": "2026-08-03T20:47:56.724Z"
     }
   },
   "dismissed": {
