@@ -32,60 +32,103 @@ class FlutterRepoUpkeeper implements Upkeeper {
   String _homeDir() =>
       Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '';
 
-  Future<Directory?> _resolveFlutterDir() async {
-    if (_flutterDirOverride != null) {
-      if (Directory(p.join(_flutterDirOverride.path, '.git')).existsSync()) {
-        return _flutterDirOverride;
-      }
-      return null;
-    }
+  bool _isGitRepo(Directory? dir) =>
+      dir != null && Directory(p.join(dir.path, '.git')).existsSync();
 
-    // 1. Check standard environment variables (FLUTTER_ROOT or FLUTTER_HOME)
+  Directory? _resolveFromEnv() {
     for (final envVar in ['FLUTTER_ROOT', 'FLUTTER_HOME']) {
       final path = Platform.environment[envVar];
       if (path != null && path.isNotEmpty) {
         final dir = Directory(path);
-        if (Directory(p.join(dir.path, '.git')).existsSync()) {
-          return dir;
-        }
+        if (_isGitRepo(dir)) return dir;
       }
     }
+    return null;
+  }
 
-    // 2. Look for flutter binary in PATH using process runner
+  Future<Directory?> _resolveFromPath() async {
     try {
       final cmd = Platform.isWindows ? 'where' : 'which';
-      final whichRes = await _processRunner(cmd, ['flutter']);
-      if (whichRes.exitCode == 0) {
-        final binPath = whichRes.stdout.toString().split('\n').first.trim();
-        if (binPath.isNotEmpty) {
-          final file = File(binPath);
-          if (file.existsSync()) {
-            final realPath = file.resolveSymbolicLinksSync();
-            final rootPath = p.dirname(p.dirname(realPath));
-            final dir = Directory(rootPath);
-            if (Directory(p.join(dir.path, '.git')).existsSync()) {
-              return dir;
-            }
-          }
-        }
-      }
+      final res = await _processRunner(cmd, ['flutter']);
+      if (res.exitCode != 0) return null;
+
+      final binPath = res.stdout.toString().split('\n').first.trim();
+      if (binPath.isEmpty) return null;
+
+      final file = File(binPath);
+      if (!file.existsSync()) return null;
+
+      final rootPath = p.dirname(p.dirname(file.resolveSymbolicLinksSync()));
+      final dir = Directory(rootPath);
+      return _isGitRepo(dir) ? dir : null;
     } catch (_) {
-      // Ignore process failure or missing binary
+      return null;
+    }
+  }
+
+  Future<Directory?> _resolveFlutterDir() async {
+    if (_flutterDirOverride != null) {
+      return _isGitRepo(_flutterDirOverride) ? _flutterDirOverride : null;
     }
 
-    // 3. Fallback to default check in ~/github/flutter
+    final fromEnv = _resolveFromEnv();
+    if (fromEnv != null) return fromEnv;
+
+    final fromPath = await _resolveFromPath();
+    if (fromPath != null) return fromPath;
+
     final defaultDir = Directory(p.join(_homeDir(), 'github', 'flutter'));
-    if (Directory(p.join(defaultDir.path, '.git')).existsSync()) {
-      return defaultDir;
-    }
-
-    return null;
+    return _isGitRepo(defaultDir) ? defaultDir : null;
   }
 
   @override
   Future<bool> isSupported() async {
     final dir = await _resolveFlutterDir();
     return dir != null;
+  }
+
+  Future<String?> _currentBranch(Directory dir) async {
+    final res = await _processRunner('git', [
+      '-C',
+      dir.path,
+      'rev-parse',
+      '--abbrev-ref',
+      'HEAD',
+    ]);
+    return res.exitCode == 0 ? res.stdout.toString().trim() : null;
+  }
+
+  Future<int> _commitsBehind(Directory dir, String branch) async {
+    final res = await _processRunner('git', [
+      '-C',
+      dir.path,
+      'rev-list',
+      '--count',
+      'HEAD..origin/$branch',
+    ]);
+    return int.tryParse(res.stdout.toString().trim()) ?? 0;
+  }
+
+  Future<({String label, int hours})> _headAge(Directory dir) async {
+    final logRes = await _processRunner('git', [
+      '-C',
+      dir.path,
+      'log',
+      '-1',
+      '--format=%ct',
+      'HEAD',
+    ]);
+    final epochSecs = int.tryParse(logRes.stdout.toString().trim());
+    if (epochSecs == null) return (label: 'unknown age', hours: 0);
+
+    final commitTime = DateTime.fromMillisecondsSinceEpoch(epochSecs * 1000);
+    final diff = _nowProvider().difference(commitTime);
+    final hours = diff.inHours;
+    final days = diff.inDays;
+    final label = days > 0
+        ? '$days day${days == 1 ? '' : 's'}'
+        : '$hours hour${hours == 1 ? '' : 's'}';
+    return (label: label, hours: hours);
   }
 
   @override
@@ -101,25 +144,16 @@ class FlutterRepoUpkeeper implements Upkeeper {
         );
       }
 
-      // Check current branch
-      final branchRes = await _processRunner('git', [
-        '-C',
-        repoDir.path,
-        'rev-parse',
-        '--abbrev-ref',
-        'HEAD',
-      ]);
-      if (branchRes.exitCode != 0) {
+      final branch = await _currentBranch(repoDir);
+      if (branch == null) {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.error,
           summary: 'Failed to determine Flutter repo branch',
-          errorMessage: branchRes.stderr.toString().trim(),
         );
       }
 
-      final branch = branchRes.stdout.toString().trim();
       if (branch != 'master' && branch != 'main') {
         return UpkeepStatus(
           upkeeperId: id,
@@ -130,7 +164,6 @@ class FlutterRepoUpkeeper implements Upkeeper {
         );
       }
 
-      // Attempt silent fetch of remote branch
       await _processRunner('git', [
         '-C',
         repoDir.path,
@@ -140,53 +173,19 @@ class FlutterRepoUpkeeper implements Upkeeper {
         branch,
       ]);
 
-      // Check commits behind origin/master or origin/main
-      final countRes = await _processRunner('git', [
-        '-C',
-        repoDir.path,
-        'rev-list',
-        '--count',
-        'HEAD..origin/$branch',
-      ]);
-      final countStr = countRes.stdout.toString().trim();
-      final commitsBehind = int.tryParse(countStr) ?? 0;
+      final behind = await _commitsBehind(repoDir, branch);
+      final age = await _headAge(repoDir);
 
-      // Get HEAD commit timestamp to measure age / days behind
-      final logRes = await _processRunner('git', [
-        '-C',
-        repoDir.path,
-        'log',
-        '-1',
-        '--format=%ct',
-        'HEAD',
-      ]);
-      final tsStr = logRes.stdout.toString().trim();
-      final epochSecs = int.tryParse(tsStr);
-
-      String ageStr = 'unknown age';
-      int hoursBehind = 0;
-      if (epochSecs != null) {
-        final commitTime = DateTime.fromMillisecondsSinceEpoch(
-          epochSecs * 1000,
-        );
-        final diff = _nowProvider().difference(commitTime);
-        hoursBehind = diff.inHours;
-        final days = diff.inDays;
-        ageStr = days > 0
-            ? '$days day${days == 1 ? '' : 's'}'
-            : '$hoursBehind hour${hoursBehind == 1 ? '' : 's'}';
-      }
-
-      if (commitsBehind > 0 || hoursBehind > 72) {
+      if (behind > 0 || age.hours > 72) {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.outdated,
           summary:
-              '$branch is $commitsBehind commit${commitsBehind == 1 ? '' : 's'} behind origin/$branch ($ageStr old)',
+              '$branch is $behind commit${behind == 1 ? '' : 's'} behind origin/$branch (${age.label} old)',
           details: [
-            'Branch $branch is trailing origin/$branch by $commitsBehind commit(s).',
-            'Local checkout HEAD commit is $ageStr old.',
+            'Branch $branch is trailing origin/$branch by $behind commit(s).',
+            'Local checkout HEAD commit is ${age.label} old.',
           ],
         );
       }
@@ -196,7 +195,7 @@ class FlutterRepoUpkeeper implements Upkeeper {
         displayName: displayName,
         state: UpkeepState.upToDate,
         summary:
-            'Up to date on $branch (0 commits behind, HEAD is $ageStr old)',
+            'Up to date on $branch (0 commits behind, HEAD is ${age.label} old)',
       );
     } catch (e) {
       return UpkeepStatus(
@@ -207,6 +206,52 @@ class FlutterRepoUpkeeper implements Upkeeper {
         errorMessage: e.toString(),
       );
     }
+  }
+
+  Future<({bool clean, String? error})> _verifyCleanWorkingTree(
+    Directory dir,
+  ) async {
+    final statusRes = await _processRunner('git', [
+      '-C',
+      dir.path,
+      'status',
+      '--porcelain',
+    ]);
+    if (statusRes.exitCode != 0) {
+      return (clean: false, error: statusRes.stderr.toString().trim());
+    }
+    if (statusRes.stdout.toString().trim().isNotEmpty) {
+      return (clean: false, error: null);
+    }
+    return (clean: true, error: null);
+  }
+
+  Future<({bool success, String targetBranch, String? error})>
+  _ensureDefaultBranch(Directory dir, String current) async {
+    if (current == 'master' || current == 'main') {
+      return (success: true, targetBranch: current, error: null);
+    }
+
+    var res = await _processRunner('git', [
+      '-C',
+      dir.path,
+      'checkout',
+      'master',
+    ]);
+    if (res.exitCode == 0) {
+      return (success: true, targetBranch: 'master', error: null);
+    }
+
+    res = await _processRunner('git', ['-C', dir.path, 'checkout', 'main']);
+    if (res.exitCode == 0) {
+      return (success: true, targetBranch: 'main', error: null);
+    }
+
+    return (
+      success: false,
+      targetBranch: current,
+      error: res.stderr.toString().trim(),
+    );
   }
 
   @override
@@ -222,24 +267,17 @@ class FlutterRepoUpkeeper implements Upkeeper {
         );
       }
 
-      // Check if working tree is clean
-      final statusRes = await _processRunner('git', [
-        '-C',
-        repoDir.path,
-        'status',
-        '--porcelain',
-      ]);
-      if (statusRes.exitCode != 0) {
-        return UpkeepResult(
-          upkeeperId: id,
-          displayName: displayName,
-          success: false,
-          message: 'Failed to inspect Flutter working directory status',
-          errorMessage: statusRes.stderr.toString().trim(),
-        );
-      }
-
-      if (statusRes.stdout.toString().trim().isNotEmpty) {
+      final status = await _verifyCleanWorkingTree(repoDir);
+      if (!status.clean) {
+        if (status.error != null) {
+          return UpkeepResult(
+            upkeeperId: id,
+            displayName: displayName,
+            success: false,
+            message: 'Failed to inspect Flutter working directory status',
+            errorMessage: status.error,
+          );
+        }
         return UpkeepResult(
           upkeeperId: id,
           displayName: displayName,
@@ -248,62 +286,34 @@ class FlutterRepoUpkeeper implements Upkeeper {
         );
       }
 
-      // Check out master or main if not currently on it
-      final branchRes = await _processRunner('git', [
-        '-C',
-        repoDir.path,
-        'rev-parse',
-        '--abbrev-ref',
-        'HEAD',
-      ]);
-      var currentBranch = branchRes.stdout.toString().trim();
-      if (currentBranch != 'master' && currentBranch != 'main') {
-        // Try checking out master first, then main
-        var checkoutRes = await _processRunner('git', [
-          '-C',
-          repoDir.path,
-          'checkout',
-          'master',
-        ]);
-        if (checkoutRes.exitCode == 0) {
-          currentBranch = 'master';
-        } else {
-          checkoutRes = await _processRunner('git', [
-            '-C',
-            repoDir.path,
-            'checkout',
-            'main',
-          ]);
-          if (checkoutRes.exitCode == 0) {
-            currentBranch = 'main';
-          } else {
-            return UpkeepResult(
-              upkeeperId: id,
-              displayName: displayName,
-              success: false,
-              message: 'Failed to check out master or main branch in Flutter repository',
-              errorMessage: checkoutRes.stderr.toString().trim(),
-            );
-          }
-        }
+      final branch = await _currentBranch(repoDir) ?? '';
+      final checkout = await _ensureDefaultBranch(repoDir, branch);
+      if (!checkout.success) {
+        return UpkeepResult(
+          upkeeperId: id,
+          displayName: displayName,
+          success: false,
+          message:
+              'Failed to check out master or main branch in Flutter repository',
+          errorMessage: checkout.error,
+        );
       }
 
-      // Perform fast-forward pull and fetch
+      final target = checkout.targetBranch;
       final fetchRes = await _processRunner('git', [
         '-C',
         repoDir.path,
         'pull',
         '--ff-only',
         'origin',
-        currentBranch,
+        target,
       ]);
       if (fetchRes.exitCode != 0) {
         return UpkeepResult(
           upkeeperId: id,
           displayName: displayName,
           success: false,
-          message:
-              'Failed fast-forward pull on Flutter repository ($currentBranch)',
+          message: 'Failed fast-forward pull on Flutter repository ($target)',
           errorMessage: fetchRes.stderr.toString().trim(),
         );
       }
@@ -312,8 +322,7 @@ class FlutterRepoUpkeeper implements Upkeeper {
         upkeeperId: id,
         displayName: displayName,
         success: true,
-        message:
-            'Successfully updated Flutter repository on branch $currentBranch',
+        message: 'Successfully updated Flutter repository on branch $target',
       );
     } catch (e) {
       return UpkeepResult(
