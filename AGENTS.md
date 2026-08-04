@@ -95,6 +95,7 @@ Verify before declaring victory:
 - **External Repos (`~/github`)**: Sync and open all external GitHub repositories under `~/github`.
   - Repositories from my personal GitHub org (`github.com/kevmoo`) live under `~/github/kevmoo/<repo_name>`.
   - `~/github/dart-sdk` has custom agent setup; always check `~/github/dart-sdk/.agents/` when working in that directory.
+  - **Dart SDK for External Repos**: When running Dart tooling (`dart test`, `dart run`, `pub get`) inside any repository under `~/github` (excluding `~/github/dart-sdk`), **always invoke Dart via `~/github/flutter/bin/dart`** (or prepend `~/github/flutter/bin` to `PATH`). Never invoke the system `/usr/bin/dart`, which is linked to internal Google3 edge builds and breaks public SemVer constraints.
 - **Dotfiles (`~/.dotfiles`)**: My home directory (`~/.zshrc`, `~/.config/*`) is managed by a bare repository at `~/.dotfiles`. Whenever inspecting or editing dotfiles in `$HOME`, consult the `personal-dotfiles` skill (`~/.agents/skills/personal-dotfiles/SKILL.md`) for the required Anti-Universe bare-repo protocol and ignore rules.
 - **Private Corp Dotfiles (`~/.dotfiles-corp`)**: On gLinux corp machines (e.g. workstations, Cloudtops), internal configurations (like `local.zsh`, `config.local`, and `settings.json`) and corp-specific agent rules are managed via the private bare repository at `~/.dotfiles-corp` and the `dotcorp` CLI.
 
