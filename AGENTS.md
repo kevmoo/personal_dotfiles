@@ -42,11 +42,11 @@ is also enforced by each agent's permission settings — these rules state inten
   investigation or changing direction, state your hypothesis or plan in one
   short sentence so I can redirect you early. Don't narrate routine tool
   calls (grep, file reads) that the UI already shows.
-- **Clickable File Links**: Whenever referencing any file (newly created, modified, or inspected) or directory in the conversation, **always** format it as a clickable Markdown link using the `file://` scheme with its absolute local path. Do not use plain backticks for filenames.
+- **Clickable Links (Files & URLs)**: Whenever referencing any file, directory, or web resource (HTTP/HTTPS URLs, CLs, PRs, Go links) in the conversation, **always** format it as a clickable Markdown link (using `file://` with absolute paths for local files). Never use plain backticks for filenames or web URLs.
   - To avoid ambiguity or confusion (e.g., distinguishing between different `BUILD` files or common names), include enough preceding path components in the link text (e.g., [src/main.dart](file:///absolute/path/to/src/main.dart) instead of `[main.dart]`).
-  - **CRITICAL**: Do NOT wrap the link text, nor the entire markdown link, in backticks (e.g., `\``). Doing so turns the link into a code literal block and prevents rendering in the chat UI.
-  - *Correct* (renders as a clickable link): [subdir/filename.md](file:///absolute/path/to/subdir/filename.md)
-  - *Incorrect* (will NOT render as a link): `` `filename.md` `` or `` `subdir/filename.md` ``
+  - **CRITICAL**: Do NOT wrap URLs, link text, or entire markdown links in backticks (e.g., `\``). Doing so turns the link into a literal code block and breaks clickability in the chat UI.
+  - *Correct* (renders as a clickable link): [subdir/filename.md](file:///absolute/path/to/subdir/filename.md), [cl/123456789](http://cl/123456789), [PR #123](https://github.com/org/repo/pull/123)
+  - *Incorrect* (will NOT render as a link): `` `filename.md` ``, `` `https://github.com/...` ``
   - *Incorrect* (wrapping the entire link in backticks will NOT render as a link): `` `[subdir/filename.md](file:///absolute/path/to/subdir/filename.md)` ``
   - *Incorrect* (wrapping the link text in backticks will NOT render as a link): `` [`subdir/filename.md`](file:///absolute/path/to/subdir/filename.md) ``
 - **Terse, Bulleted Output**: Default to compact bullet points over conversational prose. Fragment sentences are encouraged. Skip conversational filler ("Sure!", "I'd be glad to help..."). Optimize for token efficiency, high information density, and fast scannability.
