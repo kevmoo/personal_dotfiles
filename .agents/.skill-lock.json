@@ -369,6 +369,15 @@
       "skillFolderHash": "683cc66a36e991597545c60c42019ba7f04b7a15",
       "installedAt": "2026-08-03T20:47:42.350Z",
       "updatedAt": "2026-08-03T20:47:56.724Z"
+    },
+    "dart-cognitive-complexity": {
+      "source": "kevmoo/cognitive_complexity.dart",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/cognitive_complexity.dart.git",
+      "skillPath": "skills/dart-cognitive-complexity/SKILL.md",
+      "skillFolderHash": "03054c91fee47d80298fdacc1751b6a418bfdce6",
+      "installedAt": "2026-08-04T00:16:38.086Z",
+      "updatedAt": "2026-08-04T00:16:38.086Z"
     }
   },
   "dismissed": {
