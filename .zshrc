@@ -40,7 +40,6 @@ alias dot-lazy='lazygit --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias a='ls -la --no-git'
-alias pu='dart pub upgrade'
 alias pbr='dart run build_runner'
 
 # tmux session management
@@ -51,6 +50,13 @@ tm() {
 }
 alias t='tm'
 # 5. Functions
+pu() {
+  if [[ -f pubspec.yaml ]] && grep -q "sdk: flutter" pubspec.yaml 2>/dev/null; then
+    flutter pub upgrade "$@"
+  else
+    dart pub upgrade "$@"
+  fi
+}
 
 # 6. Modular Configs (Source everything in ~/.config/zsh/rc.d)
 if [[ -d ~/.config/zsh/rc.d ]]; then
