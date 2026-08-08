@@ -1,15 +1,6 @@
 {
   "version": 3,
   "skills": {
-    "dart-collect-coverage": {
-      "source": "dart-lang/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/dart-lang/skills.git",
-      "skillPath": "skills/dart-collect-coverage/SKILL.md",
-      "skillFolderHash": "818903454e5ca282a4ac278fa7f6cbc5c98084ac",
-      "installedAt": "2026-05-07T17:47:39.823Z",
-      "updatedAt": "2026-05-14T00:43:11.726Z"
-    },
     "gerrit-stacked-cls": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
@@ -154,14 +145,14 @@
       "installedAt": "2026-08-03T20:47:42.350Z",
       "updatedAt": "2026-08-03T20:47:56.724Z"
     },
-    "dart-toolkit": {
+    "dart-cleanup": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
-      "skillPath": "skills/dart-toolkit/SKILL.md",
-      "skillFolderHash": "29807f73bc40655af5b4bec0531fa8fb13083b84",
-      "installedAt": "2026-08-08T04:41:54.885Z",
-      "updatedAt": "2026-08-08T04:41:54.885Z"
+      "skillPath": "skills/dart-cleanup/SKILL.md",
+      "skillFolderHash": "3511033a1714ab64c87652f51f129f0bf7fb5b10",
+      "installedAt": "2026-08-08T05:46:03.701Z",
+      "updatedAt": "2026-08-08T05:46:03.701Z"
     }
   },
   "dismissed": {
