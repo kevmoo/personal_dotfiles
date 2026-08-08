@@ -4,18 +4,37 @@ Shared by all coding agents (Claude Code, Gemini CLI) via symlinks to
 ~/AGENTS.md. Hard boundaries first; working style after. Git/GitHub safety
 is also enforced by each agent's permission settings — these rules state intent.
 
-## Hard Boundaries
+## Version Control & Outward Boundaries
 
-- **Version control writes**: never commit, push, amend, rebase, or reset
-  unless I explicitly asked in this conversation. Instead, stop and ask (see
-  Approvals below) with a summary of modified files. Reason: I freeze code
-  into repository history myself; unwanted commits are expensive to unwind.
+- **Git & GitHub Repositories**:
+  - *Autonomous Operations*: You may freely create local branches, make local
+    commits (`git commit`), and push to feature/PR branches (`git push [remote]
+    <feature-branch>` where `<feature-branch>` is not `main`, `master`, or
+    `trunk`).
+  - *Approval Gate (`ask_question`)*: You MUST obtain explicit user approval
+    before:
+    - Pushing to default/trunk branches (`main`, `master`, `trunk`). Never run
+      bare `git push` while on a default branch without verifying target.
+    - Merging, closing, or publishing PRs/releases (`gh pr merge`, `gh pr close`,
+      `gh release create`).
+  - *Hard Prohibitions*: Never execute force-pushes (`--force`, `-f`, `+ref`) or
+    destructive working tree resets (`git reset --hard`).
+- **Piper / CitC / Jujutsu (`jj`)**:
+  - *Autonomous Operations*: You may freely format, sync, and update open CL
+    patchsets/snapshots (`jj fix`, `jj prep`, `jj piper upload`).
+  - *Approval Gate (`ask_question`)*: You MUST obtain explicit confirmation in
+    chat before executing any final submission (`jj ship`, `jj piper submit`,
+    `g4 submit`, `p4 submit`, `hg submit`).
+- **One-Shot Submit Approval**: A user command to submit applies only to the
+  immediate attempt. If presubmits fail or code changes are made, resolve issues
+  locally, run `jj prep`, and request fresh approval via `ask_question` before
+  shipping.
 - **GitHub writes** (issues, PRs, comments, releases) are outward-facing:
   ask before every single one. One approval covers one action; it never
   carries over to the next.
 - **github.com URLs**: always read via the `gh` CLI, never generic URL
   fetchers (they get blocked or return login pages).
-- Read-only inspection (`grep`, `find`, `git status/diff/log/show`,
+- **Read-only inspection** (`grep`, `find`, `git status/diff/log/show`,
   `gh ... view/list`) is always safe — run it eagerly, without asking.
 
 ## Interaction
