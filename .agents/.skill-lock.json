@@ -10,15 +10,6 @@
       "installedAt": "2026-05-07T17:47:39.823Z",
       "updatedAt": "2026-05-14T00:43:11.726Z"
     },
-    "find-skills": {
-      "source": "vercel-labs/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/vercel-labs/skills.git",
-      "skillPath": "skills/find-skills/SKILL.md",
-      "skillFolderHash": "76a98a285cb0434f3d39e1a873823556330e398b",
-      "installedAt": "2026-05-07T17:47:45.888Z",
-      "updatedAt": "2026-07-11T03:33:07.812Z"
-    },
     "dart-build-cli-app": {
       "source": "dart-lang/skills",
       "sourceType": "github",
@@ -45,15 +36,6 @@
       "skillFolderHash": "4a5dc5d5dbc77e2a7d2fd88d42adafc2cbaedbdc",
       "installedAt": "2026-05-08T19:15:53.803Z",
       "updatedAt": "2026-05-14T00:43:22.266Z"
-    },
-    "grill-with-docs": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/mattpocock/skills.git",
-      "skillPath": "skills/engineering/grill-with-docs/SKILL.md",
-      "skillFolderHash": "5fdcdeedf2d0c73b3ecb1da0a464dd885590f8d6",
-      "installedAt": "2026-05-18T18:10:51.650Z",
-      "updatedAt": "2026-07-13T22:15:43.393Z"
     },
     "gerrit-stacked-cls": {
       "source": "kevmoo/kevmoo_skills",
@@ -100,15 +82,6 @@
       "installedAt": "2026-06-05T01:22:10.951Z",
       "updatedAt": "2026-06-29T22:40:58.134Z"
     },
-    "dart-doc-validation": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-doc-validation/SKILL.md",
-      "skillFolderHash": "13e9355b7a50ec7ebb55eac6734e91edd3224b6a",
-      "installedAt": "2026-06-05T01:22:10.952Z",
-      "updatedAt": "2026-06-29T22:40:59.418Z"
-    },
     "dart-long-lines": {
       "source": "kevmoo/dash_skills",
       "sourceType": "github",
@@ -144,15 +117,6 @@
       "skillFolderHash": "71bba23e294d2e2cf8feac0417256ffccab46355",
       "installedAt": "2026-06-05T01:22:10.953Z",
       "updatedAt": "2026-06-29T22:41:05.059Z"
-    },
-    "dart-package-maintenance": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-package-maintenance/SKILL.md",
-      "skillFolderHash": "2ef4bd986ce57611337beb3d5e39e89739306c6b",
-      "installedAt": "2026-06-05T01:22:10.953Z",
-      "updatedAt": "2026-06-29T22:41:06.327Z"
     },
     "dart-test-fundamentals": {
       "source": "kevmoo/dash_skills",
