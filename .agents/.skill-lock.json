@@ -10,33 +10,6 @@
       "installedAt": "2026-05-07T17:47:39.823Z",
       "updatedAt": "2026-05-14T00:43:11.726Z"
     },
-    "dart-build-cli-app": {
-      "source": "dart-lang/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/dart-lang/skills.git",
-      "skillPath": "skills/dart-build-cli-app/SKILL.md",
-      "skillFolderHash": "e72d2bfc68fa36e8b4c6161d7a8885e8ed8407c7",
-      "installedAt": "2026-05-07T18:01:56.398Z",
-      "updatedAt": "2026-05-14T00:43:14.547Z"
-    },
-    "dart-migrate-to-checks-package": {
-      "source": "dart-lang/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/dart-lang/skills.git",
-      "skillPath": "skills/dart-migrate-to-checks-package/SKILL.md",
-      "skillFolderHash": "949f300760f8362d3ed9fc3cafb8dde7787bec7c",
-      "installedAt": "2026-05-08T06:29:10.763Z",
-      "updatedAt": "2026-06-12T19:00:55.475Z"
-    },
-    "dart-use-pattern-matching": {
-      "source": "dart-lang/skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/dart-lang/skills.git",
-      "skillPath": "skills/dart-use-pattern-matching/SKILL.md",
-      "skillFolderHash": "4a5dc5d5dbc77e2a7d2fd88d42adafc2cbaedbdc",
-      "installedAt": "2026-05-08T19:15:53.803Z",
-      "updatedAt": "2026-05-14T00:43:22.266Z"
-    },
     "gerrit-stacked-cls": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
@@ -72,60 +45,6 @@
       "skillFolderHash": "55572bbd0e6d7af0b78f8863d66d4f8c00d5edb8",
       "installedAt": "2026-06-05T01:21:48.063Z",
       "updatedAt": "2026-07-12T06:51:14.352Z"
-    },
-    "dart-best-practices": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-best-practices/SKILL.md",
-      "skillFolderHash": "f07cf2349edeaf3ee3efe88405db3a08f12b411f",
-      "installedAt": "2026-06-05T01:22:10.951Z",
-      "updatedAt": "2026-06-29T22:40:58.134Z"
-    },
-    "dart-long-lines": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-long-lines/SKILL.md",
-      "skillFolderHash": "31b5dec4d4a5a64fe9e4487c721f7f659a40c1d5",
-      "installedAt": "2026-06-05T01:22:10.952Z",
-      "updatedAt": "2026-06-29T22:41:00.700Z"
-    },
-    "dart-matcher-best-practices": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-matcher-best-practices/SKILL.md",
-      "skillFolderHash": "b6ae0b6114b7b56637d869e11202d57df100d88f",
-      "installedAt": "2026-06-05T01:22:10.953Z",
-      "updatedAt": "2026-06-29T22:41:02.381Z"
-    },
-    "dart-modern-features": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-modern-features/SKILL.md",
-      "skillFolderHash": "a9d6f412e1bb0d6b4f13a14451b22d9766f5b6ec",
-      "installedAt": "2026-06-05T01:22:10.953Z",
-      "updatedAt": "2026-06-29T22:41:03.791Z"
-    },
-    "dart-multiline-strings": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-multiline-strings/SKILL.md",
-      "skillFolderHash": "71bba23e294d2e2cf8feac0417256ffccab46355",
-      "installedAt": "2026-06-05T01:22:10.953Z",
-      "updatedAt": "2026-06-29T22:41:05.059Z"
-    },
-    "dart-test-fundamentals": {
-      "source": "kevmoo/dash_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/dash_skills.git",
-      "skillPath": "skills/dart-test-fundamentals/SKILL.md",
-      "skillFolderHash": "4c1fd1357081b1681d4f1d283d097f15884506d7",
-      "installedAt": "2026-06-05T01:22:10.954Z",
-      "updatedAt": "2026-06-29T22:41:08.222Z"
     },
     "pr-loop": {
       "source": "kevmoo/kevmoo_skills",
@@ -181,15 +100,6 @@
       "installedAt": "2026-06-29T19:19:37.575Z",
       "updatedAt": "2026-06-29T19:19:37.575Z"
     },
-    "encapsulated-method-object": {
-      "source": "kevmoo/kevmoo_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
-      "skillPath": "skills/encapsulated-method-object/SKILL.md",
-      "skillFolderHash": "f123b8124da2073282b0d0f8920c85c8fa9e087b",
-      "installedAt": "2026-06-29T19:19:37.576Z",
-      "updatedAt": "2026-08-03T23:19:59.247Z"
-    },
     "clarify-confirm-continue": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
@@ -244,14 +154,14 @@
       "installedAt": "2026-08-03T20:47:42.350Z",
       "updatedAt": "2026-08-03T20:47:56.724Z"
     },
-    "dart-cognitive-complexity": {
-      "source": "kevmoo/cognitive_complexity.dart",
+    "dart-toolkit": {
+      "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/cognitive_complexity.dart.git",
-      "skillPath": "skills/dart-cognitive-complexity/SKILL.md",
-      "skillFolderHash": "03054c91fee47d80298fdacc1751b6a418bfdce6",
-      "installedAt": "2026-08-04T00:16:38.086Z",
-      "updatedAt": "2026-08-04T00:16:38.086Z"
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/dart-toolkit/SKILL.md",
+      "skillFolderHash": "29807f73bc40655af5b4bec0531fa8fb13083b84",
+      "installedAt": "2026-08-08T04:41:54.885Z",
+      "updatedAt": "2026-08-08T04:41:54.885Z"
     }
   },
   "dismissed": {
