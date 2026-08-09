@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Standalone Markdown formatter wrapper around Prettier for user, scripts, and AI agents.
+# Enforces 80-column line wrapping adhering to the markdown-long-lines standard.
+
+set -euo pipefail
+
+# 1. Prefer mise-managed prettier if available
+if command -v mise >/dev/null 2>&1; then
+  if mise which prettier >/dev/null 2>&1; then
+    exec mise exec -- prettier --write --prose-wrap always --print-width 80 "$@"
+  fi
+fi
+
+# 2. Fallback to direct PATH prettier
+if command -v prettier >/dev/null 2>&1; then
+  exec prettier --write --prose-wrap always --print-width 80 "$@"
+fi
+
+# 3. Friendly, actionable error output if prettier is missing
+echo "❌ Error: 'prettier' is not installed or not found in PATH." >&2
+echo "" >&2
+echo "To install prettier:" >&2
+echo "  • via mise (preferred):  mise use -g npm:prettier" >&2
+echo "  • via Homebrew:          brew install prettier" >&2
+echo "  • via npm:               npm install -g prettier" >&2
+exit 1
