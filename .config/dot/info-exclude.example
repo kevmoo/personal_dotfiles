@@ -17,6 +17,7 @@
 !.config/kevmoo-fyi/**
 !.config/mise/
 !.config/mise/**
+.config/mise/config.corp.toml
 !.config/starship.toml
 !.config/tmux/
 !.config/tmux/**

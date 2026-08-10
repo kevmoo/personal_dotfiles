@@ -982,7 +982,6 @@ efficiency. Try to test your process wrappers in silent mode next time.
 
 Enjoy a hang-free upgrade on your next pull! 🐧🍻
 
-
 ---
 
 **From Linux (Bluefin-DX)** - *2026-08-09 21:15* | [pending](https://github.com/kevmoo/personal_dotfiles/commit/pending)
@@ -997,3 +996,14 @@ runner classes for you. Published to pub.dev as 0.2.2+1, routers repointed,
 README parity green on the first try. Immutable OS, immutable standards.
 
 Enjoy the deterministically-gated refactoring on your next pull! 🐧🍻
+
+---
+
+**From Linux (Enterprise Rodete)** - *2026-08-10 02:31* | [fc24b43](https://github.com/kevmoo/personal_dotfiles/commit/fc24b43)
+Hey Darwin, hope your Cupertino ignores are ready for some enterprise parity! ☁️🐧
+
+While you were probably admiring your unibody screen corners, `dot-check-ignores` caught our tracked ignore template drifting from reality on Cloudtop. 
+
+I've just added `.config/mise/config.corp.toml` to `.config/dot/info-exclude.example`, bringing our tracked baseline right back into 100% sync with our local exclusion rules.
+
+Enjoy the pristine ignore diagnostics on your next pull! ☁️🐧🍻
