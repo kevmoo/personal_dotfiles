@@ -43,240 +43,286 @@ class AuditCommand extends Command<void> {
       return;
     }
 
-    final entities = targetDir.listSync().whereType<Directory>().toList()
-      ..sort((a, b) => a.path.compareTo(b.path));
-
-    final rows = <Map<String, String>>[];
-
-    // Process repositories in parallel to fetch status faster
-    final futures = <Future<void>>[];
-
-    for (final dir in entities) {
-      final name = dir.uri.pathSegments.where((s) => s.isNotEmpty).last;
-      if (name.startsWith('.') || name.startsWith('_')) continue;
-
-      // SDK Constraint
-      final pubspecFile = File('${dir.path}/pubspec.yaml');
-      var sdkConstraint = '-';
-      if (pubspecFile.existsSync()) {
-        try {
-          final content = pubspecFile.readAsStringSync();
-          final match = RegExp(
-            r'^\s*sdk:\s*[\x27"]?([^\x27"\r\n]+)[\x27"]?',
-            multiLine: true,
-          ).firstMatch(content);
-          if (match != null) {
-            sdkConstraint = match.group(1)!.trim();
-          }
-        } catch (_) {}
-      }
-
-      final gitType = FileSystemEntity.typeSync('${dir.path}/.git');
-      if (gitType == FileSystemEntityType.notFound) {
-        rows.add({
-          'name': name,
-          'path': dir.path,
-          'remote': 'None',
-          'sdk': sdkConstraint,
-          'date': 'N/A',
-          'status': '⚪ Local scratch (No .git repo)',
-        });
-        continue;
-      }
-
-      final fut = Future(() async {
-        // Fetch remotes
-        await Process.run('git', ['fetch'], workingDirectory: dir.path);
-
-        final remoteResult = await Process.run('git', [
-          'remote',
-          'get-url',
-          'origin',
-        ], workingDirectory: dir.path);
-        final remote = remoteResult.exitCode == 0
-            ? remoteResult.stdout.toString().trim()
-            : 'None';
-
-        final branchResult = await Process.run('git', [
-          'rev-parse',
-          '--abbrev-ref',
-          'HEAD',
-        ], workingDirectory: dir.path);
-        final branch = branchResult.stdout.toString().trim();
-
-        final statusResult = await Process.run('git', [
-          'status',
-          '--porcelain',
-        ], workingDirectory: dir.path);
-        final dirtyLines = statusResult.stdout
-            .toString()
-            .trim()
-            .split('\n')
-            .where((l) => l.isNotEmpty)
-            .toList();
-        final isDirty = dirtyLines.isNotEmpty;
-
-        final defBranchResult = await Process.run('git', [
-          'symbolic-ref',
-          'refs/remotes/origin/HEAD',
-        ], workingDirectory: dir.path);
-        var defBranch = 'main';
-        if (defBranchResult.exitCode == 0) {
-          defBranch = defBranchResult.stdout.toString().trim().replaceAll(
-            'refs/remotes/origin/',
-            '',
-          );
-        }
-
-        final abResult = await Process.run('git', [
-          'rev-list',
-          '--left-right',
-          '--count',
-          'HEAD...origin/$defBranch',
-        ], workingDirectory: dir.path);
-        var ahead = 0;
-        var behind = 0;
-        if (abResult.exitCode == 0) {
-          final parts = abResult.stdout.toString().trim().split(RegExp(r'\s+'));
-          if (parts.length == 2) {
-            ahead = int.tryParse(parts[0]) ?? 0;
-            behind = int.tryParse(parts[1]) ?? 0;
-          }
-        }
-
-        // Last human commit
-        final logResult = await Process.run('git', [
-          'log',
-          '-n',
-          '20',
-          '--format=%ad|%an|%s',
-          '--date=short',
-        ], workingDirectory: dir.path);
-        var lastDate = 'N/A';
-        for (final line in logResult.stdout.toString().trim().split('\n')) {
-          final parts = line.split('|');
-          if (parts.length >= 3) {
-            final author = parts[1].toLowerCase();
-            if (!author.contains('dependabot')) {
-              lastDate = parts[0];
-              break;
-            }
-          }
-        }
-
-        final isDefault = (branch == defBranch);
-        String statusStr;
-
-        if (isDirty) {
-          statusStr = '🔴 Dirty (${dirtyLines.length} uncommitted on $branch)';
-          if (behind > 0) statusStr += ', Behind by $behind';
-        } else if (!isDefault) {
-          statusStr = '🟡 Branch: $branch';
-          if (ahead > 0) statusStr += ' (Ahead by $ahead)';
-          if (behind > 0) statusStr += ' (Behind by $behind)';
-        } else if (ahead > 0) {
-          statusStr = '🟡 Ahead by $ahead on $branch';
-        } else if (behind > 0) {
-          if (sync) {
-            final pullResult = await Process.run('git', [
-              'pull',
-              '--ff-only',
-            ], workingDirectory: dir.path);
-            if (pullResult.exitCode == 0) {
-              statusStr = '🟢 Synced (+$behind commits to $branch)';
-            } else {
-              statusStr = '⏳ Behind by $behind on $branch';
-            }
-          } else {
-            statusStr = '⏳ Behind by $behind on $branch';
-          }
-        } else {
-          statusStr = '🟢 Clean (Up-to-date on $branch)';
-        }
-
-        rows.add({
-          'name': name,
-          'path': dir.path,
-          'remote': remote,
-          'sdk': sdkConstraint,
-          'date': lastDate,
-          'status': statusStr,
-        });
-      });
-      futures.add(fut);
-    }
-
-    await Future.wait(futures);
-
-    // Sort rows: dirty/behind first, then branches, then by date descending
-    rows.sort((a, b) {
-      int priority(String s) {
-        if (s.startsWith('🔴')) return 0;
-        if (s.startsWith('⏳')) return 1;
-        if (s.startsWith('🟡')) return 2;
-        if (s.startsWith('🟢')) return 3;
-        return 4;
-      }
-
-      final pA = priority(a['status']!);
-      final pB = priority(b['status']!);
-      if (pA != pB) return pA.compareTo(pB);
-      return b['date']!.compareTo(a['date']!);
-    });
-
-    final buffer = StringBuffer()
-      ..writeln('# kevmoo Repositories & Workspace Layout')
-      ..writeln()
-      ..writeln('## Overview')
-      ..writeln()
-      ..writeln(
-        '* **Scope**: Public repositories under [github.com/kevmoo](https://github.com/kevmoo) containing Dart code, alongside local development workspaces.',
-      )
-      ..writeln(
-        '* **Workspace Organization**: Personal repositories are consolidated under [~/github/kevmoo](file:///usr/local/google/home/kevmoo/github/kevmoo).',
-      )
-      ..writeln()
-      ..writeln('---')
-      ..writeln()
-      ..writeln('## Locally Synced Repositories')
-      ..writeln()
-      ..writeln(
-        '| Local Directory | Remote Repository | SDK Constraint | Last Human Commit | Local Sync & Branch Status |',
-      )
-      ..writeln('| :--- | :--- | :--- | :--- | :--- |');
-
-    for (final r in rows) {
-      final name = r['name']!;
-      final path = r['path']!;
-      final remote = r['remote']!;
-      final sdk = r['sdk']!;
-      final date = r['date']!;
-      final status = r['status']!;
-
-      final locLink = '[$name](file://$path)';
-      var remLink = 'None';
-      if (remote != 'None') {
-        var cleanUrl = remote.replaceAll(
-          'git@github.com:',
-          'https://github.com/',
-        );
-        if (cleanUrl.endsWith('.git')) {
-          cleanUrl = cleanUrl.substring(0, cleanUrl.length - 4);
-        }
-        remLink = '[kevmoo/$name]($cleanUrl)';
-      }
-
-      buffer.writeln('| $locLink | $remLink | $sdk | $date | $status |');
-    }
-    buffer.writeln();
-
-    final output = buffer.toString();
+    final rows = await _collectRows(targetDir, sync: sync);
+    final output = _renderReport(rows);
     print(output);
 
     if (writeReadme) {
-      final readmeFile = File('$targetPath/README.md');
-      readmeFile.writeAsStringSync(output);
+      File('$targetPath/README.md').writeAsStringSync(output);
       stderr.writeln('Updated $targetPath/README.md');
     }
   }
+}
+
+/// Scans [targetDir] and produces one row per repository, sorted for display.
+///
+/// Git-backed directories are audited in parallel; plain directories are
+/// reported as local scratch space.
+Future<List<Map<String, String>>> _collectRows(
+  Directory targetDir, {
+  required bool sync,
+}) async {
+  final entities = targetDir.listSync().whereType<Directory>().toList()
+    ..sort((a, b) => a.path.compareTo(b.path));
+
+  final rows = <Map<String, String>>[];
+  final futures = <Future<void>>[];
+
+  for (final dir in entities) {
+    final name = dir.uri.pathSegments.where((s) => s.isNotEmpty).last;
+    if (name.startsWith('.') || name.startsWith('_')) continue;
+
+    final sdkConstraint = _sdkConstraint(dir);
+
+    final gitType = FileSystemEntity.typeSync('${dir.path}/.git');
+    if (gitType == FileSystemEntityType.notFound) {
+      rows.add({
+        'name': name,
+        'path': dir.path,
+        'remote': 'None',
+        'sdk': sdkConstraint,
+        'date': 'N/A',
+        'status': '⚪ Local scratch (No .git repo)',
+      });
+      continue;
+    }
+
+    futures.add(
+      _auditRepo(
+        dir,
+        name: name,
+        sdkConstraint: sdkConstraint,
+        sync: sync,
+      ).then(rows.add),
+    );
+  }
+
+  await Future.wait(futures);
+  rows.sort(_compareRows);
+  return rows;
+}
+
+/// Extracts the `sdk:` constraint from a directory's `pubspec.yaml`,
+/// or `'-'` when absent or unreadable.
+String _sdkConstraint(Directory dir) {
+  final pubspecFile = File('${dir.path}/pubspec.yaml');
+  if (!pubspecFile.existsSync()) return '-';
+  try {
+    final content = pubspecFile.readAsStringSync();
+    final match = RegExp(
+      r'^\s*sdk:\s*[\x27"]?([^\x27"\r\n]+)[\x27"]?',
+      multiLine: true,
+    ).firstMatch(content);
+    return match?.group(1)?.trim() ?? '-';
+  } catch (_) {
+    return '-';
+  }
+}
+
+/// Gathers the full status row for one git repository.
+Future<Map<String, String>> _auditRepo(
+  Directory dir, {
+  required String name,
+  required String sdkConstraint,
+  required bool sync,
+}) async {
+  await Process.run('git', ['fetch'], workingDirectory: dir.path);
+
+  final remote =
+      await _gitOrNull(dir.path, ['remote', 'get-url', 'origin']) ?? 'None';
+  final branch = await _gitStdout(dir.path, [
+    'rev-parse',
+    '--abbrev-ref',
+    'HEAD',
+  ]);
+  final dirtyCount = await _dirtyCount(dir.path);
+  final defBranch = await _defaultBranch(dir.path);
+  final (:ahead, :behind) = await _aheadBehind(dir.path, defBranch);
+  final lastDate = await _lastHumanCommitDate(dir.path);
+
+  final statusStr = await _deriveStatus(
+    dir.path,
+    branch: branch,
+    defBranch: defBranch,
+    dirtyCount: dirtyCount,
+    ahead: ahead,
+    behind: behind,
+    sync: sync,
+  );
+
+  return {
+    'name': name,
+    'path': dir.path,
+    'remote': remote,
+    'sdk': sdkConstraint,
+    'date': lastDate,
+    'status': statusStr,
+  };
+}
+
+/// Runs git and returns trimmed stdout, or `null` on a non-zero exit.
+Future<String?> _gitOrNull(String repoPath, List<String> args) async {
+  final result = await Process.run('git', args, workingDirectory: repoPath);
+  return result.exitCode == 0 ? result.stdout.toString().trim() : null;
+}
+
+/// Runs git and returns trimmed stdout regardless of exit code.
+Future<String> _gitStdout(String repoPath, List<String> args) async {
+  final result = await Process.run('git', args, workingDirectory: repoPath);
+  return result.stdout.toString().trim();
+}
+
+/// Number of uncommitted entries reported by `git status --porcelain`.
+Future<int> _dirtyCount(String repoPath) async {
+  final status = await _gitStdout(repoPath, ['status', '--porcelain']);
+  return status.split('\n').where((l) => l.isNotEmpty).length;
+}
+
+/// The remote default branch, falling back to `main` when unset.
+Future<String> _defaultBranch(String repoPath) async {
+  final symbolicRef = await _gitOrNull(repoPath, [
+    'symbolic-ref',
+    'refs/remotes/origin/HEAD',
+  ]);
+  return symbolicRef?.replaceAll('refs/remotes/origin/', '') ?? 'main';
+}
+
+/// Commits ahead of / behind `origin/[defBranch]`; zeros when unknown.
+Future<({int ahead, int behind})> _aheadBehind(
+  String repoPath,
+  String defBranch,
+) async {
+  final counts = await _gitOrNull(repoPath, [
+    'rev-list',
+    '--left-right',
+    '--count',
+    'HEAD...origin/$defBranch',
+  ]);
+  final parts = counts?.split(RegExp(r'\s+'));
+  if (parts == null || parts.length != 2) return (ahead: 0, behind: 0);
+  return (
+    ahead: int.tryParse(parts[0]) ?? 0,
+    behind: int.tryParse(parts[1]) ?? 0,
+  );
+}
+
+/// Date of the most recent commit not authored by dependabot, or `'N/A'`.
+Future<String> _lastHumanCommitDate(String repoPath) async {
+  final log = await _gitStdout(repoPath, [
+    'log',
+    '-n',
+    '20',
+    '--format=%ad|%an|%s',
+    '--date=short',
+  ]);
+  for (final line in log.split('\n')) {
+    final parts = line.split('|');
+    if (parts.length >= 3 && !parts[1].toLowerCase().contains('dependabot')) {
+      return parts[0];
+    }
+  }
+  return 'N/A';
+}
+
+/// Derives the display status; when [sync] is set and the repo is cleanly
+/// behind its default branch, attempts a fast-forward pull first.
+Future<String> _deriveStatus(
+  String repoPath, {
+  required String branch,
+  required String defBranch,
+  required int dirtyCount,
+  required int ahead,
+  required int behind,
+  required bool sync,
+}) async {
+  if (dirtyCount > 0) {
+    var status = '🔴 Dirty ($dirtyCount uncommitted on $branch)';
+    if (behind > 0) status += ', Behind by $behind';
+    return status;
+  }
+  if (branch != defBranch) {
+    var status = '🟡 Branch: $branch';
+    if (ahead > 0) status += ' (Ahead by $ahead)';
+    if (behind > 0) status += ' (Behind by $behind)';
+    return status;
+  }
+  if (ahead > 0) return '🟡 Ahead by $ahead on $branch';
+  if (behind > 0) {
+    return sync && await _ffPull(repoPath)
+        ? '🟢 Synced (+$behind commits to $branch)'
+        : '⏳ Behind by $behind on $branch';
+  }
+  return '🟢 Clean (Up-to-date on $branch)';
+}
+
+/// Attempts `git pull --ff-only`; true on success.
+Future<bool> _ffPull(String repoPath) async {
+  final result = await Process.run('git', [
+    'pull',
+    '--ff-only',
+  ], workingDirectory: repoPath);
+  return result.exitCode == 0;
+}
+
+/// Sort key: dirty/behind first, then branches, then clean, then scratch;
+/// ties broken by date descending.
+int _compareRows(Map<String, String> a, Map<String, String> b) {
+  final pA = _statusPriority(a['status']!);
+  final pB = _statusPriority(b['status']!);
+  if (pA != pB) return pA.compareTo(pB);
+  return b['date']!.compareTo(a['date']!);
+}
+
+int _statusPriority(String status) {
+  if (status.startsWith('🔴')) return 0;
+  if (status.startsWith('⏳')) return 1;
+  if (status.startsWith('🟡')) return 2;
+  if (status.startsWith('🟢')) return 3;
+  return 4;
+}
+
+/// Renders the audit rows as the markdown workspace report.
+String _renderReport(List<Map<String, String>> rows) {
+  final buffer = StringBuffer()
+    ..writeln('# kevmoo Repositories & Workspace Layout')
+    ..writeln()
+    ..writeln('## Overview')
+    ..writeln()
+    ..writeln(
+      '* **Scope**: Public repositories under [github.com/kevmoo](https://github.com/kevmoo) containing Dart code, alongside local development workspaces.',
+    )
+    ..writeln(
+      '* **Workspace Organization**: Personal repositories are consolidated under [~/github/kevmoo](file:///usr/local/google/home/kevmoo/github/kevmoo).',
+    )
+    ..writeln()
+    ..writeln('---')
+    ..writeln()
+    ..writeln('## Locally Synced Repositories')
+    ..writeln()
+    ..writeln(
+      '| Local Directory | Remote Repository | SDK Constraint | Last Human Commit | Local Sync & Branch Status |',
+    )
+    ..writeln('| :--- | :--- | :--- | :--- | :--- |');
+
+  for (final r in rows) {
+    final name = r['name']!;
+    final locLink = '[$name](file://${r['path']!})';
+    final remLink = _remoteLink(r['remote']!, name);
+    buffer.writeln(
+      '| $locLink | $remLink | ${r['sdk']!} | ${r['date']!} | ${r['status']!} |',
+    );
+  }
+  buffer.writeln();
+
+  return buffer.toString();
+}
+
+/// Markdown link for the remote column; `'None'` passes through.
+String _remoteLink(String remote, String name) {
+  if (remote == 'None') return 'None';
+  var cleanUrl = remote.replaceAll('git@github.com:', 'https://github.com/');
+  if (cleanUrl.endsWith('.git')) {
+    cleanUrl = cleanUrl.substring(0, cleanUrl.length - 4);
+  }
+  return '[kevmoo/$name]($cleanUrl)';
 }
