@@ -1,3 +1,4 @@
+export 'audit_command.dart';
 export 'check_command.dart';
 export 'list_command.dart';
 export 'triage_command.dart';

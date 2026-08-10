@@ -11,6 +11,7 @@ Future<void> main(List<String> args) async {
           'upkeep',
           'Cross-platform system status checker and updater.',
         )
+        ..addCommand(AuditCommand())
         ..addCommand(CheckCommand())
         ..addCommand(UpdateCommand())
         ..addCommand(TriageCommand())
