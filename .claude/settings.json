@@ -1,8 +1,8 @@
 {
-  "includeCoAuthoredBy": false,
   "attribution": {
     "sessionUrl": false
   },
+  "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
       "Bash(git status:*)",
@@ -47,5 +47,6 @@
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": false
+  "voiceEnabled": false,
+  "model": "claude-fable-5[1m]"
 }

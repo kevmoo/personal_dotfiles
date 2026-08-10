@@ -51,9 +51,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "10b0db61f9b3869243db8a1a0ee84f862139b94e",
+      "skillFolderHash": "fd99bcbb818f7ef766b83656fb5fac0b58e223ad",
       "installedAt": "2026-06-25T18:29:07.130Z",
-      "updatedAt": "2026-07-13T22:15:44.257Z"
+      "updatedAt": "2026-08-10T01:30:04.269Z"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
@@ -150,9 +150,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/dart-cleanup/SKILL.md",
-      "skillFolderHash": "3511033a1714ab64c87652f51f129f0bf7fb5b10",
+      "skillFolderHash": "48247145812a78de4bf5b32a86a9ff0fe536567d",
       "installedAt": "2026-08-08T05:46:03.701Z",
-      "updatedAt": "2026-08-08T05:46:03.701Z"
+      "updatedAt": "2026-08-10T02:21:01.574Z"
     }
   },
   "dismissed": {
