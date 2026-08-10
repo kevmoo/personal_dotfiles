@@ -100,6 +100,12 @@ class MiseUpkeeper implements Upkeeper {
         ['upgrade'],
         mode: verbose ? ProcessStartMode.inheritStdio : ProcessStartMode.normal,
       );
+      if (!verbose) {
+        // Drain stdout/stderr and close stdin to prevent the process from hanging due to full buffers.
+        process.stdout.listen((_) {});
+        process.stderr.listen((_) {});
+        await process.stdin.close();
+      }
       final exitCode = await process.exitCode;
       if (exitCode == 0) {
         return UpkeepResult(
