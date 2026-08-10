@@ -6,36 +6,16 @@ is also enforced by each agent's permission settings — these rules state inten
 
 ## Version Control & Outward Boundaries
 
-- **Git & GitHub Repositories**:
-  - *Autonomous Operations*: You may freely create local branches, make local
-    commits (`git commit`), and push to feature/PR branches (`git push [remote]
-    <feature-branch>` where `<feature-branch>` is not `main`, `master`, or
-    `trunk`).
-  - *Approval Gate (`ask_question`)*: You MUST obtain explicit user approval
-    before:
-    - Pushing to default/trunk branches (`main`, `master`, `trunk`). Never run
-      bare `git push` while on a default branch without verifying target.
-    - Merging, closing, or publishing PRs/releases (`gh pr merge`, `gh pr close`,
-      `gh release create`).
-  - *Hard Prohibitions*: Never execute force-pushes (`--force`, `-f`, `+ref`) or
-    destructive working tree resets (`git reset --hard`).
-- **Piper / CitC / Jujutsu (`jj`)**:
-  - *Autonomous Operations*: You may freely format, sync, and update open CL
-    patchsets/snapshots (`jj fix`, `jj prep`, `jj piper upload`).
-  - *Approval Gate (`ask_question`)*: You MUST obtain explicit confirmation in
-    chat before executing any final submission (`jj ship`, `jj piper submit`,
-    `g4 submit`, `p4 submit`, `hg submit`).
-- **One-Shot Submit Approval**: A user command to submit applies only to the
-  immediate attempt. If presubmits fail or code changes are made, resolve issues
-  locally, run `jj prep`, and request fresh approval via `ask_question` before
-  shipping.
-- **GitHub writes** (issues, PRs, comments, releases) are outward-facing:
-  ask before every single one. One approval covers one action; it never
-  carries over to the next.
-- **github.com URLs**: always read via the `gh` CLI, never generic URL
-  fetchers (they get blocked or return login pages).
-- **Read-only inspection** (`grep`, `find`, `git status/diff/log/show`,
-  `gh ... view/list`) is always safe — run it eagerly, without asking.
+- **Local Staging (Autonomous)**: Branching, committing (`git commit`), formatters, and pushing to feature/PR branches (`git push [remote] <feature-branch>`).
+- **Approval Gate (`ask_question`)**:
+  - Pushing to default/trunk (`main`, `master`, `trunk`).
+  - Merging/closing PRs, publishing releases (`gh pr merge`, `gh release create`).
+  - GitHub writes (issues, PRs, comments, releases). Single-action scope only.
+- **Two-Tier Landing Approval**:
+  - **Tier 1 (Zero-Diff / Autonomous Retry)**: Submit/merge approval covers mechanical fixes: CI test runs, auto-formatters, clean fast-forward rebases, transient lockouts. Re-run landing without re-prompting.
+  - **Tier 2 (Semantic Diff / Re-Prompt Required)**: Approval expires immediately if source code (`.dart`, `.go`, `.py`), dependencies, or test assertions change, or non-trivial rebase conflicts occur. Stage locally, then prompt via `ask_question` with diff summary.
+- **Prohibitions**: Never force-push (`--force`, `-f`, `+ref`) or hard-reset (`git reset --hard`).
+- **Reads**: Read-only inspection is always safe. Read github.com URLs via `gh` CLI only.
 
 ## Interaction
 
