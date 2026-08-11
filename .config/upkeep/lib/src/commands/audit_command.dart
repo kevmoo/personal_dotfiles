@@ -130,11 +130,7 @@ Future<Map<String, String>> _auditRepo(
 
   final remote =
       await _gitOrNull(dir.path, ['remote', 'get-url', 'origin']) ?? 'None';
-  final branch = await _gitStdout(dir.path, [
-    'rev-parse',
-    '--abbrev-ref',
-    'HEAD',
-  ]);
+  final branch = await _currentBranch(dir.path);
   final dirtyCount = await _dirtyCount(dir.path);
   final defBranch = await _defaultBranch(dir.path);
   final (:ahead, :behind) = await _aheadBehind(dir.path, defBranch);
@@ -158,6 +154,16 @@ Future<Map<String, String>> _auditRepo(
     'date': lastDate,
     'status': statusStr,
   };
+}
+
+/// The current branch name, falling back to `HEAD` when detached or unset.
+Future<String> _currentBranch(String repoPath) async {
+  var branch = await _gitStdout(repoPath, ['branch', '--show-current']);
+  if (branch.isEmpty) {
+    branch = await _gitStdout(repoPath, ['rev-parse', '--abbrev-ref', 'HEAD']);
+    if (branch.isEmpty) branch = 'HEAD';
+  }
+  return branch;
 }
 
 /// Runs git and returns trimmed stdout, or `null` on a non-zero exit.
