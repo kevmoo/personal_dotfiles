@@ -57,6 +57,26 @@ class DotfilesCorpUpkeeper implements Upkeeper {
     return false;
   }
 
+  UpkeepStatus _status(
+    UpkeepState state,
+    String summary, {
+    String? errorMessage,
+    List<String> details = const [],
+  }) => UpkeepStatus(
+    upkeeperId: id,
+    displayName: displayName,
+    state: state,
+    summary: summary,
+    errorMessage: errorMessage,
+    details: details,
+  );
+
+  Future<ProcessResult> _corpGit(
+    String gitDir,
+    String home,
+    List<String> args,
+  ) => _run('git', ['--git-dir=$gitDir', '--work-tree=$home', ...args]);
+
   @override
   Future<UpkeepStatus> check() async {
     try {
@@ -64,143 +84,97 @@ class DotfilesCorpUpkeeper implements Upkeeper {
       final gitDir = _gitDir();
 
       if (!Directory(gitDir).existsSync()) {
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: UpkeepState.error,
-          summary: 'Private dotfiles directory not found at $gitDir',
+        return _status(
+          UpkeepState.error,
+          'Private dotfiles directory not found at $gitDir',
           errorMessage:
               'Run dotcorp setup to initialize the private repository.',
         );
       }
 
       // 1. Check for local modifications (dirty status)
-      final statusProc = await _run('git', [
-        '--git-dir=$gitDir',
-        '--work-tree=$home',
+      final statusProc = await _corpGit(gitDir, home, [
         'status',
         '--porcelain',
       ]);
-
       if (statusProc.exitCode != 0) {
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: UpkeepState.error,
-          summary: 'Error checking git status',
+        return _status(
+          UpkeepState.error,
+          'Error checking git status',
           errorMessage: statusProc.stderr.toString(),
         );
       }
 
-      final statusOutput = statusProc.stdout.toString().trim();
-      final isDirty = statusOutput.isNotEmpty;
-      final dirtyFiles = isDirty
-          ? statusOutput.split('\n').map((line) => line.trim()).toList()
-          : <String>[];
+      final dirtyFiles = _parseDirtyFiles(statusProc.stdout.toString());
+      final isDirty = dirtyFiles.isNotEmpty;
 
       // 2. Fetch remote changes
-      final fetchProc = await _run('git', [
-        '--git-dir=$gitDir',
-        '--work-tree=$home',
-        'fetch',
-      ]);
-
+      final fetchProc = await _corpGit(gitDir, home, ['fetch']);
       if (fetchProc.exitCode != 0) {
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: isDirty ? UpkeepState.outdated : UpkeepState.error,
-          summary: isDirty
-              ? 'Local private dotfiles have uncommitted changes (Fetch failed)'
-              : 'Error fetching remote updates for private dotfiles',
-          errorMessage: fetchProc.stderr.toString(),
-          details: isDirty ? dirtyFiles : const [],
-        );
+        return switch (isDirty) {
+          true => _status(
+            UpkeepState.outdated,
+            'Local private dotfiles have uncommitted changes (Fetch failed)',
+            errorMessage: fetchProc.stderr.toString(),
+            details: dirtyFiles,
+          ),
+          false => _status(
+            UpkeepState.error,
+            'Error fetching remote updates for private dotfiles',
+            errorMessage: fetchProc.stderr.toString(),
+          ),
+        };
       }
 
       // Check if there is an upstream branch configured
-      final upstreamProc = await _run('git', [
-        '--git-dir=$gitDir',
-        '--work-tree=$home',
+      final upstreamProc = await _corpGit(gitDir, home, [
         'rev-parse',
         '--abbrev-ref',
         '@{u}',
       ]);
-
       if (upstreamProc.exitCode != 0) {
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: isDirty ? UpkeepState.outdated : UpkeepState.upToDate,
-          summary: isDirty
-              ? 'Local private dotfiles have uncommitted changes (No upstream branch)'
-              : 'Private dotfiles up to date (no upstream branch tracked)',
-          details: isDirty ? dirtyFiles : const [],
-        );
+        return switch (isDirty) {
+          true => _status(
+            UpkeepState.outdated,
+            'Local private dotfiles have uncommitted changes (No upstream branch)',
+            details: dirtyFiles,
+          ),
+          false => _status(
+            UpkeepState.upToDate,
+            'Private dotfiles up to date (no upstream branch tracked)',
+          ),
+        };
       }
 
-      // 3. Check behind count
-      final behindProc = await _run('git', [
-        '--git-dir=$gitDir',
-        '--work-tree=$home',
-        'rev-list',
-        '--count',
-        'HEAD..@{u}',
-      ]);
+      // 3 & 4. Behind/ahead counts against upstream
+      final behindCount = _countOutput(
+        await _corpGit(gitDir, home, ['rev-list', '--count', 'HEAD..@{u}']),
+      );
+      final aheadCount = _countOutput(
+        await _corpGit(gitDir, home, ['rev-list', '--count', '@{u}..HEAD']),
+      );
 
-      final behindCount =
-          int.tryParse(behindProc.stdout.toString().trim()) ?? 0;
-
-      // 4. Check ahead count
-      final aheadProc = await _run('git', [
-        '--git-dir=$gitDir',
-        '--work-tree=$home',
-        'rev-list',
-        '--count',
-        '@{u}..HEAD',
-      ]);
-
-      final aheadCount = int.tryParse(aheadProc.stdout.toString().trim()) ?? 0;
-
-      if (isDirty || behindCount > 0 || aheadCount > 0) {
-        final details = <String>[];
-        if (isDirty) {
-          details.add('Local modifications:');
-          details.addAll(dirtyFiles.map((f) => '  $f'));
-        }
-        if (behindCount > 0) {
-          details.add('$behindCount new commit(s) available on remote');
-        }
-        if (aheadCount > 0) {
-          details.add('$aheadCount local commit(s) unpushed');
-        }
-
-        final summaryList = <String>[];
-        if (isDirty) summaryList.add('dirty');
-        if (behindCount > 0) summaryList.add('$behindCount behind');
-        if (aheadCount > 0) summaryList.add('$aheadCount ahead');
-
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: UpkeepState.outdated,
-          summary: 'Private dotfiles out of sync: ${summaryList.join(', ')}',
-          details: details,
+      final (:details, :summaryParts) = _syncDrift(
+        isDirty: isDirty,
+        dirtyFiles: dirtyFiles,
+        behindCount: behindCount,
+        aheadCount: aheadCount,
+      );
+      if (summaryParts.isEmpty) {
+        return _status(
+          UpkeepState.upToDate,
+          'Private dotfiles repository is up to date',
         );
       }
-
-      return UpkeepStatus(
-        upkeeperId: id,
-        displayName: displayName,
-        state: UpkeepState.upToDate,
-        summary: 'Private dotfiles repository is up to date',
+      return _status(
+        UpkeepState.outdated,
+        'Private dotfiles out of sync: ${summaryParts.join(', ')}',
+        details: details,
       );
     } catch (e) {
-      return UpkeepStatus(
-        upkeeperId: id,
-        displayName: displayName,
-        state: UpkeepState.error,
-        summary: 'Exception checking private dotfiles git status',
+      return _status(
+        UpkeepState.error,
+        'Exception checking private dotfiles git status',
         errorMessage: e.toString(),
       );
     }
@@ -312,4 +286,40 @@ class DotfilesCorpUpkeeper implements Upkeeper {
       );
     }
   }
+}
+
+/// Trimmed non-empty lines of `git status --porcelain` output.
+List<String> _parseDirtyFiles(String statusStdout) {
+  final output = statusStdout.trim();
+  if (output.isEmpty) return const [];
+  return output.split('\n').map((line) => line.trim()).toList();
+}
+
+/// Integer stdout of a `rev-list --count` invocation; 0 when unparseable.
+int _countOutput(ProcessResult result) =>
+    int.tryParse(result.stdout.toString().trim()) ?? 0;
+
+/// Human-readable description of how the repo diverges from upstream.
+({List<String> details, List<String> summaryParts}) _syncDrift({
+  required bool isDirty,
+  required List<String> dirtyFiles,
+  required int behindCount,
+  required int aheadCount,
+}) {
+  final details = <String>[];
+  final summaryParts = <String>[];
+  if (isDirty) {
+    details.add('Local modifications:');
+    details.addAll(dirtyFiles.map((f) => '  $f'));
+    summaryParts.add('dirty');
+  }
+  if (behindCount > 0) {
+    details.add('$behindCount new commit(s) available on remote');
+    summaryParts.add('$behindCount behind');
+  }
+  if (aheadCount > 0) {
+    details.add('$aheadCount local commit(s) unpushed');
+    summaryParts.add('$aheadCount ahead');
+  }
+  return (details: details, summaryParts: summaryParts);
 }

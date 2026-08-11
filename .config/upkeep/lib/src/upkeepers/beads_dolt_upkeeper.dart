@@ -67,65 +67,29 @@ class BeadsDoltUpkeeper implements Upkeeper {
 
   @override
   Future<UpkeepStatus> check() async {
-    final details = <String>[];
-    final outdatedItems = <String>[];
-    var isOutdated = false;
-
     final doltFile = File(_doltPath());
     final bdFile = File(_bdPath());
 
-    if (!doltFile.existsSync() && !bdFile.existsSync()) {
-      if (_isCloudtop()) {
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: UpkeepState.outdated,
-          summary: 'Beads and Dolt binaries not installed (run update to install via go)',
-        );
-      }
+    if (!doltFile.existsSync() && !bdFile.existsSync() && _isCloudtop()) {
+      return UpkeepStatus(
+        upkeeperId: id,
+        displayName: displayName,
+        state: UpkeepState.outdated,
+        summary: 'Beads and Dolt binaries not installed (run update to install via go)',
+      );
     }
 
-    // 1. Audit Dolt
-    if (doltFile.existsSync()) {
-      try {
-        final result = await _runProcess(_doltPath(), ['version']);
-        final output = result.stdout.toString() + result.stderr.toString();
-        if (output.contains('Warning: you are on an old version of Dolt')) {
-          isOutdated = true;
-          final match = RegExp(r'The newest version is ([^\s.]+[\.\d]+)')
-              .firstMatch(output);
-          final newest = match != null ? match.group(1) : 'newer version';
-          outdatedItems.add('Dolt update available -> $newest');
-          details.add('Dolt: ${output.trim()}');
-        } else {
-          final firstLine = output.trim().split('\n').first;
-          details.add('Dolt: $firstLine (up to date)');
-        }
-      } catch (e) {
-        details.add('Dolt: Error running version check ($e)');
-      }
-    } else if (_isCloudtop()) {
-      isOutdated = true;
-      outdatedItems.add('Dolt binary not installed -> install via go');
-      details.add('Dolt: missing binary at ${_doltPath()}');
-    }
+    final findings = [await _auditDolt(doltFile), await _auditBd(bdFile)];
+    final details = [
+      for (final f in findings)
+        if (f.detail != null) f.detail!,
+    ];
+    final outdatedItems = [
+      for (final f in findings)
+        if (f.outdatedItem != null) f.outdatedItem!,
+    ];
 
-    // 2. Audit Beads (bd)
-    if (bdFile.existsSync()) {
-      try {
-        final result = await _runProcess(_bdPath(), ['--version']);
-        final stdout = result.stdout.toString().trim();
-        details.add('Beads (bd): $stdout');
-      } catch (e) {
-        details.add('Beads (bd): Error checking version ($e)');
-      }
-    } else if (_isCloudtop()) {
-      isOutdated = true;
-      outdatedItems.add('Beads (bd) binary not installed -> install via go');
-      details.add('Beads (bd): missing binary at ${_bdPath()}');
-    }
-
-    if (isOutdated) {
+    if (outdatedItems.isNotEmpty) {
       return UpkeepStatus(
         upkeeperId: id,
         displayName: displayName,
@@ -142,6 +106,52 @@ class BeadsDoltUpkeeper implements Upkeeper {
       summary: 'Beads & Dolt binaries are up to date',
       details: details,
     );
+  }
+
+  Future<({String? outdatedItem, String? detail})> _auditDolt(
+    File doltFile,
+  ) async {
+    if (doltFile.existsSync()) {
+      try {
+        final result = await _runProcess(_doltPath(), ['version']);
+        final output = result.stdout.toString() + result.stderr.toString();
+        return _doltVersionFinding(output);
+      } catch (e) {
+        return (
+          outdatedItem: null,
+          detail: 'Dolt: Error running version check ($e)',
+        );
+      }
+    }
+    if (_isCloudtop()) {
+      return (
+        outdatedItem: 'Dolt binary not installed -> install via go',
+        detail: 'Dolt: missing binary at ${_doltPath()}',
+      );
+    }
+    return (outdatedItem: null, detail: null);
+  }
+
+  Future<({String? outdatedItem, String? detail})> _auditBd(File bdFile) async {
+    if (bdFile.existsSync()) {
+      try {
+        final result = await _runProcess(_bdPath(), ['--version']);
+        final stdout = result.stdout.toString().trim();
+        return (outdatedItem: null, detail: 'Beads (bd): $stdout');
+      } catch (e) {
+        return (
+          outdatedItem: null,
+          detail: 'Beads (bd): Error checking version ($e)',
+        );
+      }
+    }
+    if (_isCloudtop()) {
+      return (
+        outdatedItem: 'Beads (bd) binary not installed -> install via go',
+        detail: 'Beads (bd): missing binary at ${_bdPath()}',
+      );
+    }
+    return (outdatedItem: null, detail: null);
   }
 
   @override
@@ -207,4 +217,22 @@ class BeadsDoltUpkeeper implements Upkeeper {
       return false;
     }
   }
+}
+
+/// Classifies `dolt version` output (stdout+stderr combined) into an optional
+/// outdated marker and a detail line.
+({String? outdatedItem, String detail}) _doltVersionFinding(String output) {
+  if (output.contains('Warning: you are on an old version of Dolt')) {
+    final match = RegExp(r'The newest version is ([^\s.]+[\.\d]+)')
+        .firstMatch(output);
+    final newest = match != null ? match.group(1) : 'newer version';
+    return (
+      outdatedItem: 'Dolt update available -> $newest',
+      detail: 'Dolt: ${output.trim()}',
+    );
+  }
+  return (
+    outdatedItem: null,
+    detail: 'Dolt: ${output.trim().split('\n').first} (up to date)',
+  );
 }

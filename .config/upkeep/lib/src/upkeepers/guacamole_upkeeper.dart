@@ -92,27 +92,7 @@ class GuacamoleUpkeeper implements Upkeeper {
         );
       }
 
-      final outdatedContainers = <String>[];
-      final details = <String>[];
-
-      for (final item in jsonList) {
-        if (item is Map<String, dynamic>) {
-          final containerName = item['ContainerName'] as String? ?? '';
-          final image = item['Image'] as String? ?? '';
-          final updated = item['Updated'] as String? ?? '';
-
-          if (containerName.isNotEmpty) {
-            if (updated == 'pending' || updated == 'true') {
-              outdatedContainers.add(containerName);
-              details.add(
-                'Container "$containerName" ($image) update is available',
-              );
-            } else {
-              details.add('Container "$containerName" ($image) is up to date');
-            }
-          }
-        }
-      }
+      final (:outdatedContainers, :details) = _classifyContainers(jsonList);
 
       if (outdatedContainers.isNotEmpty) {
         return UpkeepStatus(
@@ -174,4 +154,30 @@ class GuacamoleUpkeeper implements Upkeeper {
       );
     }
   }
+}
+
+/// Classifies `podman auto-update --dry-run` entries into outdated container
+/// names and per-container detail lines.
+({List<String> outdatedContainers, List<String> details}) _classifyContainers(
+  List<dynamic> jsonList,
+) {
+  final outdatedContainers = <String>[];
+  final details = <String>[];
+
+  for (final item in jsonList) {
+    if (item is! Map<String, dynamic>) continue;
+    final containerName = item['ContainerName'] as String? ?? '';
+    if (containerName.isEmpty) continue;
+
+    final image = item['Image'] as String? ?? '';
+    final updated = item['Updated'] as String? ?? '';
+    if (updated == 'pending' || updated == 'true') {
+      outdatedContainers.add(containerName);
+      details.add('Container "$containerName" ($image) update is available');
+    } else {
+      details.add('Container "$containerName" ($image) is up to date');
+    }
+  }
+
+  return (outdatedContainers: outdatedContainers, details: details);
 }

@@ -55,45 +55,22 @@ class GlinuxOsStrategy implements OsStrategy {
   Future<UpkeepStatus> check(String upkeeperId, String displayName) async {
     final issues = <String>[];
     final details = <String>[];
-    var state = UpkeepState.upToDate;
 
     // 1. Check gCert status
     try {
       final gcertResult = await _runProcess('gcertstatus', []);
-      final stdout = gcertResult.stdout.toString();
-      final match = RegExp(r'expires in (?:(\d+)h)?\s*(?:(\d+)m)?')
-          .firstMatch(stdout);
-
-      if (match != null) {
-        final hoursStr = match.group(1);
-        final hours = hoursStr != null ? int.tryParse(hoursStr) ?? 0 : 0;
-        if (hours < 4 && !stdout.contains('expires in 0h 0m')) {
-          state = UpkeepState.outdated;
-          issues.add('gCert ticket expiring soon (${hours}h remaining)');
-          details.add(stdout.trim());
-        } else {
-          details.add(
-            'gCert status: ${stdout.trim().split("\n").firstWhere((l) => l.contains('expires in'), orElse: () => 'OK')}',
-          );
-        }
-      } else if (gcertResult.exitCode != 0) {
-        state = UpkeepState.outdated;
-        issues.add('gCert ticket inactive or expired');
-        details.add(
-          'gCert status check failed (exit code ${gcertResult.exitCode}): run gcert',
-        );
-      }
+      final finding = _gcertFinding(
+        gcertResult.stdout.toString(),
+        gcertResult.exitCode,
+      );
+      issues.addAll(finding.issues);
+      details.addAll(finding.details);
     } catch (_) {
       // gcertstatus executable missing or error
     }
 
     // 2. Check pending reboot status
-    final hasRebootRequired = _rebootRequiredChecker != null
-        ? _rebootRequiredChecker!()
-        : (File('/var/run/reboot-required').existsSync() ||
-              File('/run/reboot-required').existsSync());
-    if (hasRebootRequired) {
-      state = UpkeepState.outdated;
+    if (_hasRebootRequired()) {
       issues.add('System reboot required');
       details.add('Reboot flag active (/var/run/reboot-required)');
     }
@@ -101,29 +78,17 @@ class GlinuxOsStrategy implements OsStrategy {
     // 3. Check gLinux updater status
     try {
       final updaterResult = await _runProcess('glinux-updater', ['--check']);
-      if (updaterResult.exitCode == 0) {
-        final stdout = updaterResult.stdout.toString().trim();
-        if (stdout.isNotEmpty && !stdout.contains('completed successfully')) {
-          state = UpkeepState.outdated;
-          issues.add('gLinux system updates required or pending');
-          details.add(stdout);
-        } else {
-          details.add(
-            stdout.isNotEmpty ? 'gLinux status: $stdout' : 'gLinux status: OK',
-          );
-        }
-      } else {
-        state = UpkeepState.outdated;
-        issues.add('gLinux system check failed or outdated');
-        details.add(
-          'glinux-updater --check failed (exit code ${updaterResult.exitCode})',
-        );
-      }
+      final finding = _updaterFinding(
+        updaterResult.stdout.toString(),
+        updaterResult.exitCode,
+      );
+      issues.addAll(finding.issues);
+      details.addAll(finding.details);
     } catch (_) {
       // glinux-updater not available or error
     }
 
-    if (state == UpkeepState.upToDate) {
+    if (issues.isEmpty) {
       return UpkeepStatus(
         upkeeperId: upkeeperId,
         displayName: displayName,
@@ -131,16 +96,20 @@ class GlinuxOsStrategy implements OsStrategy {
         summary: 'gLinux Cloudtop system is up to date & gCert active',
         details: details,
       );
-    } else {
-      return UpkeepStatus(
-        upkeeperId: upkeeperId,
-        displayName: displayName,
-        state: state,
-        summary: issues.join('; '),
-        details: details,
-      );
     }
+    return UpkeepStatus(
+      upkeeperId: upkeeperId,
+      displayName: displayName,
+      state: UpkeepState.outdated,
+      summary: issues.join('; '),
+      details: details,
+    );
   }
+
+  bool _hasRebootRequired() => _rebootRequiredChecker != null
+      ? _rebootRequiredChecker!()
+      : (File('/var/run/reboot-required').existsSync() ||
+            File('/run/reboot-required').existsSync());
 
   @override
   Future<UpkeepResult> update(
@@ -448,4 +417,61 @@ class OsUpkeeper implements Upkeeper {
     }
     return strategy.update(id, displayName, verbose: verbose);
   }
+}
+
+/// A section's contribution to the overall check: blocking issues plus
+/// informational detail lines.
+typedef _SectionFinding = ({List<String> issues, List<String> details});
+
+/// Interprets `gcertstatus` output.
+_SectionFinding _gcertFinding(String stdout, int exitCode) {
+  final match = RegExp(r'expires in (?:(\d+)h)?\s*(?:(\d+)m)?')
+      .firstMatch(stdout);
+
+  if (match != null) {
+    final hoursStr = match.group(1);
+    final hours = hoursStr != null ? int.tryParse(hoursStr) ?? 0 : 0;
+    if (hours < 4 && !stdout.contains('expires in 0h 0m')) {
+      return (
+        issues: ['gCert ticket expiring soon (${hours}h remaining)'],
+        details: [stdout.trim()],
+      );
+    }
+    return (
+      issues: const [],
+      details: [
+        'gCert status: ${stdout.trim().split("\n").firstWhere((l) => l.contains('expires in'), orElse: () => 'OK')}',
+      ],
+    );
+  }
+  if (exitCode != 0) {
+    return (
+      issues: ['gCert ticket inactive or expired'],
+      details: ['gCert status check failed (exit code $exitCode): run gcert'],
+    );
+  }
+  return (issues: const [], details: const []);
+}
+
+/// Interprets `glinux-updater --check` output.
+_SectionFinding _updaterFinding(String stdout, int exitCode) {
+  if (exitCode != 0) {
+    return (
+      issues: ['gLinux system check failed or outdated'],
+      details: ['glinux-updater --check failed (exit code $exitCode)'],
+    );
+  }
+  final trimmed = stdout.trim();
+  if (trimmed.isNotEmpty && !trimmed.contains('completed successfully')) {
+    return (
+      issues: ['gLinux system updates required or pending'],
+      details: [trimmed],
+    );
+  }
+  return (
+    issues: const [],
+    details: [
+      trimmed.isNotEmpty ? 'gLinux status: $trimmed' : 'gLinux status: OK',
+    ],
+  );
 }
