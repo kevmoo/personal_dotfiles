@@ -40,8 +40,13 @@ void main() {
       await _git(clean.path, ['add', '.']);
       await _git(clean.path, ['commit', '-m', 'init']);
 
-      // 3. Repo with uncommitted changes -> "Dirty".
+      // 3. Repo with uncommitted changes -> "Dirty". Its pubspec has no
+      // environment block; the only `sdk:` line is the flutter dependency,
+      // which naive line matching would misreport as the SDK constraint.
       final dirty = Directory(p.join(target.path, 'dirty_repo'))..createSync();
+      File(p.join(dirty.path, 'pubspec.yaml')).writeAsStringSync(
+        'name: dirty_repo\ndependencies:\n  flutter:\n    sdk: flutter\n',
+      );
       File(p.join(dirty.path, 'a.txt')).writeAsStringSync('committed\n');
       await _git(dirty.path, ['init', '-b', 'main']);
       await _git(dirty.path, ['add', '.']);
@@ -82,6 +87,10 @@ void main() {
 
       // SDK constraint parsed from pubspec.yaml; repos without one get '-'.
       check(output).contains('^3.0.0');
+
+      // A `sdk: flutter` dependency line must not masquerade as the
+      // environment SDK constraint.
+      check(output).not((it) => it.contains('| flutter |'));
 
       // No remotes configured -> remote column renders 'None'.
       check(output).contains('| None |');

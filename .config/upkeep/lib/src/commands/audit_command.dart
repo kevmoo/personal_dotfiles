@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:pubspec_parse/pubspec_parse.dart';
 
 class AuditCommand extends Command<void> {
   @override
@@ -102,18 +103,17 @@ Future<List<Map<String, String>>> _collectRows(
   return rows;
 }
 
-/// Extracts the `sdk:` constraint from a directory's `pubspec.yaml`,
-/// or `'-'` when absent or unreadable.
+/// Extracts the `environment: sdk:` constraint from a directory's
+/// `pubspec.yaml`, or `'-'` when absent or unreadable.
 String _sdkConstraint(Directory dir) {
   final pubspecFile = File('${dir.path}/pubspec.yaml');
   if (!pubspecFile.existsSync()) return '-';
   try {
-    final content = pubspecFile.readAsStringSync();
-    final match = RegExp(
-      r'^\s*sdk:\s*[\x27"]?([^\x27"\r\n]+)[\x27"]?',
-      multiLine: true,
-    ).firstMatch(content);
-    return match?.group(1)?.trim() ?? '-';
+    final pubspec = Pubspec.parse(
+      pubspecFile.readAsStringSync(),
+      lenient: true,
+    );
+    return pubspec.environment['sdk']?.toString() ?? '-';
   } catch (_) {
     return '-';
   }
