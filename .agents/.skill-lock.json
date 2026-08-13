@@ -60,9 +60,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
-      "skillFolderHash": "959e63161ff78b4b1cd553b2c0e09e0c68418e5f",
+      "skillFolderHash": "05c3244ec75b7548bbc2b635b0624bb9f70369c3",
       "installedAt": "2026-06-25T22:48:36.815Z",
-      "updatedAt": "2026-07-13T22:15:45.305Z"
+      "updatedAt": "2026-08-13T17:40:14.255Z"
     },
     "just-brainstorm": {
       "source": "kevmoo/kevmoo_skills",
@@ -123,9 +123,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/pq/pq-agent-skills.git",
       "skillPath": "skills/estimate-conversation-tokens/SKILL.md",
-      "skillFolderHash": "ce4d3db0688b372e55b7956c018e78ff61eb62eb",
+      "skillFolderHash": "7c5459c3b692aaa8a62a7e3f084a82b365cf2594",
       "installedAt": "2026-07-14T04:02:44.855Z",
-      "updatedAt": "2026-07-14T04:02:44.855Z"
+      "updatedAt": "2026-08-13T17:40:15.616Z"
     },
     "gws-calendar": {
       "source": "googleworkspace/cli",

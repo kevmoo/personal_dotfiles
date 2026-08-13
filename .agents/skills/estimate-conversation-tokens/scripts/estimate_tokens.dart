@@ -43,6 +43,20 @@ class _Category {
   _Category(this.name, this.chars);
 }
 
+class AgentBreakdown {
+  final String id;
+  final int totalTokens;
+  final int cachedTokens;
+  final int totalModelCalls;
+
+  AgentBreakdown(
+    this.id,
+    this.totalTokens,
+    this.cachedTokens,
+    this.totalModelCalls,
+  );
+}
+
 void main(List<String> arguments) async {
   var conversationId = _parseConversationId(arguments);
   if (conversationId == null) {
@@ -52,16 +66,99 @@ void main(List<String> arguments) async {
     exit(1);
   }
 
-  var home = Platform.environment['HOME'] ?? '';
-  var transcriptPath =
-      '$home/.gemini/jetski/brain/$conversationId/.system_generated/logs/transcript_full.jsonl';
+  var pendingIds = <String>[conversationId];
+  var seenIds = <String>{};
+  var allBreakdowns = <AgentBreakdown>[];
+  var globalTokens = 0;
+  var globalCached = 0;
+  var globalCalls = 0;
 
-  var lines = await _readTranscriptLines(transcriptPath);
-  if (lines == null) {
-    exit(1);
+  while (pendingIds.isNotEmpty) {
+    var id = pendingIds.removeAt(0);
+    if (seenIds.contains(id)) continue;
+    seenIds.add(id);
+
+    var home = Platform.environment['HOME'] ?? '';
+    var transcriptPath =
+        '$home/.gemini/jetski/brain/$id/.system_generated/logs/transcript_full.jsonl';
+    var lines = await _readTranscriptLines(transcriptPath);
+    if (lines == null || lines.isEmpty) {
+      continue;
+    }
+
+    print('====================================================');
+    print('## Analyzing Conversation ID: $id');
+    print('====================================================\n');
+    var breakdownAndSubagents = _printGranularBreakdown(lines);
+
+    allBreakdowns.add(
+      AgentBreakdown(
+        id,
+        breakdownAndSubagents.tokens,
+        breakdownAndSubagents.cachedTokens,
+        breakdownAndSubagents.calls,
+      ),
+    );
+    globalTokens += breakdownAndSubagents.tokens;
+    globalCached += breakdownAndSubagents.cachedTokens;
+    globalCalls += breakdownAndSubagents.calls;
+
+    pendingIds.addAll(breakdownAndSubagents.subagents);
   }
 
-  _printGranularBreakdown(lines);
+  var parentBreakdown = allBreakdowns.firstWhere(
+    (b) => b.id == conversationId,
+    orElse: () => AgentBreakdown(conversationId, 0, 0, 0),
+  );
+  var subagents = allBreakdowns.where((b) => b.id != conversationId).toList();
+
+  var parentTokens = parentBreakdown.totalTokens;
+  var parentCachedTokens = parentBreakdown.cachedTokens;
+  var parentCalls = parentBreakdown.totalModelCalls;
+  var parentPercent = globalTokens > 0
+      ? (parentTokens / globalTokens * 100).toStringAsFixed(1)
+      : '0.0';
+
+  var subagentsTokens = subagents.fold<int>(0, (sum, b) => sum + b.totalTokens);
+  var subagentsCachedTokens = subagents.fold<int>(
+    0,
+    (sum, b) => sum + b.cachedTokens,
+  );
+  var subagentsCalls = subagents.fold<int>(
+    0,
+    (sum, b) => sum + b.totalModelCalls,
+  );
+  var subagentsPercent = globalTokens > 0
+      ? (subagentsTokens / globalTokens * 100).toStringAsFixed(1)
+      : '0.0';
+
+  print('====================================================');
+  print('## Aggregate Summary');
+  print('====================================================\n');
+  print(
+    '| Agent ID | Model Calls | Total Tokens | Cached Tokens | % of Total |',
+  );
+  print('|---|---|---|---|---|');
+  print(
+    '| $conversationId (Parent) | $parentCalls | ${formatNumber(parentTokens)} | ${formatNumber(parentCachedTokens)} | $parentPercent% |',
+  );
+  if (subagents.isNotEmpty) {
+    subagents.sort((a, b) => b.totalTokens.compareTo(a.totalTokens));
+    for (var sub in subagents) {
+      var subPercent = globalTokens > 0
+          ? (sub.totalTokens / globalTokens * 100).toStringAsFixed(1)
+          : '0.0';
+      print(
+        '| ${sub.id} (Subagent) | ${sub.totalModelCalls} | ${formatNumber(sub.totalTokens)} | ${formatNumber(sub.cachedTokens)} | $subPercent% |',
+      );
+    }
+    print(
+      '| Aggregated Subagents (${subagents.length}) | $subagentsCalls | ${formatNumber(subagentsTokens)} | ${formatNumber(subagentsCachedTokens)} | $subagentsPercent% |',
+    );
+  }
+  print(
+    '| **Grand Total** | **$globalCalls** | **${formatNumber(globalTokens)}** | **${formatNumber(globalCached)}** | **100.0%** |',
+  );
 }
 
 String formatNumber(num number) {
@@ -85,8 +182,17 @@ String? _parseConversationId(List<String> arguments) {
   return Platform.environment['ANTIGRAVITY_CONVERSATION_ID'];
 }
 
-void _printGranularBreakdown(List<String> lines) {
+class BreakdownResult {
+  final int tokens;
+  final int cachedTokens;
+  final int calls;
+  final List<String> subagents;
+  BreakdownResult(this.tokens, this.cachedTokens, this.calls, this.subagents);
+}
+
+BreakdownResult _printGranularBreakdown(List<String> lines) {
   var blocks = <TurnBlock>[];
+  var subagents = <String>[];
 
   int cumulativeInputChars = 0;
   int totalModelCalls = 0;
@@ -102,6 +208,8 @@ void _printGranularBreakdown(List<String> lines) {
   int totalKnowledgeChars = 0;
   int totalOtherChars = 0;
 
+  var uuidRegex = RegExp(r'"conversationId":\s*"([^"]+)"');
+
   for (var line in lines) {
     if (line.trim().isEmpty) continue;
 
@@ -116,6 +224,14 @@ void _printGranularBreakdown(List<String> lines) {
         ? json.encode(step['tool_calls'])
         : '';
     var chars = content.length + thinking.length + toolCalls.length;
+
+    // extract subagents from content if present
+    var matches = uuidRegex.allMatches(content);
+    for (var m in matches) {
+      if (m.groupCount >= 1) {
+        subagents.add(m.group(1)!);
+      }
+    }
 
     if (stepType == 'USER_INPUT') {
       var summary = content
@@ -205,6 +321,7 @@ void _printGranularBreakdown(List<String> lines) {
   var totalSystemOverhead = baseSystemPromptTokens * totalModelCalls;
   var grandTotalTokens =
       totalProcessedInputTokens + totalOutputTokens + totalSystemOverhead;
+  var grandTotalCachedTokens = (grandTotalTokens * 0.25).round();
 
   var categories = [
     _Category('📄 File I/O (Reads/Edits)', totalFileReadChars),
@@ -249,7 +366,14 @@ void _printGranularBreakdown(List<String> lines) {
     '* **Grand Total (Without Caching):** **${formatNumber(grandTotalTokens)}**',
   );
   print(
-    '* **Grand Total (With Context Caching active):** **~${formatNumber((grandTotalTokens * 0.25).round())}**',
+    '* **Grand Total (With Context Caching active):** **~${formatNumber(grandTotalCachedTokens)}**\n',
+  );
+
+  return BreakdownResult(
+    grandTotalTokens,
+    grandTotalCachedTokens,
+    totalModelCalls,
+    subagents,
   );
 }
 
