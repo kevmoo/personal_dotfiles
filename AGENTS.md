@@ -41,13 +41,13 @@ is also enforced by each agent's permission settings — these rules state inten
   investigation or changing direction, state your hypothesis or plan in one
   short sentence so I can redirect you early. Don't narrate routine tool
   calls (grep, file reads) that the UI already shows.
-- **Clickable Links (Files & URLs)**: Whenever referencing any file, directory, or web resource (HTTP/HTTPS URLs, CLs, PRs, Go links) in the conversation, **always** format it as a clickable Markdown link (using `file://` with absolute paths for local files). Never use plain backticks for filenames or web URLs.
+- **Clickable Links (Files & URLs)**: Whenever referencing any file, directory, or web resource (HTTP/HTTPS URLs, CLs, PRs, Go links) in the conversation, **always** format it as a clickable Markdown link (using `file://` with absolute paths for local files).
   - To avoid ambiguity or confusion (e.g., distinguishing between different `BUILD` files or common names), include enough preceding path components in the link text (e.g., [src/main.dart](file:///absolute/path/to/src/main.dart) instead of `[main.dart]`).
-  - **CRITICAL**: Do NOT wrap URLs, link text, or entire markdown links in backticks (e.g., `\``). Doing so turns the link into a literal code block and breaks clickability in the chat UI.
-  - *Correct* (renders as a clickable link): [subdir/filename.md](file:///absolute/path/to/subdir/filename.md), [cl/123456789](http://cl/123456789), [PR #123](https://github.com/org/repo/pull/123)
-  - *Incorrect* (will NOT render as a link): `` `filename.md` ``, `` `https://github.com/...` ``
-  - *Incorrect* (wrapping the entire link in backticks will NOT render as a link): `` `[subdir/filename.md](file:///absolute/path/to/subdir/filename.md)` ``
-  - *Incorrect* (wrapping the link text in backticks will NOT render as a link): `` [`subdir/filename.md`](file:///absolute/path/to/subdir/filename.md) ``
+  - **Formatting Containment Rules**:
+    - Place markdown brackets `[` and parentheses `(` on the absolute outside of the link (e.g. `[text](url)`).
+    - Any formatting style (such as bold `**` or code backticks `` ` ``) must be enclosed **inside** the brackets `[]` (e.g., `[**bold link**](url)` or `[` `ClassName` `](url)`). Never wrap the link text brackets or the entire link in styling markers.
+- **Markdown Tables**: When displaying structured data in markdown tables, keep each row on a single continuous line. Do not insert physical line breaks (`\n`) inside cells. Let the Markdown renderer handle column wrapping automatically to preserve standard table structure.
+  - **mdformat Protection**: In Google3/Piper workspaces, the automated formatter (`mdformat` / `jj fix`) aggressively wraps table rows exceeding 80 columns into broken multi-line colon (`:`) syntax. To prevent this, always wrap tables exceeding 80 columns in `<!-- mdformat off -->` and `<!-- mdformat on -->` block guards.
 - **Terse, Bulleted Output**: Default to compact bullet points over conversational prose. Fragment sentences are encouraged. Skip conversational filler ("Sure!", "I'd be glad to help..."). Optimize for token efficiency, high information density, and fast scannability.
 - **Direct Chat Output (No Thought Collapse)**: always output user-facing
   questions, explanations, and key status updates directly as visible chat
