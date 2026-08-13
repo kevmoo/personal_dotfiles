@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 import '../models.dart';
@@ -51,7 +52,7 @@ class SkillsUpkeeper implements Upkeeper {
           );
         }
 
-        if (_needsReconciliation(home)) {
+        if (needsReconciliation(home)) {
           return UpkeepStatus(
             upkeeperId: id,
             displayName: displayName,
@@ -79,7 +80,7 @@ class SkillsUpkeeper implements Upkeeper {
         );
       }
 
-      if (_needsReconciliation(home)) {
+      if (needsReconciliation(home)) {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
@@ -124,7 +125,7 @@ class SkillsUpkeeper implements Upkeeper {
       }
 
       // 3. Reconcile symlinks in ~/.claude/skills/
-      _reconcileSymlinks(home);
+      reconcileSymlinks(home);
 
       if (globalSuccess && localSuccess) {
         return UpkeepResult(
@@ -153,234 +154,166 @@ class SkillsUpkeeper implements Upkeeper {
     }
   }
 
-  bool _needsReconciliation(String home) {
+  /// Whether any agent-integration target is missing skill links or holds
+  /// dangling ones. Exposed for testing; drive with a temp home directory.
+  @visibleForTesting
+  bool needsReconciliation(String home) {
     final agentsSkillsDir = Directory(p.join(home, '.agents', 'skills'));
-    if (!agentsSkillsDir.existsSync()) {
-      return false;
-    }
-
-    // 1. Claude skills check
-    final claudeSkillsDir = Directory(p.join(home, '.claude', 'skills'));
-    if (claudeSkillsDir.existsSync()) {
-      // Check for missing relative links
-      for (final entity in agentsSkillsDir.listSync()) {
-        if (entity is Directory) {
-          final name = p.basename(entity.path);
-          final targetLink = Link(p.join(claudeSkillsDir.path, name));
-          if (FileSystemEntity.typeSync(targetLink.path, followLinks: false) ==
-              FileSystemEntityType.notFound) {
-            return true;
-          }
-        }
-      }
-
-      // Check for dangling non-GC links
-      for (final entity in claudeSkillsDir.listSync(followLinks: false)) {
-        if (entity is Link) {
-          final name = p.basename(entity.path);
-          if (name.startsWith('core.gc-')) continue;
-
-          // Check if link is dangling (target doesn't exist)
-          final targetPath = entity.targetSync();
-          final resolvedTarget = p.isAbsolute(targetPath)
-              ? targetPath
-              : p.normalize(p.join(claudeSkillsDir.path, targetPath));
-
-          if (FileSystemEntity.typeSync(resolvedTarget) ==
-              FileSystemEntityType.notFound) {
-            return true;
-          }
-        }
-      }
-    }
-
-    final geminiDir = Directory(p.join(home, '.gemini'));
-    if (geminiDir.existsSync()) {
-      // 2. Global user-plugin skills directory check
-      final userPluginSkillsDir = Directory(
-        p.join(geminiDir.path, 'config', 'plugins', 'user-plugin', 'skills'),
-      );
-      if (userPluginSkillsDir.existsSync()) {
-        // Check for missing relative links
-        for (final entity in agentsSkillsDir.listSync()) {
-          if (entity is Directory) {
-            final name = p.basename(entity.path);
-            final targetLink = Link(p.join(userPluginSkillsDir.path, name));
-            if (FileSystemEntity.typeSync(
-                  targetLink.path,
-                  followLinks: false,
-                ) ==
-                FileSystemEntityType.notFound) {
-              return true;
-            }
-          }
-        }
-
-        // Check for dangling links
-        for (final entity in userPluginSkillsDir.listSync(followLinks: false)) {
-          if (entity is Link) {
-            final targetPath = entity.targetSync();
-            final resolvedTarget = p.isAbsolute(targetPath)
-                ? targetPath
-                : p.normalize(p.join(userPluginSkillsDir.path, targetPath));
-
-            if (FileSystemEntity.typeSync(resolvedTarget) ==
-                FileSystemEntityType.notFound) {
-              return true;
-            }
-          }
-        }
-      }
-
-      // 3. Antigravity IDE check
-      final ideDir = Directory(p.join(geminiDir.path, 'antigravity-ide'));
-      if (ideDir.existsSync()) {
-        final configUserPlugin = Directory(
-          p.join(geminiDir.path, 'config', 'plugins', 'user-plugin'),
-        );
-        if (configUserPlugin.existsSync()) {
-          // Check ~/.gemini/antigravity-ide/skills
-          final ideSkillsLink = Link(p.join(ideDir.path, 'skills'));
-          if (FileSystemEntity.typeSync(
-                ideSkillsLink.path,
-                followLinks: false,
-              ) ==
-              FileSystemEntityType.notFound) {
-            return true;
-          }
-
-          // Check ~/.gemini/antigravity-ide/plugins/user-plugin
-          final ideUserPluginLink = Link(
-            p.join(ideDir.path, 'plugins', 'user-plugin'),
-          );
-          if (FileSystemEntity.typeSync(
-                ideUserPluginLink.path,
-                followLinks: false,
-              ) ==
-              FileSystemEntityType.notFound) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
+    if (!agentsSkillsDir.existsSync()) return false;
+    return _claudeNeedsReconciliation(home, agentsSkillsDir) ||
+        _geminiNeedsReconciliation(home, agentsSkillsDir);
   }
 
-  void _reconcileSymlinks(String home) {
+  /// Creates missing skill links and prunes dangling ones for every
+  /// agent-integration target. Exposed for testing; drive with a temp home.
+  @visibleForTesting
+  void reconcileSymlinks(String home) {
     final agentsSkillsDir = Directory(p.join(home, '.agents', 'skills'));
-    if (!agentsSkillsDir.existsSync()) {
-      return;
-    }
+    if (!agentsSkillsDir.existsSync()) return;
 
-    // 1. Claude skills reconciliation
+    // 1. Claude skills: relative links from ~/.claude/skills.
     final claudeSkillsDir = Directory(p.join(home, '.claude', 'skills'));
     if (claudeSkillsDir.existsSync()) {
-      // Add missing relative links
-      for (final entity in agentsSkillsDir.listSync()) {
-        if (entity is Directory) {
-          final name = p.basename(entity.path);
-          final targetLink = Link(p.join(claudeSkillsDir.path, name));
-          if (FileSystemEntity.typeSync(targetLink.path, followLinks: false) ==
-              FileSystemEntityType.notFound) {
-            targetLink.createSync(
-              '../../.agents/skills/$name',
-              recursive: true,
-            );
-          }
-        }
-      }
-
-      // Prune dangling non-GC links
-      for (final entity in claudeSkillsDir.listSync(followLinks: false)) {
-        if (entity is Link) {
-          final name = p.basename(entity.path);
-          if (name.startsWith('core.gc-')) continue;
-
-          // Check if link is dangling (target doesn't exist)
-          final targetPath = entity.targetSync();
-          final resolvedTarget = p.isAbsolute(targetPath)
-              ? targetPath
-              : p.normalize(p.join(claudeSkillsDir.path, targetPath));
-
-          if (FileSystemEntity.typeSync(resolvedTarget) ==
-              FileSystemEntityType.notFound) {
-            entity.deleteSync();
-          }
-        }
-      }
+      _createMissingLinks(
+        agentsSkillsDir,
+        claudeSkillsDir,
+        (name, _) => '../../.agents/skills/$name',
+      );
+      _pruneDanglingLinks(claudeSkillsDir, skipPrefix: 'core.gc-');
     }
 
     final geminiDir = Directory(p.join(home, '.gemini'));
-    if (geminiDir.existsSync()) {
-      // 2. Global user-plugin skills directory reconciliation
-      final userPluginSkillsDir = Directory(
-        p.join(geminiDir.path, 'config', 'plugins', 'user-plugin', 'skills'),
+    if (!geminiDir.existsSync()) return;
+
+    // 2. Global user-plugin skills: absolute links.
+    final userPluginSkillsDir = Directory(
+      p.join(geminiDir.path, 'config', 'plugins', 'user-plugin', 'skills'),
+    );
+    if (userPluginSkillsDir.existsSync()) {
+      _createMissingLinks(
+        agentsSkillsDir,
+        userPluginSkillsDir,
+        (_, skillDir) => skillDir.path,
       );
-      if (userPluginSkillsDir.existsSync()) {
-        for (final entity in agentsSkillsDir.listSync()) {
-          if (entity is Directory) {
-            final name = p.basename(entity.path);
-            final targetLink = Link(p.join(userPluginSkillsDir.path, name));
-            if (FileSystemEntity.typeSync(
-                  targetLink.path,
-                  followLinks: false,
-                ) ==
-                FileSystemEntityType.notFound) {
-              targetLink.createSync(entity.path);
-            }
-          }
-        }
-        for (final entity in userPluginSkillsDir.listSync(followLinks: false)) {
-          if (entity is Link) {
-            final targetPath = entity.targetSync();
-            final resolvedTarget = p.isAbsolute(targetPath)
-                ? targetPath
-                : p.normalize(p.join(userPluginSkillsDir.path, targetPath));
-
-            if (FileSystemEntity.typeSync(resolvedTarget) ==
-                FileSystemEntityType.notFound) {
-              entity.deleteSync();
-            }
-          }
-        }
-      }
-
-      // 3. Antigravity IDE skills & plugin links reconciliation
-      final ideDir = Directory(p.join(geminiDir.path, 'antigravity-ide'));
-      if (ideDir.existsSync()) {
-        final configUserPlugin = Directory(
-          p.join(geminiDir.path, 'config', 'plugins', 'user-plugin'),
-        );
-        if (configUserPlugin.existsSync()) {
-          // Reconcile ~/.gemini/antigravity-ide/skills -> ~/.gemini/config/plugins/user-plugin/skills
-          final ideSkillsLink = Link(p.join(ideDir.path, 'skills'));
-          final targetSkillsDir = p.join(configUserPlugin.path, 'skills');
-          if (FileSystemEntity.typeSync(
-                ideSkillsLink.path,
-                followLinks: false,
-              ) ==
-              FileSystemEntityType.notFound) {
-            ideSkillsLink.createSync(targetSkillsDir, recursive: true);
-          }
-
-          // Reconcile ~/.gemini/antigravity-ide/plugins/user-plugin -> ~/.gemini/config/plugins/user-plugin
-          final idePluginsDir = Directory(p.join(ideDir.path, 'plugins'));
-          if (!idePluginsDir.existsSync()) {
-            idePluginsDir.createSync();
-          }
-          final ideUserPluginLink = Link(
-            p.join(idePluginsDir.path, 'user-plugin'),
-          );
-          if (FileSystemEntity.typeSync(
-                ideUserPluginLink.path,
-                followLinks: false,
-              ) ==
-              FileSystemEntityType.notFound) {
-            ideUserPluginLink.createSync(configUserPlugin.path);
-          }
-        }
-      }
+      _pruneDanglingLinks(userPluginSkillsDir);
     }
+
+    // 3. Antigravity IDE links into the user plugin.
+    final ideDir = Directory(p.join(geminiDir.path, 'antigravity-ide'));
+    final configUserPlugin = Directory(
+      p.join(geminiDir.path, 'config', 'plugins', 'user-plugin'),
+    );
+    if (ideDir.existsSync() && configUserPlugin.existsSync()) {
+      _ensureLink(
+        p.join(ideDir.path, 'skills'),
+        p.join(configUserPlugin.path, 'skills'),
+      );
+      Directory(p.join(ideDir.path, 'plugins')).createSync(recursive: true);
+      _ensureLink(
+        p.join(ideDir.path, 'plugins', 'user-plugin'),
+        configUserPlugin.path,
+      );
+    }
+  }
+}
+
+/// Whether the `.claude/skills` target is missing links or holds dangling
+/// non-GC-managed ones.
+bool _claudeNeedsReconciliation(String home, Directory agentsSkillsDir) {
+  final claudeSkillsDir = Directory(p.join(home, '.claude', 'skills'));
+  if (!claudeSkillsDir.existsSync()) return false;
+  return _hasMissingLinks(agentsSkillsDir, claudeSkillsDir) ||
+      _hasDanglingLinks(claudeSkillsDir, skipPrefix: 'core.gc-');
+}
+
+/// Whether any `.gemini` target (user-plugin skills, antigravity IDE) is
+/// missing links or holds dangling ones.
+bool _geminiNeedsReconciliation(String home, Directory agentsSkillsDir) {
+  final geminiDir = Directory(p.join(home, '.gemini'));
+  if (!geminiDir.existsSync()) return false;
+
+  final userPluginSkillsDir = Directory(
+    p.join(geminiDir.path, 'config', 'plugins', 'user-plugin', 'skills'),
+  );
+  if (userPluginSkillsDir.existsSync() &&
+      (_hasMissingLinks(agentsSkillsDir, userPluginSkillsDir) ||
+          _hasDanglingLinks(userPluginSkillsDir))) {
+    return true;
+  }
+
+  final ideDir = Directory(p.join(geminiDir.path, 'antigravity-ide'));
+  final configUserPlugin = Directory(
+    p.join(geminiDir.path, 'config', 'plugins', 'user-plugin'),
+  );
+  return ideDir.existsSync() &&
+      configUserPlugin.existsSync() &&
+      (_linkMissing(p.join(ideDir.path, 'skills')) ||
+          _linkMissing(p.join(ideDir.path, 'plugins', 'user-plugin')));
+}
+
+/// Skill directories under `.agents/skills`.
+Iterable<Directory> _skillDirs(Directory agentsSkillsDir) =>
+    agentsSkillsDir.listSync().whereType<Directory>();
+
+/// Whether no filesystem entity (following nothing) exists at [linkPath].
+bool _linkMissing(String linkPath) =>
+    FileSystemEntity.typeSync(linkPath, followLinks: false) ==
+    FileSystemEntityType.notFound;
+
+/// Whether any skill dir in [agentsSkillsDir] lacks a link in [targetDir].
+bool _hasMissingLinks(Directory agentsSkillsDir, Directory targetDir) =>
+    _skillDirs(agentsSkillsDir).any(
+      (skillDir) =>
+          _linkMissing(p.join(targetDir.path, p.basename(skillDir.path))),
+    );
+
+/// Links in [dir] whose resolved target no longer exists, skipping names
+/// starting with [skipPrefix].
+Iterable<Link> _danglingLinks(Directory dir, {String? skipPrefix}) sync* {
+  for (final entity in dir.listSync(followLinks: false)) {
+    if (entity is! Link) continue;
+    if (skipPrefix != null && p.basename(entity.path).startsWith(skipPrefix)) {
+      continue;
+    }
+    final targetPath = entity.targetSync();
+    final resolvedTarget = p.isAbsolute(targetPath)
+        ? targetPath
+        : p.normalize(p.join(dir.path, targetPath));
+    if (FileSystemEntity.typeSync(resolvedTarget) ==
+        FileSystemEntityType.notFound) {
+      yield entity;
+    }
+  }
+}
+
+bool _hasDanglingLinks(Directory dir, {String? skipPrefix}) =>
+    _danglingLinks(dir, skipPrefix: skipPrefix).isNotEmpty;
+
+/// Creates a link for each skill dir missing in [targetDir]; [linkTarget]
+/// computes the link destination from the skill name and directory.
+void _createMissingLinks(
+  Directory agentsSkillsDir,
+  Directory targetDir,
+  String Function(String name, Directory skillDir) linkTarget,
+) {
+  for (final skillDir in _skillDirs(agentsSkillsDir)) {
+    final name = p.basename(skillDir.path);
+    final link = Link(p.join(targetDir.path, name));
+    if (_linkMissing(link.path)) {
+      link.createSync(linkTarget(name, skillDir), recursive: true);
+    }
+  }
+}
+
+void _pruneDanglingLinks(Directory dir, {String? skipPrefix}) {
+  for (final link in _danglingLinks(dir, skipPrefix: skipPrefix).toList()) {
+    link.deleteSync();
+  }
+}
+
+/// Creates [linkPath] pointing at [target] unless something already exists.
+void _ensureLink(String linkPath, String target) {
+  if (_linkMissing(linkPath)) {
+    Link(linkPath).createSync(target, recursive: true);
   }
 }
