@@ -92,7 +92,8 @@ Verify before declaring victory:
 ## Workspace & Repository Layout
 
 - **External Repos (`~/github`)**: Sync and open all external GitHub repositories under `~/github`.
-  - Repositories from my personal GitHub org (`github.com/kevmoo`) live under `~/github/kevmoo/<repo_name>`.
+  - **Personal Repositories (`github.com/kevmoo`)**: Exclusively clone and nest repositories from my personal GitHub org under `~/github/kevmoo/<repo_name>`.
+  - **All Other External Repositories**: Clone directly at the top level of `~/github/<repo_name>` (e.g. `~/github/google-cloud-dart`, `~/github/flutter`, `~/github/googleapis.dart`), never nested under `~/github/<org>/<repo_name>`.
   - `~/github/dart-sdk` has custom agent setup; always check `~/github/dart-sdk/.agents/` when working in that directory.
   - **Sandbox Snapshot Atomic Rename Mitigation**: When executing Dart CLI applications, tests, or scripts in sandboxed environments, if pub pre-compilation fails with `.dart_tool` atomic rename errors (`PathNotFoundException`, `errno = 2`), pass `--no-precompile` (e.g., `dart run --no-precompile <script>` or `dart test --no-precompile`) to bypass executable snapshot caching. Never guess or hallucinate non-existent binary release paths when default tool execution encounters filesystem sandbox limits.
 - **Dotfiles (`~/.dotfiles`)**: My home directory (`~/.zshrc`, `~/.config/*`) is managed by a bare repository at `~/.dotfiles`. Whenever inspecting or editing dotfiles in `$HOME`, consult the `personal-dotfiles` skill (`~/.agents/skills/personal-dotfiles/SKILL.md`) for the required Anti-Universe bare-repo protocol and ignore rules.
