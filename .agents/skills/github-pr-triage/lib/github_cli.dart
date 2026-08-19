@@ -22,11 +22,12 @@ class PrContext {
 }
 
 /// Function signature for running external process commands.
-typedef CommandRunner = Future<String> Function(
-  String command,
-  List<String> args, {
-  String? workingDirectory,
-});
+typedef CommandRunner =
+    Future<String> Function(
+      String command,
+      List<String> args, {
+      String? workingDirectory,
+    });
 
 /// Runs an external process command and returns its standard output.
 ///
