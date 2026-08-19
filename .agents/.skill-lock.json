@@ -118,15 +118,6 @@
       "installedAt": "2026-07-14T04:02:44.854Z",
       "updatedAt": "2026-07-15T18:39:33.948Z"
     },
-    "estimate-conversation-tokens": {
-      "source": "pq/pq-agent-skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/pq/pq-agent-skills.git",
-      "skillPath": "skills/estimate-conversation-tokens/SKILL.md",
-      "skillFolderHash": "7c5459c3b692aaa8a62a7e3f084a82b365cf2594",
-      "installedAt": "2026-07-14T04:02:44.855Z",
-      "updatedAt": "2026-08-13T17:40:15.616Z"
-    },
     "gws-calendar": {
       "source": "googleworkspace/cli",
       "sourceType": "github",
