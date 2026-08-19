@@ -15,9 +15,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/github-pr-triage/SKILL.md",
-      "skillFolderHash": "e2f7f315335952ca09e88e67cd5d1d7ec26dc659",
+      "skillFolderHash": "cf344015a46295e691b6ff855a008488bf216452",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-07-11T03:33:08.976Z"
+      "updatedAt": "2026-08-19T05:28:42.843Z"
     },
     "gob-curl": {
       "source": "kevmoo/kevmoo_skills",
@@ -51,9 +51,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "fd99bcbb818f7ef766b83656fb5fac0b58e223ad",
+      "skillFolderHash": "0d40d978f1a588971a11ea7ae85b208e78102dc3",
       "installedAt": "2026-06-25T18:29:07.130Z",
-      "updatedAt": "2026-08-10T01:30:04.269Z"
+      "updatedAt": "2026-08-19T05:28:47.047Z"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
@@ -105,9 +105,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "3162a27b204c97d664933627ddd4ab384ad1244d",
+      "skillFolderHash": "5bd42a9f516f6be49b8da9358eb6d1e86e2e408e",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-08-02T18:08:34.796Z"
+      "updatedAt": "2026-08-19T05:28:44.510Z"
     },
     "conversation-auditor": {
       "source": "pq/pq-agent-skills",
@@ -150,9 +150,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/dart-cleanup/SKILL.md",
-      "skillFolderHash": "48247145812a78de4bf5b32a86a9ff0fe536567d",
+      "skillFolderHash": "5dc83ee07fb94da7d532f02bd655272590064eb7",
       "installedAt": "2026-08-08T05:46:03.701Z",
-      "updatedAt": "2026-08-10T02:21:01.574Z"
+      "updatedAt": "2026-08-19T05:28:45.806Z"
     }
   },
   "dismissed": {
