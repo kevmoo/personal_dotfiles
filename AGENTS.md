@@ -41,7 +41,7 @@ is also enforced by each agent's permission settings — these rules state inten
   investigation or changing direction, state your hypothesis or plan in one
   short sentence so I can redirect you early. Don't narrate routine tool
   calls (grep, file reads) that the UI already shows.
-- **Clickable Links (Files & URLs)**: Whenever referencing any file, directory, or web resource (HTTP/HTTPS URLs, CLs, PRs, Go links) in the conversation, **always** format it as a clickable Markdown link (using `file://` with absolute paths for local files).
+- **Clickable Links (Files & URLs)**: Format files (`file://`), web URLs (`https://`), CLs, and PRs as clickable Markdown links. Never wrap HTTP/HTTPS URLs in code backticks (which disables autolinking).
   - To avoid ambiguity or confusion (e.g., distinguishing between different `BUILD` files or common names), include enough preceding path components in the link text (e.g., [src/main.dart](file:///absolute/path/to/src/main.dart) instead of `[main.dart]`).
   - **Formatting Containment Rules**:
     - Place markdown brackets `[` and parentheses `(` on the absolute outside of the link (e.g. `[text](url)`).
