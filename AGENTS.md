@@ -98,4 +98,17 @@ Verify before declaring victory:
   - **Sandbox Snapshot Atomic Rename Mitigation**: When executing Dart CLI applications, tests, or scripts in sandboxed environments, if pub pre-compilation fails with `.dart_tool` atomic rename errors (`PathNotFoundException`, `errno = 2`), pass `--no-precompile` (e.g., `dart run --no-precompile <script>` or `dart test --no-precompile`) to bypass executable snapshot caching. Never guess or hallucinate non-existent binary release paths when default tool execution encounters filesystem sandbox limits.
 - **Dotfiles (`~/.dotfiles`)**: My home directory (`~/.zshrc`, `~/.config/*`) is managed by a bare repository at `~/.dotfiles`. Whenever inspecting or editing dotfiles in `$HOME`, consult the `personal-dotfiles` skill (`~/.agents/skills/personal-dotfiles/SKILL.md`) for the required Anti-Universe bare-repo protocol and ignore rules.
 - **Private Corp Dotfiles (`~/.dotfiles-corp`)**: On gLinux corp machines (e.g. workstations, Cloudtops), internal configurations (like `local.zsh`, `config.local`, and `settings.json`) and corp-specific agent rules are managed via the private bare repository at `~/.dotfiles-corp` and the `dotcorp` CLI.
+- **Dart Development & MCP Server Protocol**:
+  - **Open-Source Repositories (`~/github/...`)**:
+    - **Server**: Exclusively use `dart_oss` MCP tools (`ServerName: "dart_oss"`).
+    - **Capabilities**:
+      - `lsp`: Use for fast symbol resolution (`resolveWorkspaceSymbol`), type documentation (`hover`), and function signatures (`signatureHelp`) across dependencies without manual file navigation.
+      - `read_package_uris` & `rip_grep_packages`: Resolve and search `package:...` dependencies directly from the pub cache.
+      - `analyze_files`: Run instant in-memory analyzer diagnostics.
+      - `pub` & `pub_dev_search`: Query and manage pub packages.
+      - `dtd` / `hot_reload` / `widget_inspector`: Live application debugging.
+  - **Google3 Workspaces (`/google/src/...`)**:
+    - **Server**: Never invoke `dart_oss` tools. For live debugging/DTD only, use `dart_g3` (`ServerName: "dart_g3"`).
+    - **Discipline**: For static analysis, search, editing, and tests in Google3, exclusively use native Google3 tools (`code_search`, `view_file`, `replace_file_content`, `blaze-for-agents`).
+
 
