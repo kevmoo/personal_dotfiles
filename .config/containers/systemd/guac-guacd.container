@@ -1,0 +1,14 @@
+[Unit]
+Description=Guacamole guacd
+
+[Container]
+ContainerName=guacd
+Image=docker.io/guacamole/guacd:latest
+Pod=guac.pod
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

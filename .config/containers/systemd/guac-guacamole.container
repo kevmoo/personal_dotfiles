@@ -1,0 +1,20 @@
+[Unit]
+Description=Guacamole web app
+After=guac-guacd.service
+Wants=guac-guacd.service
+
+[Container]
+ContainerName=guacamole
+Image=docker.io/guacamole/guacamole:latest
+Pod=guac.pod
+AutoUpdate=registry
+Environment=GUACAMOLE_HOME=/data
+Environment=GUACD_HOSTNAME=127.0.0.1
+Environment=GUACD_PORT=4822
+Volume=/var/home/kevmoo/.config/guacamole/guac-home:/data:Z
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target
