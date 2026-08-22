@@ -91,6 +91,11 @@ Verify before declaring victory:
 
 ## Workspace & Repository Layout
 
+- **Agent Skills Layout (`~/.agents/skills`)**:
+  - **No Direct Edits in `~/.agents/skills/`**: `~/.agents/skills/` is the deployed runtime directory for active agent skills. NEVER edit files or directories in `~/.agents/skills/` directly.
+  - **Edit Authoritative Source Repositories**: Always locate and modify skills in their respective source repositories:
+    - *Personal / OSS Skills*: `~/github/kevmoo/kevmoo_skills/skills/<skill_name>/`
+    - *Google3 Skills*: `//depot/google3/experimental/users/kevmoo/skills/...` or `//depot/configs/users/kevmoo/_agents/skills/...`
 - **External Repos (`~/github`)**: Sync and open all external GitHub repositories under `~/github`.
   - **Personal Repositories (`github.com/kevmoo`)**: Exclusively clone and nest repositories from my personal GitHub org under `~/github/kevmoo/<repo_name>`.
   - **All Other External Repositories**: Clone directly at the top level of `~/github/<repo_name>` (e.g. `~/github/google-cloud-dart`, `~/github/flutter`, `~/github/googleapis.dart`), never nested under `~/github/<org>/<repo_name>`.
