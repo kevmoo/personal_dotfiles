@@ -22,12 +22,11 @@ class PrContext {
 }
 
 /// Function signature for running external process commands.
-typedef CommandRunner =
-    Future<String> Function(
-      String command,
-      List<String> args, {
-      String? workingDirectory,
-    });
+typedef CommandRunner = Future<String> Function(
+  String command,
+  List<String> args, {
+  String? workingDirectory,
+});
 
 /// Runs an external process command and returns its standard output.
 ///
@@ -577,8 +576,8 @@ Future<String> fetchFailedCheckLog(
   final annotations = <String>[];
 
   Future<String> ghRepoApi(String subpath) => runCommand('gh', [
-    ...repoArgs,
     'api',
+    '--allow-escape-sequences',
     'repos/${context.owner}/${context.repo}/$subpath',
   ], workingDirectory: context.workingDir);
 

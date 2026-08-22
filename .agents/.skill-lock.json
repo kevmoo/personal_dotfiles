@@ -15,9 +15,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/github-pr-triage/SKILL.md",
-      "skillFolderHash": "cf344015a46295e691b6ff855a008488bf216452",
+      "skillFolderHash": "c5a5eae171d1893b49063a75e4a1b06075b97ff7",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-08-19T05:28:42.843Z"
+      "updatedAt": "2026-08-22T19:50:07.542Z"
     },
     "gob-curl": {
       "source": "kevmoo/kevmoo_skills",
@@ -42,27 +42,27 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/pr-loop/SKILL.md",
-      "skillFolderHash": "80c503ad21759909030b594330f1a0a75ef64dd4",
+      "skillFolderHash": "83a1e44a481e5287fafe211315a97e38943acbc3",
       "installedAt": "2026-06-25T18:17:01.797Z",
-      "updatedAt": "2026-07-14T04:48:11.816Z"
+      "updatedAt": "2026-08-22T19:50:10.286Z"
     },
     "grilling": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "0d40d978f1a588971a11ea7ae85b208e78102dc3",
+      "skillFolderHash": "f0732035b8b1b60ae39454e4191caef32fa91903",
       "installedAt": "2026-06-25T18:29:07.130Z",
-      "updatedAt": "2026-08-19T05:28:47.047Z"
+      "updatedAt": "2026-08-22T19:50:12.915Z"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
-      "skillFolderHash": "05c3244ec75b7548bbc2b635b0624bb9f70369c3",
+      "skillFolderHash": "388c9822641805ca2dcd5038e68a1d5282437ee5",
       "installedAt": "2026-06-25T22:48:36.815Z",
-      "updatedAt": "2026-08-13T17:40:14.255Z"
+      "updatedAt": "2026-08-22T19:50:14.580Z"
     },
     "just-brainstorm": {
       "source": "kevmoo/kevmoo_skills",
