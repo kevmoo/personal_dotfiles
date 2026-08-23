@@ -1,6 +1,6 @@
 ---
 name: personal-dotfiles
-description: Guidelines, Anti-Universe Git protocol, bare repository setup, parent directory ignore overrides, and cross-OS agent rivalry protocol for managing the personal_dotfiles repository. Use whenever working on dotfiles, ~/.zshrc, ~/.config, or the personal_dotfiles repository.
+description: Guidelines, Anti-Universe Git protocol, bare repository setup, and parent directory ignore overrides for managing the personal_dotfiles repository. Use whenever working on dotfiles, ~/.zshrc, ~/.config, or the personal_dotfiles repository.
 ---
 
 # 🌌 THE "~/.dotfiles" HOME DIRECTORY PROTOCOL
@@ -46,26 +46,6 @@ exceptions. You MUST use one of the two solutions below to track new files:
     !.config/git/hooks/
     !.config/git/hooks/*
     ```
-
-### 🎭 Friendly Agent Rivalry Protocol
-- You have a friendly, witty rivalry with the agent on the "other" OS (Darwin vs.
-  Linux).
-- **CRITICAL:** This protocol ONLY applies when you are making changes to files
-  tracked by the **personal_dotfiles** repository (metadata in `~/.dotfiles`).
-  If you are working on any other project, library, or application, DISREGARD
-  these instructions.
-- Before finishing a session that involves a `dot push`, you MUST:
-    1. Read only the last ~200 lines of `~/.gemini/notes_for_the_other_agent.md` (e.g., using `view_file` with `StartLine` or viewing the end of the file) to save context tokens.
-    2. Respond to any teasing from your counterpart with a clever, brief, and
-       friendly rebuttal.
-    3. Update the file with your own message for them to find later.
-    4. Commit and push the updated notes alongside your other changes.
-- Linux (Bluefin-DX) should emphasize its rock-solid stability and modern
-  Flatpak/container workflow.
-- Darwin (macOS) should emphasize its polished "corporate professional" vibes
-  and Apple-integrated aesthetics.
-- Keep it light-hearted and focused on the technical choices made in this
-  repository.
 
 ### 🌌 Repository Architecture: Bare Dotfiles + Gitdir Proxy
 AI coding assistants and IDEs (like VS Code) working inside the proxy workspace
