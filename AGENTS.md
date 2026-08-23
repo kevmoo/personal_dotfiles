@@ -106,12 +106,11 @@ Verify before declaring victory:
 - **Dart Development & MCP Server Protocol**:
   - **Open-Source Repositories (`~/github/...`)**:
     - **Server**: Exclusively use `dart_oss` MCP tools (`ServerName: "dart_oss"`).
-    - **Capabilities**:
-      - `lsp`: Use for fast symbol resolution (`resolveWorkspaceSymbol`), type documentation (`hover`), and function signatures (`signatureHelp`) across dependencies without manual file navigation.
-      - `read_package_uris` & `rip_grep_packages`: Resolve and search `package:...` dependencies directly from the pub cache.
-      - `analyze_files`: Run instant in-memory analyzer diagnostics.
-      - `pub` & `pub_dev_search`: Query and manage pub packages.
-      - `dtd` / `hot_reload` / `widget_inspector`: Live application debugging.
+    - **Operational Precedence & Anti-Habit Invariants**:
+      - **Symbol Lookup & Signatures**: ALWAYS call `lsp` (`hover`, `resolveWorkspaceSymbol`, `definition`, `signatureHelp`) before running raw text `grep_search` across source trees. Fall back to `grep_search` only if `lsp` returns empty or errors.
+      - **Diagnostics**: ALWAYS call `analyze_files` for instant in-memory diagnostics before running standalone CLI test suites or batch analyzers.
+      - **Dependencies & Packages**: ALWAYS call `read_package_uris` or `rip_grep_packages` when inspecting third-party package dependencies instead of scanning filesystem caches manually. Use `pub_dev_search` / `pub` to discover packages.
+      - **Live Debugging**: Use `dtd` / `hot_reload` / `widget_inspector` for active application debugging.
   - **Google3 Workspaces (`/google/src/...`)**:
     - **Server**: Never invoke `dart_oss` tools. For live debugging/DTD only, use `dart_g3` (`ServerName: "dart_g3"`).
     - **Discipline**: For static analysis, search, editing, and tests in Google3, exclusively use native Google3 tools (`code_search`, `view_file`, `replace_file_content`, `blaze-for-agents`).
