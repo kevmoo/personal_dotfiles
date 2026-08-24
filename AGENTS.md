@@ -55,6 +55,8 @@ is also enforced by each agent's permission settings — these rules state inten
   questions, explanations, and key status updates directly as visible chat
   messages rather than inside intermediate reasoning/thought blocks or tool
   preambles (which get collapsed into "thoughts for 5s" in Web UI).
+- **Command Execution & Non-Interactive Flags**: Always pass non-interactive flags (`--yes`, `PAGER=cat`, `EDITOR=true`) to CLI tools to prevent blocking on interactive `stdin` prompts. Enforce execution timeouts (`timeout 45s`, `dart test --timeout 30s`).
+- **Zero-Token Waiting (Zero-Tool Background Yield)**: Whenever a command or tool runs in the background as an asynchronous task, immediately terminate your turn without calling further tools. The runtime automatically resumes execution upon process termination. Never execute bash `sleep` loops or manual polling turns.
 
 ## Engineering Discipline
 
@@ -115,16 +117,12 @@ Local Web App & UI Verification ("Show Me First"):
   - **Sandbox Snapshot Atomic Rename Mitigation**: When executing Dart CLI applications, tests, or scripts in sandboxed environments, if pub pre-compilation fails with `.dart_tool` atomic rename errors (`PathNotFoundException`, `errno = 2`), pass `--no-precompile` (e.g., `dart run --no-precompile <script>` or `dart test --no-precompile`) to bypass executable snapshot caching. Never guess or hallucinate non-existent binary release paths when default tool execution encounters filesystem sandbox limits.
 - **Dotfiles (`~/.dotfiles`)**: My home directory (`~/.zshrc`, `~/.config/*`) is managed by a bare repository at `~/.dotfiles`. Whenever inspecting or editing dotfiles in `$HOME`, consult the `personal-dotfiles` skill (`~/.agents/skills/personal-dotfiles/SKILL.md`) for the required Anti-Universe bare-repo protocol and ignore rules.
 - **Private Corp Dotfiles (`~/.dotfiles-corp`)**: On gLinux corp machines (e.g. workstations, Cloudtops), internal configurations (like `local.zsh`, `config.local`, and `settings.json`) and corp-specific agent rules are managed via the private bare repository at `~/.dotfiles-corp` and the `dotcorp` CLI.
-- **Dart Development & MCP Server Protocol**:
-  - **Open-Source Repositories (`~/github/...`)**:
-    - **Server**: Exclusively use `dart_oss` MCP tools (`ServerName: "dart_oss"`).
-    - **Operational Precedence & Anti-Habit Invariants**:
-      - **Symbol Lookup & Signatures**: ALWAYS call `lsp` (`hover`, `resolveWorkspaceSymbol`, `definition`, `signatureHelp`) before running raw text `grep_search` across source trees. Fall back to `grep_search` only if `lsp` returns empty or errors.
-      - **Diagnostics**: ALWAYS call `analyze_files` for instant in-memory diagnostics before running standalone CLI test suites or batch analyzers.
-      - **Dependencies & Packages**: ALWAYS call `read_package_uris` or `rip_grep_packages` when inspecting third-party package dependencies instead of scanning filesystem caches manually. Use `pub_dev_search` / `pub` to discover packages.
-      - **Live Debugging**: Use `dtd` / `hot_reload` / `widget_inspector` for active application debugging.
-  - **Google3 Workspaces (`/google/src/...`)**:
-    - **Server**: Never invoke `dart_oss` tools. For live debugging/DTD only, use `dart_g3` (`ServerName: "dart_g3"`).
-    - **Discipline**: For static analysis, search, editing, and tests in Google3, exclusively use native Google3 tools (`code_search`, `view_file`, `replace_file_content`, `blaze-for-agents`).
+- **Dart Development & MCP Server Protocol (`~/github/...`)**:
+  - **Server**: Exclusively use `dart_oss` MCP tools (`ServerName: "dart_oss"`).
+  - **Operational Precedence & Anti-Habit Invariants**:
+    - **Symbol Lookup & Signatures**: ALWAYS call `lsp` (`hover`, `resolveWorkspaceSymbol`, `definition`, `signatureHelp`) before running raw text `grep_search` across source trees. Fall back to `grep_search` only if `lsp` returns empty or errors.
+    - **Diagnostics**: ALWAYS call `analyze_files` for instant in-memory diagnostics before running standalone CLI test suites or batch analyzers.
+    - **Dependencies & Packages**: ALWAYS call `read_package_uris` or `rip_grep_packages` when inspecting third-party package dependencies instead of scanning filesystem caches manually. Use `pub_dev_search` / `pub` to discover packages.
+    - **Live Debugging**: Use `dtd` / `hot_reload` / `widget_inspector` for active application debugging.
 
 
