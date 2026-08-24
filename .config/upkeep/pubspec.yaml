@@ -6,6 +6,9 @@ publish_to: none
 environment:
   sdk: '^3.13.0-0'
 
+executables:
+  upkeep: null
+
 dependencies:
   args: ^2.5.0
   cli_util: ^0.4.1

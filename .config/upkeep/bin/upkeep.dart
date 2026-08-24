@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' as io;
 
 import 'package:args/command_runner.dart';
 import 'package:upkeep/upkeep.dart';
@@ -7,7 +7,7 @@ const version = '0.1.0';
 
 Future<void> main(List<String> args) async {
   final runner =
-      CommandRunner<void>(
+      CommandRunner<int>(
           'upkeep',
           'Cross-platform system status checker and updater.',
         )
@@ -24,8 +24,8 @@ Future<void> main(List<String> args) async {
   );
 
   if (args.contains('--version')) {
-    print('upkeep v$version');
-    exit(0);
+    io.stdout.writeln('upkeep v$version');
+    return;
   }
 
   if (args.isEmpty ||
@@ -36,12 +36,12 @@ Future<void> main(List<String> args) async {
   }
 
   try {
-    await runner.run(args);
+    io.exitCode = await runner.run(args) ?? 0;
   } on UsageException catch (e) {
-    stderr.writeln(e);
-    exit(64);
+    io.stderr.writeln(e);
+    io.exitCode = 64;
   } catch (e) {
-    stderr.writeln('Error: $e');
-    exit(1);
+    io.stderr.writeln('Error: $e');
+    io.exitCode = 1;
   }
 }

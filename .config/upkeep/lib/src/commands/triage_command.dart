@@ -2,7 +2,7 @@ import 'package:args/command_runner.dart';
 
 import '../upkeepers/brewfile_upkeeper.dart';
 
-class TriageCommand extends Command<void> {
+class TriageCommand extends Command<int> {
   @override
   final String name = 'triage';
 
@@ -11,8 +11,9 @@ class TriageCommand extends Command<void> {
       'Interactively triage Brewfile discrepancies (unmanaged or missing packages).';
 
   @override
-  Future<void> run() async {
+  Future<int> run() async {
     final brewfileUpkeeper = BrewfileUpkeeper();
     await brewfileUpkeeper.triageInteractive();
+    return 0;
   }
 }

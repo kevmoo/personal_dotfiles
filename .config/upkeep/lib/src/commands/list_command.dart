@@ -4,7 +4,7 @@ import 'package:args/command_runner.dart';
 
 import '../runner.dart';
 
-class ListCommand extends Command<void> {
+class ListCommand extends Command<int> {
   @override
   final String name = 'list';
 
@@ -21,7 +21,7 @@ class ListCommand extends Command<void> {
   }
 
   @override
-  Future<void> run() async {
+  Future<int> run() async {
     final isJson = argResults!['json'] as bool;
     final upkeepRunner = UpkeepRunner();
 
@@ -39,7 +39,7 @@ class ListCommand extends Command<void> {
       print(
         const JsonEncoder.withIndent('  ').convert({'upkeepers': adapterList}),
       );
-      return;
+      return 0;
     }
 
     print('═══ Registered System Upkeepers ═══\n');
@@ -51,5 +51,6 @@ class ListCommand extends Command<void> {
       final name = adapter['displayName'] as String;
       print(' • $id  $name ($statusIcon)');
     }
+    return 0;
   }
 }
