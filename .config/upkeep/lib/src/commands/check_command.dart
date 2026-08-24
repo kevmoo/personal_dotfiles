@@ -7,7 +7,7 @@ import '../runner.dart';
 import '../ui/table_formatter.dart';
 import '../upkeepers/brewfile_upkeeper.dart';
 
-class CheckCommand extends Command<void> {
+class CheckCommand extends Command<int> {
   @override
   final String name = 'check';
 
@@ -33,7 +33,7 @@ class CheckCommand extends Command<void> {
   }
 
   @override
-  Future<void> run() async {
+  Future<int> run() async {
     final keepers = argResults!['keeper'] as List<String>;
     final positionals = argResults!.rest;
     final targets = [...keepers, ...positionals];
@@ -50,8 +50,10 @@ class CheckCommand extends Command<void> {
     final statuses = await upkeepRunner.checkAll(targetIds: targets);
 
     if (statuses.isEmpty && targets.isNotEmpty) {
-      print('❌ No matching upkeepers found for targets: ${targets.join(', ')}');
-      exit(64);
+      throw UsageException(
+        'No matching upkeepers found for targets: ${targets.join(', ')}',
+        usage,
+      );
     }
 
     if (isJson) {
@@ -62,7 +64,7 @@ class CheckCommand extends Command<void> {
         'upkeepers': statuses.map((s) => s.toJson()).toList(),
       };
       print(const JsonEncoder.withIndent('  ').convert(payload));
-      return;
+      return 0;
     }
 
     print(TableFormatter.formatStatusTable(statuses));
@@ -72,7 +74,7 @@ class CheckCommand extends Command<void> {
     if (isInteractive) {
       final brewfileUpkeeper = BrewfileUpkeeper();
       await brewfileUpkeeper.triageInteractive();
-      return;
+      return 0;
     }
 
     final outdated = statuses.where((s) => s.isOutdated).toList();
@@ -88,5 +90,6 @@ class CheckCommand extends Command<void> {
         );
       }
     }
+    return 0;
   }
 }

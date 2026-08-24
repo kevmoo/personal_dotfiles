@@ -6,7 +6,7 @@ import '../runner.dart';
 import '../ui/interactive_select.dart';
 import '../ui/table_formatter.dart';
 
-class UpdateCommand extends Command<void> {
+class UpdateCommand extends Command<int> {
   @override
   final String name = 'update';
 
@@ -41,7 +41,7 @@ class UpdateCommand extends Command<void> {
   }
 
   @override
-  Future<void> run() async {
+  Future<int> run() async {
     final keepers = argResults!['keeper'] as List<String>;
     final positionals = argResults!.rest;
     final targets = [...keepers, ...positionals];
@@ -56,8 +56,10 @@ class UpdateCommand extends Command<void> {
     final statuses = await upkeepRunner.checkAll(targetIds: targets);
 
     if (statuses.isEmpty && targets.isNotEmpty) {
-      print('❌ No matching upkeepers found for targets: ${targets.join(', ')}');
-      exit(64);
+      throw UsageException(
+        'No matching upkeepers found for targets: ${targets.join(', ')}',
+        usage,
+      );
     }
 
     print(TableFormatter.formatStatusTable(statuses));
@@ -69,7 +71,7 @@ class UpdateCommand extends Command<void> {
       toUpdate = statuses.map((s) => s.upkeeperId).toList();
     } else if (outdated.isEmpty) {
       print('✨ Everything is up to date! No updates required.');
-      return;
+      return 0;
     } else if (autoYes) {
       toUpdate = outdated.map((s) => s.upkeeperId).toList();
     } else {
@@ -78,7 +80,7 @@ class UpdateCommand extends Command<void> {
 
     if (toUpdate.isEmpty) {
       print('⏭️  Skipped updates.');
-      return;
+      return 0;
     }
 
     print(
@@ -91,14 +93,17 @@ class UpdateCommand extends Command<void> {
     );
 
     print('\n═══ Update Execution Results ═══\n');
+    var hadErrors = false;
     for (final res in updateResults) {
       final icon = res.success ? '✅' : '❌';
       print('$icon ${res.displayName}: ${res.message}');
       if (res.errorMessage != null && res.errorMessage!.isNotEmpty) {
         print('   Error: ${res.errorMessage}');
+        hadErrors = true;
       }
     }
 
     print('\n✨ System upkeep run completed.');
+    return hadErrors ? 1 : 0;
   }
 }

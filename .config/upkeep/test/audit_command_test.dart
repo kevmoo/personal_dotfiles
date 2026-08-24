@@ -62,7 +62,7 @@ void main() {
     });
 
     Future<String> runAudit() async {
-      final runner = CommandRunner<void>('upkeep', 'test')
+      final runner = CommandRunner<int>('upkeep', 'test')
         ..addCommand(AuditCommand());
       await runZoned(
         () => runner.run(['audit', target.path]),
@@ -108,12 +108,11 @@ void main() {
     });
 
     test('exits with code 1 for a missing target directory', () async {
-      final runner = CommandRunner<void>('upkeep', 'test')
+      final runner = CommandRunner<int>('upkeep', 'test')
         ..addCommand(AuditCommand());
       final missing = p.join(target.path, 'does_not_exist');
-      await runner.run(['audit', missing]);
-      check(exitCode).equals(1);
-      exitCode = 0;
+      final code = await runner.run(['audit', missing]);
+      check(code).equals(1);
     });
   });
 }

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:pubspec_parse/pubspec_parse.dart';
 
-class AuditCommand extends Command<void> {
+class AuditCommand extends Command<int> {
   @override
   final String name = 'audit';
 
@@ -28,7 +28,7 @@ class AuditCommand extends Command<void> {
   }
 
   @override
-  Future<void> run() async {
+  Future<int> run() async {
     final sync = argResults!['sync'] as bool;
     final writeReadme = argResults!['write'] as bool;
     final positional = argResults!.rest;
@@ -40,8 +40,7 @@ class AuditCommand extends Command<void> {
     final targetDir = Directory(targetPath);
     if (!targetDir.existsSync()) {
       stderr.writeln('Target directory not found: $targetPath');
-      exitCode = 1;
-      return;
+      return 1;
     }
 
     final rows = await _collectRows(targetDir, sync: sync);
@@ -52,6 +51,7 @@ class AuditCommand extends Command<void> {
       File('$targetPath/README.md').writeAsStringSync(output);
       stderr.writeln('Updated $targetPath/README.md');
     }
+    return 0;
   }
 }
 
