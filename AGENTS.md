@@ -79,6 +79,12 @@ Verify before declaring victory:
   wrong and verify empirically. Report failures plainly; never declare
   success early.
 
+Local Web App & UI Verification ("Show Me First"):
+- When modifying web clients, UI components, HTML templates, CSS, or user-facing services:
+  - **Live Server Prerequisite**: Always ensure the dev server is actively running in the background (`IsDaemon: true`) and responsive (`curl -s ...`).
+  - **Mandatory Link & URL Artifact**: Create a `<App Name>.url.json` artifact using `http://<hostname>:<PORT>/...` (e.g. `http://kevmoo.c.googlers.com:<PORT>/...`) so it pins in the UI sidebar, and output the clickable preview URL and visual screenshot directly in visible chat.
+  - **No Premature Landing Modals**: NEVER trigger an `ask_question` modal asking to commit or ship (`jj ship`) for UI/Web modifications until the user has actively seen the running app and verified the UX behavior. Conclude the turn by presenting the live dev app and inviting the user to inspect/test it.
+
 ## GitHub PRs & Commit Messages
 
 - New PRs: `gh pr create -f` when the branch is exactly one commit ahead of
