@@ -6,9 +6,11 @@ is also enforced by each agent's permission settings — these rules state inten
 
 ## Version Control & Outward Boundaries
 
-- **Local Staging (Autonomous)**: Branching, committing (`git commit`), formatters, and pushing to feature/PR branches (`git push [remote] <feature-branch>`).
+- **Local Staging & Worktrees (Autonomous)**: Branching, staging, committing (`git commit`), formatters, and pushing to feature/PR branches (`git push [remote] <feature-branch>`).
+  - **Worktree Isolation for Code**: When developing code in mixed documentation/code repositories (e.g. `private_life`), use `new-worktree` to create a dedicated sibling worktree (`_[repo]-[branch]`). This keeps the primary repository checkout clean on `main` for ongoing note-taking and live task operations.
+- **Mandatory Pull Requests for Code**: When modifying source code (`.dart`, `.go`, `.py`, scripts, build configurations, test suites), NEVER push directly to default/trunk (`main`, `master`, `trunk`). Always stage on a feature branch, create a Pull Request (`gh pr create`), and verify CI check runs pass before requesting merge approval.
 - **Approval Gate (`ask_question`)**:
-  - Pushing to default/trunk (`main`, `master`, `trunk`).
+  - Pushing pure documentation/notes directly to default/trunk (`main`, `master`, `trunk`).
   - Merging/closing PRs, publishing releases (`gh pr merge`, `gh release create`).
   - GitHub writes (issues, PRs, comments, releases). Single-action scope only.
 - **Two-Tier Landing Approval**:
