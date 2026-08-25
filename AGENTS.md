@@ -82,9 +82,6 @@ Verify before declaring victory:
 - Be skeptical of your own "perfect" solution — imagine how it could be
   wrong and verify empirically. Report failures plainly; never declare
   success early.
-- **Explicit Baseline Qualification for Performance**: When reporting performance speedups or latency multipliers (e.g., `1.5x`):
-  - **Never quote an unqualified speedup**: Explicitly label the exact comparator (e.g., `1.21x faster than pre-change commit` vs `1.52x faster than Stock Dart baseline`).
-  - **Isolated Feature Deltas**: When evaluating a specific commit or optimization, show strictly the isolated **Before vs. After on the active target** without conflating cross-tier competitor baselines.
 
 
 Local Web App & UI Verification ("Show Me First"):
