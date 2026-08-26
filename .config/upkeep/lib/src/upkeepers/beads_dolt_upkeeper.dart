@@ -168,7 +168,7 @@ class BeadsDoltUpkeeper implements Upkeeper {
       if (res.exitCode != 0) {
         res = await _runProcess('bash', [
           '-c',
-          'curl -sL https://github.com/dolthub/dolt/releases/latest/download/dolt-linux-amd64.tar.gz | tar -xz -C /tmp && cp /tmp/dolt-linux-amd64/bin/dolt ${_doltPath()} && rm -rf /tmp/dolt-linux-amd64',
+          'mkdir -p "\$(dirname ${_doltPath()})" && curl -sL https://github.com/dolthub/dolt/releases/latest/download/dolt-linux-amd64.tar.gz | tar -xz -C /tmp && install -m 755 /tmp/dolt-linux-amd64/bin/dolt ${_doltPath()} && rm -rf /tmp/dolt-linux-amd64',
         ]);
       }
       if (res.exitCode == 0) {
