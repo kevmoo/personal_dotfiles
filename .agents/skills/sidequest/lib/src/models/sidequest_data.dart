@@ -232,7 +232,7 @@ class SidequestData {
           id: '1',
           title: firstQuestTitle,
           status: QuestStatus.active,
-          vcs: const VcsState(stage: VcsStage.dirty),
+          vcs: null,
         ),
       ],
     );
