@@ -120,10 +120,12 @@ Local Web App & UI Verification ("Show Me First"):
 - **Private Corp Dotfiles (`~/.dotfiles-corp`)**: On gLinux corp machines (e.g. workstations, Cloudtops), internal configurations (like `local.zsh`, `config.local`, and `settings.json`) and corp-specific agent rules are managed via the private bare repository at `~/.dotfiles-corp` and the `dotcorp` CLI.
 - **Dart Development & MCP Server Protocol (`~/github/...`)**:
   - **Server**: Exclusively use `dart_oss` MCP tools (`ServerName: "dart_oss"`).
+  - **`dart install` Mandate**: Never use or recommend `dart pub global` or `dart pub global activate`. Exclusively use `dart install` (e.g. `dart install --source path <dir>`). If a package breaks or fails with `dart install`, DO NOT fall back to `dart pub global`; raise the issue and error output directly to the user and ask for guidance.
   - **Operational Precedence & Anti-Habit Invariants**:
     - **Symbol Lookup & Signatures**: ALWAYS call `lsp` (`hover`, `resolveWorkspaceSymbol`, `definition`, `signatureHelp`) before running raw text `grep_search` across source trees. Fall back to `grep_search` only if `lsp` returns empty or errors.
     - **Diagnostics**: ALWAYS call `analyze_files` for instant in-memory diagnostics before running standalone CLI test suites or batch analyzers.
     - **Dependencies & Packages**: ALWAYS call `read_package_uris` or `rip_grep_packages` when inspecting third-party package dependencies instead of scanning filesystem caches manually. Use `pub_dev_search` / `pub` to discover packages.
     - **Live Debugging**: Use `dtd` / `hot_reload` / `widget_inspector` for active application debugging.
+
 
 
