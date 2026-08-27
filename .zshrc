@@ -24,6 +24,7 @@ fi
 typeset -U path # Keep path array unique
 local -a candidates=(
   "$HOME/.local/bin"
+  "$HOME/.local/state/Dart/install/bin"
   "$HOME/go/bin"
   "$HOME/bin"
   "$HOME/github/flutter/bin"
