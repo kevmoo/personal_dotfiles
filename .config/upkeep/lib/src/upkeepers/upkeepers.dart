@@ -1,9 +1,12 @@
 export 'beads_dolt_upkeeper.dart';
 export 'brew_upkeeper.dart';
 export 'brewfile_upkeeper.dart';
+export 'dart_install_upkeeper.dart';
+export 'dart_pub_global_upkeeper.dart';
 export 'dotfiles_upkeeper.dart';
 export 'dotfiles_corp_upkeeper.dart';
 export 'flutter_repo_upkeeper.dart';
+export 'gh_vault_upkeeper.dart';
 export 'guacamole_upkeeper.dart';
 export 'mise_upkeeper.dart';
 export 'os_upkeeper.dart';
