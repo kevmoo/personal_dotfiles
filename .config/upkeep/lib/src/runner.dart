@@ -15,8 +15,6 @@ class UpkeepRunner {
             DotfilesCorpUpkeeper(),
             GuacamoleUpkeeper(),
             SkillsUpkeeper(),
-            DartInstallUpkeeper(),
-            DartPubGlobalUpkeeper(),
             ScriptsDartUpkeeper(),
             FlutterRepoUpkeeper(),
             GhVaultUpkeeper(),
