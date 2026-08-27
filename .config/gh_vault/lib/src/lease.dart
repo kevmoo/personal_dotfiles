@@ -88,6 +88,11 @@ class AdminLease {
       try {
         file.deleteSync();
         return true;
+      } on FileSystemException catch (e) {
+        stderr.writeln(
+          '❌ Failed to revoke lease at ${file.path}: ${e.message}',
+        );
+        return false;
       } catch (_) {
         return false;
       }

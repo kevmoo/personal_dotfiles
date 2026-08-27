@@ -33,7 +33,7 @@ void main(List<String> args) {
   final results = parser.parse(args);
 
   if (results['help'] as bool) {
-    print('Usage: gh-unlock [options]\n');
+    print('Usage: gh-unlock [minutes] [options]\n');
     print(parser.usage);
     exit(0);
   }
@@ -43,9 +43,14 @@ void main(List<String> args) {
 
   if (results['init'] as bool) {
     stdout.write('Enter Admin GitHub Token: ');
-    stdin.echoMode = false;
-    final token = stdin.readLineSync()?.trim() ?? '';
-    stdin.echoMode = true;
+    final hasTerm = stdin.hasTerminal;
+    if (hasTerm) stdin.echoMode = false;
+    final String token;
+    try {
+      token = stdin.readLineSync()?.trim() ?? '';
+    } finally {
+      if (hasTerm) stdin.echoMode = true;
+    }
     stdout.writeln();
 
     if (token.isEmpty) {
@@ -67,7 +72,10 @@ void main(List<String> args) {
     exit(0);
   }
 
-  final minutes = int.tryParse(results['minutes'] as String) ?? 5;
+  final rawMinutes = results.rest.isNotEmpty
+      ? results.rest.first
+      : (results['minutes'] as String);
+  final minutes = int.tryParse(rawMinutes) ?? 5;
   final customRuntimeDir = results['runtime-dir'] as String?;
 
   final vaultFile = File(vaultPath);

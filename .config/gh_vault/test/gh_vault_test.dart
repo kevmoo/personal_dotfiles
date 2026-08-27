@@ -102,5 +102,17 @@ void main() {
         check(resolved).equals(mockGh.path);
       },
     );
+
+    test('resolveRealGhExecutable ignores broken symlinks in search paths', () {
+      final binDir = Directory(p.join(tempDir.path, 'bin'))..createSync();
+      Link(p.join(binDir.path, 'gh')).createSync('/nonexistent/path/to/gh');
+
+      final resolved = VaultPaths.resolveRealGhExecutable(
+        currentExecutable: p.join(tempDir.path, 'self', 'gh'),
+        searchPaths: [binDir.path],
+      );
+
+      check(resolved).isNull();
+    });
   });
 }

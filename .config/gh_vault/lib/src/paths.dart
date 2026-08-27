@@ -19,11 +19,13 @@ class VaultPaths {
     final uid = targetUid ?? currentUid();
 
     if (Platform.isLinux) {
-      final xdg = Platform.environment['XDG_RUNTIME_DIR'];
-      if (xdg != null && Directory(xdg).existsSync()) {
-        final dir = Directory(p.join(xdg, 'gh_vault'));
-        _ensureSecureDir(dir, uid);
-        return dir;
+      if (targetUid == null || targetUid == currentUid()) {
+        final xdg = Platform.environment['XDG_RUNTIME_DIR'];
+        if (xdg != null && Directory(xdg).existsSync()) {
+          final dir = Directory(p.join(xdg, 'gh_vault'));
+          _ensureSecureDir(dir, uid);
+          return dir;
+        }
       }
       final runUser = Directory('/run/user/$uid');
       if (runUser.existsSync()) {
@@ -82,28 +84,37 @@ class VaultPaths {
       ...?currentExecutable == null ? null : [currentExecutable],
     };
 
+    bool isSelf(File f) {
+      if (selfPaths.contains(f.path)) return true;
+      try {
+        return selfPaths.contains(f.resolveSymbolicLinksSync());
+      } on FileSystemException {
+        return false;
+      }
+    }
+
+    // 1. Check PATH environment directories first
+    final rawPath = Platform.environment['PATH'] ?? '';
+    final dirs = searchPaths ?? rawPath.split(':');
+    for (final dir in dirs) {
+      if (dir.isEmpty) continue;
+      final file = File(p.join(dir, 'gh'));
+      if (file.existsSync() && !isSelf(file)) {
+        return file.path;
+      }
+    }
+
+    // 2. Fall back to known candidate paths
     if (searchPaths == null || candidatePaths != null) {
       final candidates =
           candidatePaths ??
           ['/opt/homebrew/bin/gh', '/usr/local/bin/gh', '/usr/bin/gh'];
 
       for (final candidate in candidates) {
-        if (!selfPaths.contains(candidate) && File(candidate).existsSync()) {
+        final file = File(candidate);
+        if (file.existsSync() && !isSelf(file)) {
           return candidate;
         }
-      }
-    }
-
-    // Scan PATH environment directories
-    final rawPath = Platform.environment['PATH'] ?? '';
-    final dirs = searchPaths ?? rawPath.split(':');
-    for (final dir in dirs) {
-      if (dir.isEmpty) continue;
-      final file = File(p.join(dir, 'gh'));
-      if (file.existsSync() &&
-          !selfPaths.contains(file.path) &&
-          !selfPaths.contains(file.resolveSymbolicLinksSync())) {
-        return file.path;
       }
     }
 

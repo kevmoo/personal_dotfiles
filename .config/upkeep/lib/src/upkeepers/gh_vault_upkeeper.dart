@@ -125,6 +125,8 @@ class GhVaultUpkeeper implements Upkeeper {
       // Recompile user binaries
       final dispatchSrc = p.join(_packageDir, 'bin', 'gh_dispatch.dart');
       final lockSrc = p.join(_packageDir, 'bin', 'gh_lock.dart');
+      final unlockSrc = p.join(_packageDir, 'bin', 'gh_unlock.dart');
+      final userUnlockBin = p.join(_homeDir(), '.local', 'bin', 'gh-unlock');
 
       final compDispatch = await Process.run('dart', [
         'compile',
@@ -159,6 +161,24 @@ class GhVaultUpkeeper implements Upkeeper {
           success: false,
           message: 'Failed to compile gh_lock.dart',
           errorMessage: compLock.stderr.toString(),
+        );
+      }
+
+      final compUnlock = await Process.run('dart', [
+        'compile',
+        'exe',
+        unlockSrc,
+        '-o',
+        userUnlockBin,
+      ]);
+
+      if (compUnlock.exitCode != 0) {
+        return UpkeepResult(
+          upkeeperId: id,
+          displayName: displayName,
+          success: false,
+          message: 'Failed to compile gh_unlock.dart',
+          errorMessage: compUnlock.stderr.toString(),
         );
       }
 
