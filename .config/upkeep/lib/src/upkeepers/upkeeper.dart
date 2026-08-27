@@ -1,4 +1,11 @@
+import 'dart:io';
+
 import '../models.dart';
+
+typedef ProcessRunner = Future<ProcessResult> Function(
+  String executable,
+  List<String> arguments,
+);
 
 abstract class Upkeeper {
   /// Unique identifier for this upkeeper (e.g. 'brew', 'mise').

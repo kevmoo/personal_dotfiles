@@ -1,15 +1,9 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:yaml/yaml.dart';
 
 import '../models.dart';
 import 'upkeeper.dart';
-
-typedef ProcessRunner = Future<ProcessResult> Function(
-  String executable,
-  List<String> arguments,
-);
 
 class ScriptsDartUpkeeper implements Upkeeper {
   static const String repoUrl = 'https://github.com/kevmoo/scripts.dart.git';
