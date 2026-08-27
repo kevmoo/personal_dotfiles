@@ -99,6 +99,10 @@ Local Web App & UI Verification ("Show Me First"):
   OAuth2 PKCE flow`, never `updates`/`fix bug`). Body: why the change is
   needed, bulleted summary, `Fixes #123` links — no agent meta-commentary
   or tool logs.
+- **Published Package Pre-PR Verification (`pubspec.yaml` & `CHANGELOG.md`)**:
+  - Before creating a PR for any published package:
+    1. **Version & WIP Status**: Check the package version in `pubspec.yaml` against its published status on pub.dev. If the version is already published or is missing a `-wip` pre-release suffix, bump the version appropriately and append `-wip` (e.g. `1.1.2` -> `1.1.3-wip` or `1.2.0-wip`).
+    2. **Changelog**: Ensure `CHANGELOG.md` is updated with a concise description of the changes under the current `-wip` version header.
 
 ## Workspace & Repository Layout
 
