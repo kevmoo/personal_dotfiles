@@ -8,8 +8,8 @@ environment:
 
 executables:
   gh: gh_dispatch
-  gh_unlock: gh_unlock
-  gh_lock: gh_lock
+  gh-unlock: gh_unlock
+  gh-lock: gh_lock
 
 dependencies:
   args: ^2.5.0
