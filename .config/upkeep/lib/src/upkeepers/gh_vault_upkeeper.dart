@@ -6,23 +6,91 @@ import '../models.dart';
 import 'upkeeper.dart';
 
 class GhVaultUpkeeper implements Upkeeper {
+  final Future<ProcessResult> Function(
+    String executable,
+    List<String> arguments,
+  )?
+  processRunner;
+  final String? homeDirOverride;
+  final String? packageDirOverride;
+  final String? systemUnlockBinOverride;
+  final String? rootVaultFileOverride;
+
+  GhVaultUpkeeper({
+    this.processRunner,
+    this.homeDirOverride,
+    this.packageDirOverride,
+    this.systemUnlockBinOverride,
+    this.rootVaultFileOverride,
+  });
+
+  Future<ProcessResult> _runProcess(
+    String executable,
+    List<String> arguments,
+  ) async {
+    final runner = processRunner;
+    if (runner != null) {
+      return runner(executable, arguments);
+    }
+    return Process.run(executable, arguments);
+  }
+
   @override
   String get id => 'gh_vault';
 
   @override
   String get displayName => 'GitHub CLI Vault & Agent Safeguards';
 
-  String _homeDir() => Platform.environment['HOME'] ?? Directory.current.path;
+  String _homeDir() =>
+      homeDirOverride ?? Platform.environment['HOME'] ?? Directory.current.path;
 
-  String get _packageDir => p.join(_homeDir(), '.config', 'gh_vault');
+  String get _packageDir =>
+      packageDirOverride ?? p.join(_homeDir(), '.config', 'gh_vault');
   String get _dispatchBin => p.join(_homeDir(), '.local', 'bin', 'gh');
   String get _lockBin => p.join(_homeDir(), '.local', 'bin', 'gh-lock');
-  String get _systemUnlockBin => '/usr/local/bin/gh-unlock';
-  String get _rootVaultFile => '/etc/github/admin.token';
+  String get _userUnlockBin => p.join(_homeDir(), '.local', 'bin', 'gh-unlock');
+  String get _systemUnlockBin =>
+      systemUnlockBinOverride ?? '/usr/local/bin/gh-unlock';
+  String get _rootVaultFile =>
+      rootVaultFileOverride ?? '/etc/github/admin.token';
 
   @override
   Future<bool> isSupported() async {
     return Directory(_packageDir).existsSync();
+  }
+
+  DateTime? _latestSourceMtime() {
+    final pkgDir = Directory(_packageDir);
+    if (!pkgDir.existsSync()) return null;
+
+    DateTime? latest;
+    void checkFile(File f) {
+      if (f.existsSync()) {
+        final mtime = f.lastModifiedSync();
+        if (latest == null || mtime.isAfter(latest!)) {
+          latest = mtime;
+        }
+      }
+    }
+
+    void scanDir(Directory d) {
+      if (!d.existsSync()) return;
+      for (final entity in d.listSync(recursive: true)) {
+        if (entity is File &&
+            (entity.path.endsWith('.dart') ||
+                p.basename(entity.path) == 'pubspec.yaml' ||
+                p.basename(entity.path) == 'pubspec.lock')) {
+          checkFile(entity);
+        }
+      }
+    }
+
+    scanDir(Directory(p.join(_packageDir, 'lib')));
+    scanDir(Directory(p.join(_packageDir, 'bin')));
+    checkFile(File(p.join(_packageDir, 'pubspec.yaml')));
+    checkFile(File(p.join(_packageDir, 'pubspec.lock')));
+
+    return latest;
   }
 
   @override
@@ -43,13 +111,14 @@ class GhVaultUpkeeper implements Upkeeper {
     if (!systemUnlock.existsSync()) {
       missing.add('System unlock binary missing at $_systemUnlockBin');
       actions.add(
-        "Run 'sudo install -m 0755 ~/.local/bin/gh-unlock /usr/local/bin/gh-unlock'",
+        "Run 'sudo install -m 0755 $_userUnlockBin $_systemUnlockBin'",
       );
     }
 
     // 3. Check user binaries
     final dispatchBin = File(_dispatchBin);
     final lockBin = File(_lockBin);
+    final userUnlockBin = File(_userUnlockBin);
 
     if (!dispatchBin.existsSync()) {
       missing.add('User dispatcher missing at $_dispatchBin');
@@ -57,22 +126,44 @@ class GhVaultUpkeeper implements Upkeeper {
     if (!lockBin.existsSync()) {
       missing.add('User lock binary missing at $_lockBin');
     }
+    if (!userUnlockBin.existsSync()) {
+      missing.add('User unlock binary missing at $_userUnlockBin');
+    }
 
-    // 4. Check binary freshness against source Dart files
-    if (dispatchBin.existsSync()) {
-      final dispatchSrc = File(p.join(_packageDir, 'bin', 'gh_dispatch.dart'));
-      if (dispatchSrc.existsSync()) {
-        final srcMtime = dispatchSrc.lastModifiedSync();
-        final binMtime = dispatchBin.lastModifiedSync();
-        if (srcMtime.isAfter(binMtime)) {
-          warnings.add('User dispatcher is older than source Dart package');
+    // 4. Check binary freshness against all source Dart/pubspec files
+    final latestSource = _latestSourceMtime();
+    if (latestSource != null) {
+      final staleUserBins = <String>[];
+      for (final bin in [dispatchBin, lockBin, userUnlockBin]) {
+        if (bin.existsSync() && latestSource.isAfter(bin.lastModifiedSync())) {
+          staleUserBins.add(p.basename(bin.path));
         }
+      }
+      if (staleUserBins.isNotEmpty) {
+        warnings.add(
+          'User binaries (${staleUserBins.join(', ')}) are older than source Dart package',
+        );
+        actions.add("Run 'upkeep update gh_vault' to recompile user binaries");
+      }
+
+      // Check system unlock binary freshness
+      if (systemUnlock.existsSync() &&
+          userUnlockBin.existsSync() &&
+          userUnlockBin.lastModifiedSync().isAfter(
+            systemUnlock.lastModifiedSync(),
+          )) {
+        warnings.add(
+          'System unlock binary at $_systemUnlockBin is older than user binary',
+        );
+        actions.add(
+          "Run 'sudo install -m 0755 $_userUnlockBin $_systemUnlockBin'",
+        );
       }
     }
 
     // 5. Check active gh auth status
     try {
-      final authProc = await Process.run('gh', ['auth', 'status']);
+      final authProc = await _runProcess('gh', ['auth', 'status']);
       final output = '${authProc.stdout}\n${authProc.stderr}';
       if (output.contains('gho_')) {
         warnings.add(
@@ -126,9 +217,8 @@ class GhVaultUpkeeper implements Upkeeper {
       final dispatchSrc = p.join(_packageDir, 'bin', 'gh_dispatch.dart');
       final lockSrc = p.join(_packageDir, 'bin', 'gh_lock.dart');
       final unlockSrc = p.join(_packageDir, 'bin', 'gh_unlock.dart');
-      final userUnlockBin = p.join(_homeDir(), '.local', 'bin', 'gh-unlock');
 
-      final compDispatch = await Process.run('dart', [
+      final compDispatch = await _runProcess('dart', [
         'compile',
         'exe',
         dispatchSrc,
@@ -146,7 +236,7 @@ class GhVaultUpkeeper implements Upkeeper {
         );
       }
 
-      final compLock = await Process.run('dart', [
+      final compLock = await _runProcess('dart', [
         'compile',
         'exe',
         lockSrc,
@@ -164,12 +254,12 @@ class GhVaultUpkeeper implements Upkeeper {
         );
       }
 
-      final compUnlock = await Process.run('dart', [
+      final compUnlock = await _runProcess('dart', [
         'compile',
         'exe',
         unlockSrc,
         '-o',
-        userUnlockBin,
+        _userUnlockBin,
       ]);
 
       if (compUnlock.exitCode != 0) {
