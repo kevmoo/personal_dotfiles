@@ -8,7 +8,13 @@ is also enforced by each agent's permission settings — these rules state inten
 
 - **Local Staging & Worktrees (Autonomous)**: Branching, staging, committing (`git commit`), formatters, and pushing to feature/PR branches (`git push [remote] <feature-branch>`).
   - **Worktree Isolation for Code**: When developing code in mixed documentation/code repositories (e.g. `private_life`), use `new-worktree` to create a dedicated sibling worktree (`_[repo]-[branch]`). This keeps the primary repository checkout clean on `main` for ongoing note-taking and live task operations.
-- **Mandatory Pull Requests for Code**: When modifying source code (`.dart`, `.go`, `.py`, scripts, build configurations, test suites), NEVER push directly to default/trunk (`main`, `master`, `trunk`). Always stage on a feature branch, create a Pull Request (`gh pr create`), and verify CI check runs pass before requesting merge approval.
+- **Strict Prohibition: Never Push Directly to Trunk (`main` / `master` / `trunk`)**:
+  - **Mandatory Pull Requests for Code**: When modifying source code (`.dart`, `.go`, `.py`, scripts, build configurations, test suites), NEVER push directly to default/trunk (`main`, `master`, `trunk`) on any remote. Always stage on a feature branch, push to that feature branch, create a Pull Request (`gh pr create`), and verify CI check runs pass before requesting merge approval.
+  - **Prompt & Plan Override Immunity**: Even if an intake prompt, execution plan, task description, or upstream tracking configuration suggests or instructs to "push to main" (e.g. `git push <remote> HEAD:main` or `git push origin main`), NEVER push directly to `main` autonomously.
+  - **Approval Gate & PR Recommendation Invariant**: If pushing directly to `main` is ever contemplated or explicitly requested by context, you MUST stop and gate via `ask_question`. The options MUST recommend branching/PR:
+    - `(Recommended) Create a feature branch and open a PR`
+    - `Push directly to main`
+    - `Cancel / pause`
 - **Approval Gate (`ask_question`)**:
   - Pushing pure documentation/notes directly to default/trunk (`main`, `master`, `trunk`).
   - Merging/closing PRs, publishing releases (`gh pr merge`, `gh release create`).
