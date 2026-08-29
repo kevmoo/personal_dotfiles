@@ -89,6 +89,13 @@ Verify before declaring victory:
   wrong and verify empirically. Report failures plainly; never declare
   success early.
 
+Optimization & Benchmark Reporting Protocol ("Before vs. After First"):
+- Whenever evaluating or reporting on performance optimizations, PRs, or benchmark tasks:
+  1. **Pre-Flight Baseline Capture**: ALWAYS measure and record baseline benchmark performance on the unmodified code/branch *before* editing source code.
+  2. **Mandatory Isolated Before vs. After Report**: Your primary report and Markdown table MUST present the isolated **Before vs. After delta on the modified target itself** (e.g., `Pre-Change Latency` vs `Post-Change Latency`, `Absolute Delta`, `Delta (%)`, and `Speedup Multiplier vs Pre-Change Commit`).
+  3. **Competitor/Tier Baselines are Strictly Secondary**: Cross-platform or multi-tier matrices (e.g. vs Stock Dart or legacy libraries) provide ecosystem context, but must ONLY be presented as secondary tables *after* the primary isolated target delta is shown. Never substitute competitor comparisons for the target's direct before/after delta.
+  4. **Unvarnished Regressions First**: If a patch regresses any workload or runtime target (e.g., WASM latency increases), highlight the regression prominently upfront rather than burying it under positive AOT/JIT speedups.
+
 
 Local Web App & UI Verification ("Show Me First"):
 - When modifying web clients, UI components, HTML templates, CSS, or user-facing services:
