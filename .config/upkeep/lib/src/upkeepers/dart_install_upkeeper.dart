@@ -263,12 +263,12 @@ class DartInstallUpkeeper implements Upkeeper {
       final outdated = apps.where((a) => a.isOutdated).toList();
 
       if (outdated.isEmpty) {
-        final names = apps.map((a) => a.name).join(', ');
+        final names = apps.map((a) => a.name).toSet().toList()..sort();
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.upToDate,
-          summary: '${apps.length} tool(s) up to date ($names)',
+          summary: '${names.length} tool(s) up to date (${names.join(', ')})',
         );
       }
 
