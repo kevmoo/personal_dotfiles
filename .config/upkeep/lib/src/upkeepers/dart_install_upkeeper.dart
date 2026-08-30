@@ -133,8 +133,12 @@ class DartInstallUpkeeper implements Upkeeper {
       // 2. Check git bundles: <pkgName>/git/<sha>/
       final gitDir = Directory(p.join(entity.path, 'git'));
       if (gitDir.existsSync()) {
-        for (final shaEntity in gitDir.listSync()) {
-          if (shaEntity is! Directory) continue;
+        final shaDirs = gitDir.listSync().whereType<Directory>().toList();
+        if (shaDirs.isNotEmpty) {
+          shaDirs.sort(
+            (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+          );
+          final shaEntity = shaDirs.first;
           final sha = p.basename(shaEntity.path);
 
           String? gitUrl;
@@ -283,10 +287,14 @@ class DartInstallUpkeeper implements Upkeeper {
               ? a.latestRef!.substring(0, 7)
               : (a.latestRef ?? 'unknown');
           outdatedDetails.add('${a.name} (git): $currShort -> $remShort');
+        } else if (a.type == 'local') {
+          outdatedDetails.add(
+            '${a.name} (local): ${a.currentRef} -> ${a.latestRef}',
+          );
         }
       }
 
-      final outdatedNames = outdated.map((a) => a.name).join(', ');
+      final outdatedNames = outdated.map((a) => a.name).toSet().join(', ');
       return UpkeepStatus(
         upkeeperId: id,
         displayName: displayName,
@@ -330,17 +338,30 @@ class DartInstallUpkeeper implements Upkeeper {
         ProcessResult res;
         if (app.type == 'hosted') {
           res = await _processRunner('dart', ['install', app.name]);
-        } else if (app.type == 'git' && app.sourceUrl != null) {
+        } else if (app.type == 'git') {
+          final url = app.sourceUrl;
+          if (url == null) {
+            errors.add('${app.name}: missing remote Git URL in pubspec.lock');
+            continue;
+          }
           res = await _processRunner('dart', [
             'install',
-            '${app.name}@{git: {url: ${app.sourceUrl}}}',
+            '${app.name}@{git: {url: $url}}',
           ]);
-        } else if (app.type == 'local' && app.sourceUrl != null) {
+        } else if (app.type == 'local') {
+          final path = app.sourceUrl;
+          if (path == null) {
+            errors.add(
+              '${app.name}: missing local source path in pubspec.lock',
+            );
+            continue;
+          }
           res = await _processRunner('dart', [
             'install',
-            '${app.name}@{path: ${app.sourceUrl}}',
+            '${app.name}@{path: $path}',
           ]);
         } else {
+          errors.add('${app.name}: unknown package source type ${app.type}');
           continue;
         }
 

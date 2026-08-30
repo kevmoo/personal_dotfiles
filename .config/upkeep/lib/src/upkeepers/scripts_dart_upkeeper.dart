@@ -210,8 +210,7 @@ class ScriptsDartUpkeeper implements Upkeeper {
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.upToDate,
-          summary:
-              'Activated globally at $shortLocal (unable to fetch remote SHA)',
+          summary: 'Installed at $shortLocal (unable to fetch remote SHA)',
         );
       }
 
@@ -222,7 +221,7 @@ class ScriptsDartUpkeeper implements Upkeeper {
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.upToDate,
-          summary: 'Activated globally at $shortLocal',
+          summary: 'Installed at $shortLocal',
         );
       }
 
