@@ -27,6 +27,10 @@ void main() {
     });
 
     test('check returns a valid UpkeepStatus', () async {
+      upkeeper = GhVaultUpkeeper(
+        processRunner: (exe, args) async =>
+            ProcessResult(1, 0, 'gh version 2.40.0', ''),
+      );
       if (!await upkeeper.isSupported()) return;
 
       final status = await upkeeper.check();

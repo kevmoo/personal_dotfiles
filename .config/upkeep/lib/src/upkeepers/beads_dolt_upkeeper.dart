@@ -17,19 +17,19 @@ class BeadsDoltUpkeeper implements Upkeeper {
   final bool? isCloudtopOverride;
 
   BeadsDoltUpkeeper({
-    Future<ProcessResult> Function(String executable, List<String> arguments)?
-    processRunner,
+    this._processRunner,
     this.doltPathOverride,
     this.bdPathOverride,
     this.isCloudtopOverride,
-  }) : _processRunner = processRunner;
+  });
 
   Future<ProcessResult> _runProcess(
     String executable,
     List<String> arguments,
   ) async {
-    if (_processRunner != null) {
-      return _processRunner!(executable, arguments);
+    final runner = _processRunner;
+    if (runner != null) {
+      return runner(executable, arguments);
     }
     return Process.run(executable, arguments);
   }

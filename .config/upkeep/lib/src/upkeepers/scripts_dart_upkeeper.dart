@@ -1,15 +1,9 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:yaml/yaml.dart';
 
 import '../models.dart';
 import 'upkeeper.dart';
-
-typedef ProcessRunner = Future<ProcessResult> Function(
-  String executable,
-  List<String> arguments,
-);
 
 class ScriptsDartUpkeeper implements Upkeeper {
   static const String repoUrl = 'https://github.com/kevmoo/scripts.dart.git';
@@ -20,11 +14,9 @@ class ScriptsDartUpkeeper implements Upkeeper {
 
   ScriptsDartUpkeeper({
     ProcessRunner? processRunner,
-    Directory? pubCacheDirOverride,
-    Directory? installDirOverride,
-  }) : _processRunner = processRunner ?? Process.run,
-       _pubCacheDirOverride = pubCacheDirOverride,
-       _installDirOverride = installDirOverride;
+    this._pubCacheDirOverride,
+    this._installDirOverride,
+  }) : _processRunner = processRunner ?? Process.run;
 
   @override
   String get id => 'scripts_dart';
@@ -36,7 +28,8 @@ class ScriptsDartUpkeeper implements Upkeeper {
   Future<bool> isSupported() async => _findInstalledSha() != null;
 
   Directory get _pubCacheDir {
-    if (_pubCacheDirOverride != null) return _pubCacheDirOverride!;
+    final override = _pubCacheDirOverride;
+    if (override != null) return override;
     final envCache = Platform.environment['PUB_CACHE'];
     if (envCache != null && envCache.isNotEmpty) {
       return Directory(envCache);
@@ -49,14 +42,15 @@ class ScriptsDartUpkeeper implements Upkeeper {
   }
 
   Directory get _installDir {
-    if (_installDirOverride != null) return _installDirOverride!;
+    final override = _installDirOverride;
+    if (override != null) return override;
     final home = Platform.environment['HOME'] ?? '';
     if (Platform.isMacOS) {
       return Directory(
         p.join(home, 'Library', 'Application Support', 'Dart', 'install'),
       );
     } else {
-      return Directory(p.join(home, '.local', 'share', 'dart', 'install'));
+      return Directory(p.join(home, '.local', 'state', 'Dart', 'install'));
     }
   }
 
@@ -216,8 +210,7 @@ class ScriptsDartUpkeeper implements Upkeeper {
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.upToDate,
-          summary:
-              'Activated globally at $shortLocal (unable to fetch remote SHA)',
+          summary: 'Installed at $shortLocal (unable to fetch remote SHA)',
         );
       }
 
@@ -228,7 +221,7 @@ class ScriptsDartUpkeeper implements Upkeeper {
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.upToDate,
-          summary: 'Activated globally at $shortLocal',
+          summary: 'Installed at $shortLocal',
         );
       }
 

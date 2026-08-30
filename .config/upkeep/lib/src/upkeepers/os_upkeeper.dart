@@ -18,22 +18,18 @@ class GlinuxOsStrategy implements OsStrategy {
     String executable,
     List<String> arguments,
   )?
-  _processRunner;
-  final bool Function()? _rebootRequiredChecker;
+  processRunner;
+  final bool Function()? rebootRequiredChecker;
 
-  GlinuxOsStrategy({
-    Future<ProcessResult> Function(String executable, List<String> arguments)?
-    processRunner,
-    bool Function()? rebootRequiredChecker,
-  }) : _processRunner = processRunner,
-       _rebootRequiredChecker = rebootRequiredChecker;
+  GlinuxOsStrategy({this.processRunner, this.rebootRequiredChecker});
 
   Future<ProcessResult> _runProcess(
     String executable,
     List<String> arguments,
   ) async {
-    if (_processRunner != null) {
-      return _processRunner!(executable, arguments);
+    final runner = processRunner;
+    if (runner != null) {
+      return runner(executable, arguments);
     }
     return Process.run(executable, arguments);
   }
@@ -106,10 +102,13 @@ class GlinuxOsStrategy implements OsStrategy {
     );
   }
 
-  bool _hasRebootRequired() => _rebootRequiredChecker != null
-      ? _rebootRequiredChecker!()
-      : (File('/var/run/reboot-required').existsSync() ||
-            File('/run/reboot-required').existsSync());
+  bool _hasRebootRequired() {
+    final checker = rebootRequiredChecker;
+    return checker != null
+        ? checker()
+        : (File('/var/run/reboot-required').existsSync() ||
+              File('/run/reboot-required').existsSync());
+  }
 
   @override
   Future<UpkeepResult> update(
@@ -144,8 +143,9 @@ class GlinuxOsStrategy implements OsStrategy {
         );
       }
 
-      final hasRebootRequired = _rebootRequiredChecker != null
-          ? _rebootRequiredChecker!()
+      final checker = rebootRequiredChecker;
+      final hasRebootRequired = checker != null
+          ? checker()
           : (File('/var/run/reboot-required').existsSync() ||
                 File('/run/reboot-required').existsSync());
 
@@ -190,19 +190,17 @@ class OstreeOsStrategy implements OsStrategy {
     String executable,
     List<String> arguments,
   )?
-  _processRunner;
+  processRunner;
 
-  OstreeOsStrategy({
-    Future<ProcessResult> Function(String executable, List<String> arguments)?
-    processRunner,
-  }) : _processRunner = processRunner;
+  OstreeOsStrategy({this.processRunner});
 
   Future<ProcessResult> _runProcess(
     String executable,
     List<String> arguments,
   ) async {
-    if (_processRunner != null) {
-      return _processRunner!(executable, arguments);
+    final runner = processRunner;
+    if (runner != null) {
+      return runner(executable, arguments);
     }
     return Process.run(executable, arguments);
   }
