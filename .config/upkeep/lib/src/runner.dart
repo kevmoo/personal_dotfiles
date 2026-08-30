@@ -19,7 +19,6 @@ class UpkeepRunner {
             DartPubGlobalUpkeeper(),
             ScriptsDartUpkeeper(),
             FlutterRepoUpkeeper(),
-            GhVaultUpkeeper(),
             OsUpkeeper(),
             BeadsDoltUpkeeper(),
             VscodeUpkeeper(),
