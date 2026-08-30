@@ -17,7 +17,7 @@ is also enforced by each agent's permission settings — these rules state inten
     - `Cancel / pause`
 - **Approval Gate (`ask_question`)**:
   - Pushing pure documentation/notes directly to default/trunk (`main`, `master`, `trunk`).
-  - Merging/closing PRs, publishing releases (`gh pr merge`, `gh release create`).
+  - Merging/closing PRs, enabling auto-merge, or applying auto-submit labels (`gh pr merge`, `gh pr merge --auto`, `--label autosubmit`, `gh release create`). Never apply `autosubmit` labels or auto-merge flags autonomously during PR creation without explicit turn-level confirmation.
   - GitHub writes (issues, PRs, comments, releases). Single-action scope only.
 - **Two-Tier Landing Approval**:
   - **Tier 1 (Zero-Diff / Autonomous Retry)**: Submit/merge approval covers mechanical fixes: CI test runs, auto-formatters, clean fast-forward rebases, transient lockouts. Re-run landing without re-prompting.
