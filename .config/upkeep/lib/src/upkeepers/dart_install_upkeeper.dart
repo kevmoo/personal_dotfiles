@@ -36,10 +36,9 @@ class DartInstallUpkeeper implements Upkeeper {
   DartInstallUpkeeper({
     ProcessRunner? processRunner,
     LatestVersionFetcher? versionFetcher,
-    Directory? installDirOverride,
+    this._installDirOverride,
   }) : _processRunner = processRunner ?? Process.run,
-       _versionFetcher = versionFetcher ?? _fetchLatestPubDevVersion,
-       _installDirOverride = installDirOverride;
+       _versionFetcher = versionFetcher ?? _fetchLatestPubDevVersion;
 
   @override
   String get id => 'dart_install';

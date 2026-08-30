@@ -9,19 +9,17 @@ class GuacamoleUpkeeper implements Upkeeper {
     String executable,
     List<String> arguments,
   )?
-  _processRunner;
+  processRunner;
 
-  GuacamoleUpkeeper({
-    Future<ProcessResult> Function(String executable, List<String> arguments)?
-    processRunner,
-  }) : _processRunner = processRunner;
+  GuacamoleUpkeeper({this.processRunner});
 
   Future<ProcessResult> _runProcess(
     String executable,
     List<String> arguments,
   ) async {
-    if (_processRunner != null) {
-      return _processRunner!(executable, arguments);
+    final runner = processRunner;
+    if (runner != null) {
+      return runner(executable, arguments);
     }
     return Process.run(executable, arguments);
   }
