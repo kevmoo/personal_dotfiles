@@ -62,6 +62,7 @@ is also enforced by each agent's permission settings — these rules state inten
   messages rather than inside intermediate reasoning/thought blocks or tool
   preambles (which get collapsed into "thoughts for 5s" in Web UI).
 - **Command Execution & Non-Interactive Flags**: Always pass non-interactive flags (`--yes`, `PAGER=cat`, `EDITOR=true`) to CLI tools to prevent blocking on interactive `stdin` prompts. Enforce execution timeouts (`timeout 45s`, `dart test --timeout 30s`).
+  - **Git Status & Diff Token Efficiency**: When inspecting Git repositories via shell commands, prefer `git status -s --untracked=no` (short format without untracked file noise) and `git diff --name-status` (file names and status only without full patch payloads) to conserve token budget and prevent terminal pager deadlocks.
 - **Zero-Token Waiting (Zero-Tool Background Yield)**: Whenever a command or tool runs in the background as an asynchronous task, immediately terminate your turn without calling further tools. The runtime automatically resumes execution upon process termination. Never execute bash `sleep` loops or manual polling turns.
 
 ## Engineering Discipline
