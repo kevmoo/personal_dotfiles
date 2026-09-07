@@ -34,3 +34,6 @@ brew "yq"           # Portable command-line YAML processor
 brew "bazelisk"     # User-friendly launcher for Bazel
 brew "buildozer"    # Rewrite bazel BUILD files using standard commands
 brew "beads"        # Dolt-powered issue tracker/persistent agent memory
+brew "kubernetes-cli" # Kubernetes command-line tool (kubectl)
+brew "podman"       # Daemonless container engine
+brew "tmux"         # Terminal multiplexer

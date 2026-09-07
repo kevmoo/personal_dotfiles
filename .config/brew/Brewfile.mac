@@ -17,4 +17,4 @@ brew "zbar"         # Barcode reading library and tools
 cask "bluesnooze"                 # Sleeping/waking Bluetooth utility
 cask "font-roboto-mono-nerd-font" # Nerd Font
 cask "vscodium"                   # VSCode, no BS
-brew "dart-lang/dart/dart@3.10.9"
+brew "dart-lang/dart/dart@3.12.2"
