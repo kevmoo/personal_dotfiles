@@ -140,6 +140,10 @@ Local Web App & UI Verification ("Show Me First"):
     - **Diagnostics**: ALWAYS call `analyze_files` for instant in-memory diagnostics before running standalone CLI test suites or batch analyzers.
     - **Dependencies & Packages**: ALWAYS call `read_package_uris` or `rip_grep_packages` when inspecting third-party package dependencies instead of scanning filesystem caches manually. Use `pub_dev_search` / `pub` to discover packages.
     - **Live Debugging**: Use `dtd` / `hot_reload` / `widget_inspector` for active application debugging.
+    - **Structural File Outlines & Entity Search (`sem`)**:
+      - **Anti-Scroll Window Rule**: Before calling `view_file` sequentially across large source files (`>300 lines`), run `sem entities <file> --only class --only method` (or `--only function`) to dump a 1-turn structural TOC with exact `Lstart:end` ranges, then call `view_file` once with exact `StartLine`/`EndLine`.
+      - **Entity-Scoped String Search**: When searching for error strings, literals, or Markdown section headers, prefer `sem entities <dir> --text "<string>"` over raw `grep_search` to identify the enclosing AST function/section immediately without a second file-read hop.
+      - **Monorepo Scope Guard**: In massive repositories (`>10,000 files`, e.g., `dart-sdk`), restrict `sem` to fast `index.sem` mmap queries (`sem find`, `sem callers`, `sem refs`, `sem grep`) or explicitly path-scoped `sem entities <subpath>`. Never invoke unscoped `sem impact` or `sem context` at the root of a monorepo.
 
 
 
