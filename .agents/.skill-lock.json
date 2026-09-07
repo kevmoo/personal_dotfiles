@@ -144,6 +144,15 @@
       "skillFolderHash": "d11f7b70ecbce3bb3a97b38397b44c1362fc7ca2",
       "installedAt": "2026-08-08T05:46:03.701Z",
       "updatedAt": "2026-08-25T02:46:16.962Z"
+    },
+    "sem-cli": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/sem-cli/SKILL.md",
+      "skillFolderHash": "57726c48242dd26ba3f978a8c8fc32b4e38c9618",
+      "installedAt": "2026-09-07T00:11:12.877Z",
+      "updatedAt": "2026-09-07T00:11:12.877Z"
     }
   },
   "dismissed": {
