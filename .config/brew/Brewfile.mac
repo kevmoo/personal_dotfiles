@@ -3,6 +3,7 @@
 # Development Utilities
 brew "dotnet"       # Needed for shelf compliance!
 brew "fvm"          # Flutter version manager
+brew "geckodriver"  # WebDriver <-> Marionette proxy
 brew "mkcert"       # Make locally-trusted development certificates
 brew "oha"          # HTTP load generator, inspired by rakyll/hey with tui animation
 brew "qrtool"       # Utility for reading and creating QR codes
