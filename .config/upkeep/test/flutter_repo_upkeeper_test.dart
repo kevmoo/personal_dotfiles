@@ -130,7 +130,7 @@ void main() {
       check(result.message).contains('uncommitted local changes exist');
     });
 
-    test('update performs checkout and pull when clean', () async {
+    test('update performs checkout, pull, and doctor when clean', () async {
       Directory(p.join(flutterDir.path, '.git')).createSync(recursive: true);
       final commands = <String>[];
       final upkeeper = FlutterRepoUpkeeper(
@@ -149,8 +149,44 @@ void main() {
 
       final result = await upkeeper.update();
       check(result.success).isTrue();
+      check(result.message).contains('and ran flutter doctor');
       check(commands)
           .contains('git -C ${flutterDir.path} pull --ff-only origin master');
+      final expectedDoctorBin = p.join(
+        flutterDir.path,
+        'bin',
+        Platform.isWindows ? 'flutter.bat' : 'flutter',
+      );
+      check(commands).contains('$expectedDoctorBin doctor');
+    });
+
+    test('update reports failure when flutter doctor fails', () async {
+      Directory(p.join(flutterDir.path, '.git')).createSync(recursive: true);
+      final expectedDoctorBin = p.join(
+        flutterDir.path,
+        'bin',
+        Platform.isWindows ? 'flutter.bat' : 'flutter',
+      );
+      final upkeeper = FlutterRepoUpkeeper(
+        overrideFlutterDir: flutterDir,
+        processRunner: (executable, args) async {
+          if (args.contains('status')) {
+            return ProcessResult(0, 0, '', '');
+          }
+          if (args.contains('rev-parse')) {
+            return ProcessResult(0, 0, 'master\n', '');
+          }
+          if (executable == expectedDoctorBin && args.contains('doctor')) {
+            return ProcessResult(0, 1, '', 'doctor tool failure');
+          }
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final result = await upkeeper.update();
+      check(result.success).isFalse();
+      check(result.message).contains('flutter doctor failed');
+      check(result.errorMessage).equals('doctor tool failure');
     });
   });
 }

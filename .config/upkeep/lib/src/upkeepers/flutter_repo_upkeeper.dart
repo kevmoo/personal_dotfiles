@@ -318,11 +318,36 @@ class FlutterRepoUpkeeper implements Upkeeper {
         );
       }
 
+      final flutterBin = p.join(
+        repoDir.path,
+        'bin',
+        Platform.isWindows ? 'flutter.bat' : 'flutter',
+      );
+      final doctorRes = await _processRunner(flutterBin, ['doctor']);
+      if (doctorRes.exitCode != 0) {
+        return UpkeepResult(
+          upkeeperId: id,
+          displayName: displayName,
+          success: false,
+          message:
+              'Updated Flutter repository ($target), but flutter doctor failed',
+          errorMessage: doctorRes.stderr.toString().trim().isNotEmpty
+              ? doctorRes.stderr.toString().trim()
+              : doctorRes.stdout.toString().trim(),
+        );
+      }
+
+      if (verbose) {
+        final out = doctorRes.stdout.toString().trim();
+        if (out.isNotEmpty) stdout.writeln(out);
+      }
+
       return UpkeepResult(
         upkeeperId: id,
         displayName: displayName,
         success: true,
-        message: 'Successfully updated Flutter repository on branch $target',
+        message:
+            'Successfully updated Flutter repository on branch $target and ran flutter doctor',
       );
     } catch (e) {
       return UpkeepResult(
