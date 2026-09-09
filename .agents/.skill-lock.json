@@ -28,15 +28,6 @@
       "installedAt": "2026-06-05T01:21:48.062Z",
       "updatedAt": "2026-07-12T06:51:13.279Z"
     },
-    "sem-semantic-diff": {
-      "source": "kevmoo/kevmoo_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
-      "skillPath": "skills/sem-semantic-diff/SKILL.md",
-      "skillFolderHash": "55572bbd0e6d7af0b78f8863d66d4f8c00d5edb8",
-      "installedAt": "2026-06-05T01:21:48.063Z",
-      "updatedAt": "2026-07-12T06:51:14.352Z"
-    },
     "pr-loop": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
