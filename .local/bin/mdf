@@ -7,13 +7,15 @@ set -euo pipefail
 # 1. Prefer mise-managed prettier if available
 if command -v mise >/dev/null 2>&1; then
   if mise which prettier >/dev/null 2>&1; then
-    exec mise exec -- prettier --write --prose-wrap always --print-width 80 "$@"
+    exec mise exec -- prettier --write --config-precedence file-override \
+      --prose-wrap always --print-width 80 "$@"
   fi
 fi
 
 # 2. Fallback to direct PATH prettier
 if command -v prettier >/dev/null 2>&1; then
-  exec prettier --write --prose-wrap always --print-width 80 "$@"
+  exec prettier --write --config-precedence file-override \
+    --prose-wrap always --print-width 80 "$@"
 fi
 
 # 3. Friendly, actionable error output if prettier is missing
