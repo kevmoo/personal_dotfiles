@@ -96,9 +96,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "9a8bbaf0d69073a735c45ce7a2e2a6991ffbcb36",
+      "skillFolderHash": "288d445a57748c4c2de7b2bcef36751fe128510a",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-08-30T07:19:42.117Z"
+      "updatedAt": "2026-09-12T06:09:48.090Z"
     },
     "conversation-auditor": {
       "source": "pq/pq-agent-skills",
