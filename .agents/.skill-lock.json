@@ -144,6 +144,15 @@
       "skillFolderHash": "57726c48242dd26ba3f978a8c8fc32b4e38c9618",
       "installedAt": "2026-09-07T00:11:12.877Z",
       "updatedAt": "2026-09-07T00:11:12.877Z"
+    },
+    "review-pr": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/review-pr/SKILL.md",
+      "skillFolderHash": "9fe953719316a9d8d0fe010102e369b82cb8e80b",
+      "installedAt": "2026-09-13T00:09:48.443Z",
+      "updatedAt": "2026-09-13T00:09:48.443Z"
     }
   },
   "dismissed": {
