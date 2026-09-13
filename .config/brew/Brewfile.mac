@@ -4,13 +4,14 @@
 brew "dotnet"       # Needed for shelf compliance!
 brew "fvm"          # Flutter version manager
 brew "geckodriver"  # WebDriver <-> Marionette proxy
+brew "graphviz"     # Graph visualization software
+brew "kubernetes-cli" # Kubernetes command-line tool (kubectl)
 brew "mkcert"       # Make locally-trusted development certificates
 brew "oha"          # HTTP load generator, inspired by rakyll/hey with tui animation
+brew "podman"       # Daemonless container engine
 brew "qrtool"       # Utility for reading and creating QR codes
 brew "wabt"         # Web Assembly Binary Toolkit
-brew "wasm-tools"   # Low-level tooling for WebAssembly
 brew "witr"         # Process causal chain explorer ("Why Is This Running?")
-brew "wrk"          # Modern HTTP benchmarking tool
 brew "zbar"         # Barcode reading library and tools
 
 
