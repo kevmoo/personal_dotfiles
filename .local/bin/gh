@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+# Prescriptive diagnostic wrapper for GitHub CLI (gh)
+# Principles:
+#   1. Zero aliases (no gh-checks wrapper)
+#   2. No silent flag or argument rewriting
+#   3. Prescriptive FuzzyCommandRunner-style hints on common agent mistakes
+#   4. Normalizes `gh pr checks` Exit Code 8 (pending) -> Exit 0 with explicit status & next-step guidance
+
+set -uo pipefail
+
+# Resolve real gh binary on PATH (excluding this wrapper)
+REAL_GH="${GH_WRAPPER_REAL_GH:-}"
+if [[ -z "$REAL_GH" ]]; then
+  while IFS= read -r candidate; do
+    if [[ -n "$candidate" && "$candidate" != "$HOME/.local/bin/gh" && -x "$candidate" ]]; then
+      REAL_GH="$candidate"
+      break
+    fi
+  done < <(which -a gh 2>/dev/null)
+fi
+
+if [[ -z "$REAL_GH" ]]; then
+  echo "Error: underlying 'gh' binary not found in PATH." >&2
+  exit 127
+fi
+
+# Escape hatch for raw execution
+if [[ "${GH_WRAPPER_RAW:-0}" == "1" ]]; then
+  exec "$REAL_GH" "$@"
+fi
+
+# Helper: resolve GitHub <owner>/<repo> from git origin remote if inside a git repo
+resolve_github_repo() {
+  local origin_url
+  origin_url=$(git remote get-url origin 2>/dev/null || true)
+  if [[ "$origin_url" =~ github\.com[:/]([^/]+/[^/]+)$ ]]; then
+    local slug="${BASH_REMATCH[1]}"
+    echo "${slug%.git}"
+  fi
+}
+
+# Pass through interactive `--watch` invocations directly
+for arg in "$@"; do
+  if [[ "$arg" == "--watch" ]]; then
+    exec "$REAL_GH" "$@"
+  fi
+done
+
+tmp_out=$(mktemp)
+trap 'rm -f "$tmp_out"' EXIT
+
+"$REAL_GH" "$@" >"$tmp_out" 2>&1
+rc=$?
+
+cat "$tmp_out"
+
+# If command succeeded, exit 0 immediately
+if [[ "$rc" -eq 0 ]]; then
+  exit 0
+fi
+
+# 1. Prescriptive handling for `gh pr checks`
+if [[ "${1:-}" == "pr" && "${2:-}" == "checks" ]]; then
+  # Case A: Exit Code 8 (Checks pending/in-progress) -> Normalize to 0 with prescriptive guidance
+  if [[ "$rc" -eq 8 ]]; then
+    echo ""
+    echo "⏳ [gh] CI STATUS: PENDING (Exit code 8 normalized to 0: checks are queued or running)."
+    echo "💡 Next step: Do NOT poll in a bash sleep loop."
+    echo "   • To wait reactively for completion: gh run list --limit 5  ->  gh run watch <run-id>"
+    echo "   • Or yield and schedule an async timer."
+    exit 0
+  fi
+
+  # Case B: Exit Code 1 right after git push ("no checks reported on the '...' branch")
+  if [[ "$rc" -eq 1 ]] && grep -q "no checks reported on the" "$tmp_out"; then
+    echo ""
+    echo "⏳ [gh] CI STATUS: STARTING (Exit code 1 normalized to 0: GitHub Actions has not registered check runs yet)."
+    echo "💡 Next step: Wait ~15 seconds, then check active runs with: gh run list --limit 5"
+    exit 0
+  fi
+
+  # Case C: Unknown JSON field "url" -> Prescriptive failure hint (keep Exit Code 1)
+  if grep -q 'Unknown JSON field: "url"' "$tmp_out"; then
+    echo "" >&2
+    echo "💡 Prescriptive Hint: 'gh pr checks' uses 'link' instead of 'url' for check URLs." >&2
+    echo "   Canonical invocation: gh pr checks --json name,state,link" >&2
+    exit "$rc"
+  fi
+fi
+
+# 2. Prescriptive hint for secondary Git worktrees missing default remote repository
+if grep -q "No default remote repository has been set" "$tmp_out"; then
+  repo_slug=$(resolve_github_repo)
+  echo "" >&2
+  if [[ -n "$repo_slug" ]]; then
+    echo "💡 Prescriptive Hint (Git Worktree): No default repository is configured for this worktree." >&2
+    echo "   Run once to configure permanently for this worktree:" >&2
+    echo "     gh repo set-default origin" >&2
+    echo "   Or pass explicitly: gh $* -R $repo_slug" >&2
+  else
+    echo "💡 Prescriptive Hint: Run 'gh repo set-default origin' or pass '-R <owner>/<repo>'." >&2
+  fi
+  exit "$rc"
+fi
+
+exit "$rc"
