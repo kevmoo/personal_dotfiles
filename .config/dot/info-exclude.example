@@ -31,6 +31,7 @@
 !.local/bin/brew-check
 !.local/bin/dot-check-ignores
 !.local/bin/dot
+!.local/bin/gh
 !.local/bin/net-diag
 !.gemini/**
 !.zshrc.d/**
