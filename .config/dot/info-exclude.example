@@ -45,4 +45,4 @@
 !.agents/
 !.agents/skills/**
 !.config/environment.d/
-!.config/environment.d/10-pub-cache.conf
+!.config/environment.d/10-dart-install.conf
