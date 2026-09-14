@@ -6,36 +6,36 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/gerrit-stacked-cls/SKILL.md",
-      "skillFolderHash": "22a916fd546d847ca8114570ab900938fec98be3",
+      "skillFolderHash": "783bde360705a4e8ef192279b771dac811ecd4f9",
       "installedAt": "2026-06-05T01:21:48.061Z",
-      "updatedAt": "2026-06-29T19:19:37.576Z"
+      "updatedAt": "2026-09-14T14:43:57.397Z"
     },
     "github-pr-triage": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/github-pr-triage/SKILL.md",
-      "skillFolderHash": "10d79f2a65460a2e272f5319d703f0d2b1c16c70",
+      "skillFolderHash": "fcc2719e268a6426af849ae8306bfb90811fefda",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-08-30T07:19:34.086Z"
+      "updatedAt": "2026-09-14T14:43:58.595Z"
     },
     "gob-curl": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/gob-curl/SKILL.md",
-      "skillFolderHash": "6e7e323bb2b3e2e6215362aaab65b894510968cc",
+      "skillFolderHash": "a819bcd5168e8ba1d585d12fc35c9e3fe9335a27",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-07-12T06:51:13.279Z"
+      "updatedAt": "2026-09-14T14:44:01.258Z"
     },
     "pr-loop": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/pr-loop/SKILL.md",
-      "skillFolderHash": "83a1e44a481e5287fafe211315a97e38943acbc3",
+      "skillFolderHash": "75d17d178e2d07d7ba785fd7b024574a909fba1d",
       "installedAt": "2026-06-25T18:17:01.797Z",
-      "updatedAt": "2026-08-22T19:50:10.286Z"
+      "updatedAt": "2026-09-14T14:44:03.230Z"
     },
     "grilling": {
       "source": "mattpocock/skills",
@@ -60,45 +60,45 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/just-brainstorm/SKILL.md",
-      "skillFolderHash": "1f2ae09299686eab3a21d86aba4724664eb3d684",
+      "skillFolderHash": "49901e12ebef8692ac77da71d9c4cbafc5240033",
       "installedAt": "2026-06-29T19:19:37.574Z",
-      "updatedAt": "2026-08-30T07:19:36.417Z"
+      "updatedAt": "2026-09-14T14:44:05.323Z"
     },
     "markdown-long-lines": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/markdown-long-lines/SKILL.md",
-      "skillFolderHash": "b6ea2a459227d585d5b56ab05470dc2a0281148f",
+      "skillFolderHash": "98af8aab9d84337d534f3ec95cfcce2d53ae9b6e",
       "installedAt": "2026-06-29T19:19:37.575Z",
-      "updatedAt": "2026-06-29T19:19:37.575Z"
+      "updatedAt": "2026-09-14T14:44:07.251Z"
     },
     "quick-question": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/quick-question/SKILL.md",
-      "skillFolderHash": "2f337b3fea27de84227c846481f74f8cc1269da3",
+      "skillFolderHash": "0f785dd6e5607bb620986b014482b07a8ab47dd7",
       "installedAt": "2026-06-29T19:19:37.575Z",
-      "updatedAt": "2026-08-30T07:19:38.162Z"
+      "updatedAt": "2026-09-14T14:44:09.144Z"
     },
     "clarify-confirm-continue": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/clarify-confirm-continue/SKILL.md",
-      "skillFolderHash": "81d972ed30a10ce96d2dcf11bcb9a0cfb65025e4",
+      "skillFolderHash": "b769443ff03c9a8f0c7f5e2ebc6409ca5dcc44b4",
       "installedAt": "2026-07-07T21:40:25.936Z",
-      "updatedAt": "2026-08-30T07:19:40.093Z"
+      "updatedAt": "2026-09-14T14:44:10.974Z"
     },
     "sidequest": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "288d445a57748c4c2de7b2bcef36751fe128510a",
+      "skillFolderHash": "c73d76f48c9b7e779fa0d169714ee7e190f6e8a1",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-09-12T06:09:48.090Z"
+      "updatedAt": "2026-09-14T14:44:13.110Z"
     },
     "conversation-auditor": {
       "source": "pq/pq-agent-skills",
@@ -123,36 +123,36 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/new-worktree/SKILL.md",
-      "skillFolderHash": "88ece65f7a14ace74f08cc3cebc1ef61e5f64279",
+      "skillFolderHash": "3c468ebb11c9371d92c22ffa3a30510642bfae90",
       "installedAt": "2026-08-03T20:47:42.350Z",
-      "updatedAt": "2026-08-30T07:19:44.048Z"
+      "updatedAt": "2026-09-14T14:44:14.977Z"
     },
     "dart-cleanup": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/dart-cleanup/SKILL.md",
-      "skillFolderHash": "ee0aae4e86b6e3252a1db1310107087af0aff55d",
+      "skillFolderHash": "ce7a041d4c6280bdb16f4daef993d8ef6d0dae2c",
       "installedAt": "2026-08-08T05:46:03.701Z",
-      "updatedAt": "2026-09-10T22:56:13.283Z"
+      "updatedAt": "2026-09-14T14:44:16.323Z"
     },
     "sem-cli": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sem-cli/SKILL.md",
-      "skillFolderHash": "57726c48242dd26ba3f978a8c8fc32b4e38c9618",
+      "skillFolderHash": "55b229e00db5b851e522b26c4fb42a2b689b8741",
       "installedAt": "2026-09-07T00:11:12.877Z",
-      "updatedAt": "2026-09-07T00:11:12.877Z"
+      "updatedAt": "2026-09-14T14:44:17.729Z"
     },
     "review-pr": {
       "source": "kevmoo/kevmoo_skills",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/review-pr/SKILL.md",
-      "skillFolderHash": "9fe953719316a9d8d0fe010102e369b82cb8e80b",
+      "skillFolderHash": "b3db268affc690acb625a432469b57432f1ecbd3",
       "installedAt": "2026-09-13T00:09:48.443Z",
-      "updatedAt": "2026-09-13T00:09:48.443Z"
+      "updatedAt": "2026-09-14T14:44:19.244Z"
     }
   },
   "dismissed": {
