@@ -95,10 +95,10 @@ if grep -q "No default remote repository has been set" "$tmp_out"; then
   if [[ -n "$repo_slug" ]]; then
     echo "💡 Prescriptive Hint (Git Worktree): No default repository is configured for this worktree." >&2
     echo "   Run once to configure permanently for this worktree:" >&2
-    echo "     gh repo set-default $repo_slug" >&2
+    echo "     gh repo set-default origin" >&2
     echo "   Or pass explicitly: gh $* -R $repo_slug" >&2
   else
-    echo "💡 Prescriptive Hint: Run 'gh repo set-default <owner>/<repo>' or pass '-R <owner>/<repo>'." >&2
+    echo "💡 Prescriptive Hint: Run 'gh repo set-default origin' or pass '-R <owner>/<repo>'." >&2
   fi
   exit "$rc"
 fi
