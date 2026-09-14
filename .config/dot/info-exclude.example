@@ -21,8 +21,14 @@
 !.config/starship.toml
 !.config/tmux/
 !.config/tmux/**
+!.config/upkeep/
+!.config/upkeep/**
+.config/upkeep/.dart_tool/
+!.config/vscode-shared/
+!.config/vscode-shared/**
 !.config/zsh/
 !.config/zsh/**
+!.config/zsh/rc.d/gh-completion.zsh
 !.local/
 .local/*
 !.local/bin/
@@ -33,6 +39,7 @@
 !.local/bin/dot
 !.local/bin/gh
 !.local/bin/net-diag
+!.local/bin/upkeep
 !.gemini/**
 !.zshrc.d/**
 !README.md
@@ -43,6 +50,10 @@
 !.config/git/hooks/*
 
 !.agents/
+!.agents/.skill-lock.json
+!.agents/skills/
 !.agents/skills/**
 !.config/environment.d/
 !.config/environment.d/10-dart-install.conf
+
+.DS_Store

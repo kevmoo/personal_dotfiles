@@ -178,9 +178,9 @@ Future<String> _gitStdout(String repoPath, List<String> args) async {
   return result.stdout.toString().trim();
 }
 
-/// Number of uncommitted entries reported by `git status --porcelain`.
+/// Number of uncommitted entries reported by `git status --porcelain -u`.
 Future<int> _dirtyCount(String repoPath) async {
-  final status = await _gitStdout(repoPath, ['status', '--porcelain']);
+  final status = await _gitStdout(repoPath, ['status', '--porcelain', '-u']);
   return status.split('\n').where((l) => l.isNotEmpty).length;
 }
 

@@ -140,5 +140,36 @@ void main() {
       upkeeper.reconcileSymlinks(home); // second run must not throw
       check(upkeeper.needsReconciliation(home)).isFalse();
     });
+
+    test('uncommittedSkillFiles detects untracked files even when status.showUntrackedFiles is no', () async {
+      final dotfilesBare = Directory(path(['.dotfiles']));
+      await Process.run('git', ['init', '--bare', dotfilesBare.path]);
+      await Process.run('git', [
+        '--git-dir=${dotfilesBare.path}',
+        '--work-tree=$home',
+        'config',
+        'status.showUntrackedFiles',
+        'no',
+      ]);
+      File(p.join(dotfilesBare.path, 'info', 'exclude')).writeAsStringSync(
+        '*\n!.agents/\n!.agents/skills/\n!.agents/skills/**\n',
+      );
+
+      final evalFile =
+          File(path(['.agents', 'skills', 'alpha', 'evals', 'evals.json']))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('{}');
+
+      final dirty = await upkeeper.uncommittedSkillFiles(home);
+      check(dirty).isNotEmpty();
+      check(dirty.single).contains('evals/evals.json');
+
+      final dotfilesUpkeeper = DotfilesUpkeeper(homeDirOverride: home);
+      final status = await dotfilesUpkeeper.check();
+      check(status.state).equals(UpkeepState.outdated);
+      check(status.summary).contains('uncommitted/untracked file(s)');
+
+      evalFile.deleteSync();
+    });
   });
 }
