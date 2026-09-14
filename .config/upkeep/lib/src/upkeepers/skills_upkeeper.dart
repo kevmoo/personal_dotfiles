@@ -40,6 +40,8 @@ class SkillsUpkeeper implements Upkeeper {
     try {
       final home = _homeDir();
       final result = await Process.run('npx', ['skills', 'check']);
+      final dirty = await uncommittedSkillFiles(home);
+
       if (result.exitCode != 0) {
         // Fallback: check if .agents directory exists
         final agentsDir = Directory(p.join(home, '.agents'));
@@ -61,6 +63,17 @@ class SkillsUpkeeper implements Upkeeper {
           );
         }
 
+        if (dirty.isNotEmpty) {
+          return UpkeepStatus(
+            upkeeperId: id,
+            displayName: displayName,
+            state: UpkeepState.outdated,
+            summary:
+                'Agent skills have uncommitted changes in ~/.dotfiles (${dirty.length} file(s))',
+            details: dirty,
+          );
+        }
+
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
@@ -76,7 +89,7 @@ class SkillsUpkeeper implements Upkeeper {
           displayName: displayName,
           state: UpkeepState.outdated,
           summary: 'Agent skills have updates available',
-          details: [output],
+          details: [output, ...dirty],
         );
       }
 
@@ -86,6 +99,18 @@ class SkillsUpkeeper implements Upkeeper {
           displayName: displayName,
           state: UpkeepState.outdated,
           summary: 'Agent skills symlinks need reconciliation',
+          details: dirty,
+        );
+      }
+
+      if (dirty.isNotEmpty) {
+        return UpkeepStatus(
+          upkeeperId: id,
+          displayName: displayName,
+          state: UpkeepState.outdated,
+          summary:
+              'Agent skills have uncommitted changes in ~/.dotfiles (${dirty.length} file(s))',
+          details: dirty,
         );
       }
 
@@ -127,19 +152,26 @@ class SkillsUpkeeper implements Upkeeper {
       // 3. Reconcile symlinks in ~/.claude/skills/
       reconcileSymlinks(home);
 
+      // 4. Report any uncommitted/untracked files under .agents in ~/.dotfiles
+      final dirty = await uncommittedSkillFiles(home);
+      final dirtySuffix = dirty.isNotEmpty
+          ? ' (${dirty.length} uncommitted/untracked file(s) in ~/.agents/)'
+          : '';
+
       if (globalSuccess && localSuccess) {
         return UpkeepResult(
           upkeeperId: id,
           displayName: displayName,
           success: true,
-          message: 'Successfully updated agent skills (global and local)',
+          message:
+              'Successfully updated agent skills (global and local)$dirtySuffix',
         );
       } else {
         return UpkeepResult(
           upkeeperId: id,
           displayName: displayName,
           success: false,
-          message: 'Failed to update some agent skills',
+          message: 'Failed to update some agent skills$dirtySuffix',
           errorMessage: 'Global output: ${globalProc.stderr.toString().trim()}',
         );
       }
@@ -151,6 +183,34 @@ class SkillsUpkeeper implements Upkeeper {
         message: 'Failed to run npx skills update',
         errorMessage: e.toString(),
       );
+    }
+  }
+
+  /// Returns modified or untracked files under `.agents` in `~/.dotfiles`
+  /// using `git status --porcelain -u -- .agents`.
+  @visibleForTesting
+  Future<List<String>> uncommittedSkillFiles(String home) async {
+    final gitDir = p.join(home, '.dotfiles');
+    if (!Directory(gitDir).existsSync()) return const [];
+    try {
+      final proc = await Process.run('git', [
+        '--git-dir=$gitDir',
+        '--work-tree=$home',
+        'status',
+        '--porcelain',
+        '-u',
+        '--',
+        '.agents',
+      ], workingDirectory: home);
+      if (proc.exitCode != 0) return const [];
+      return proc.stdout
+          .toString()
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const [];
     }
   }
 
