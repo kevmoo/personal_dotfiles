@@ -18,6 +18,9 @@ is also enforced by each agent's permission settings — these rules state inten
 - **Approval Gate (`ask_question`)**:
   - Pushing pure documentation/notes directly to default/trunk (`main`, `master`, `trunk`).
   - Merging/closing PRs, enabling auto-merge, or applying auto-submit labels (`gh pr merge`, `gh pr merge --auto`, `--label autosubmit`, `gh release create`). Never apply `autosubmit` labels or auto-merge flags autonomously during PR creation without explicit turn-level confirmation.
+  - **PR Merge-on-Green Org Boundary (`github.com/kevmoo/*` Only)**:
+    - **`github.com/kevmoo/*`**: Once CI check runs pass, you may prompt via `ask_question` to merge the PR.
+    - **All Other Repositories (`dart-lang/*`, `flutter/*`, `google/*`, etc.)**: PRs universally require peer review/approval. Once CI is green, report the passing status and leave the PR open for review. Do **not** prompt to merge unless the PR already has explicit maintainer approval or the user explicitly asks to merge.
   - GitHub writes (issues, PRs, comments, releases). Single-action scope only.
 - **Two-Tier Landing Approval**:
   - **Tier 1 (Zero-Diff / Autonomous Retry)**: Submit/merge approval covers mechanical fixes: CI test runs, auto-formatters, clean fast-forward rebases, transient lockouts. Re-run landing without re-prompting.
