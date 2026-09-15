@@ -4,12 +4,12 @@ export PATH="$HOME/.local/state/Dart/install/bin:$HOME/.local/bin:$PATH"
 # Smart SSH Agent socket recovery
 # If SSH_AUTH_SOCK is empty, or points to a non-existent/invalid socket file,
 # try to recover by finding a living socket in ~/.ssh/agent/
-if [[ -z "$SSH_AUTH_SOCK" ]] || ! [[ -S "$SSH_AUTH_SOCK" ]]; then
-  for sock in ~/.ssh/agent/s.*(Nom); do
+if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! [[ -S "$SSH_AUTH_SOCK" ]]; then
+  for sock in $(ls -1dt "$HOME/.ssh/agent"/s.* 2>/dev/null); do
     if SSH_AUTH_SOCK="$sock" ssh-add -l >/dev/null 2>&1 || [[ $? -eq 1 ]]; then
-      mkdir -p ~/.ssh
-      ln -sf "$sock" ~/.ssh/ssh_auth_sock
-      export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
+      mkdir -p "$HOME/.ssh"
+      ln -sf "$sock" "$HOME/.ssh/ssh_auth_sock"
+      export SSH_AUTH_SOCK="$HOME/.ssh/ssh_auth_sock"
       break
     fi
   done
