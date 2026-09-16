@@ -4,7 +4,7 @@
 # Linux-specific PATH additions
 candidates+=(
   "$HOME/.local/bin"
-  "$HOME/.local/share/dart/install/bin"
+  "$HOME/.local/state/Dart/install/bin"
 )
 
 # ---------------------------------------------------------
