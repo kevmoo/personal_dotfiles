@@ -15,9 +15,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/github-pr-triage/SKILL.md",
-      "skillFolderHash": "fcc2719e268a6426af849ae8306bfb90811fefda",
+      "skillFolderHash": "cc29daa796a1cf18351149e5ed9f46b880005316",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-09-14T14:43:58.595Z"
+      "updatedAt": "2026-09-18T21:07:10.142Z"
     },
     "gob-curl": {
       "source": "kevmoo/kevmoo_skills",
@@ -33,9 +33,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/pr-loop/SKILL.md",
-      "skillFolderHash": "75d17d178e2d07d7ba785fd7b024574a909fba1d",
+      "skillFolderHash": "be25d445dfbbf8b85c461b8d927d288c95068757",
       "installedAt": "2026-06-25T18:17:01.797Z",
-      "updatedAt": "2026-09-14T14:44:03.230Z"
+      "updatedAt": "2026-09-18T21:07:11.959Z"
     },
     "grilling": {
       "source": "mattpocock/skills",
@@ -96,9 +96,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "0eac1cebaaf451ee2ab78906a8abb4c6ff0fa45f",
+      "skillFolderHash": "571cff5b2431cb9fe54ec1bd60b25cd914e20b50",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-09-14T20:51:51.674Z"
+      "updatedAt": "2026-09-18T21:07:13.765Z"
     },
     "gws-calendar": {
       "source": "googleworkspace/cli",
@@ -144,6 +144,15 @@
       "skillFolderHash": "b3db268affc690acb625a432469b57432f1ecbd3",
       "installedAt": "2026-09-13T00:09:48.443Z",
       "updatedAt": "2026-09-14T14:44:19.244Z"
+    },
+    "github-post": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/github-post/SKILL.md",
+      "skillFolderHash": "87ccee6363c8c95d5280dff922ea62c39c7c966e",
+      "installedAt": "2026-09-18T21:08:20.394Z",
+      "updatedAt": "2026-09-18T21:08:20.394Z"
     }
   },
   "dismissed": {
