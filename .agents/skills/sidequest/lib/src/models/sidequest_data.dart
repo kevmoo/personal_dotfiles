@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:math';
-
 import 'enums.dart';
 import 'vcs_state.dart';
 

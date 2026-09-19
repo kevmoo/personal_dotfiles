@@ -18,12 +18,14 @@
 !.config/mise/
 !.config/mise/**
 .config/mise/config.corp.toml
+.config/mise/conf.d/local.toml
 !.config/starship.toml
 !.config/tmux/
 !.config/tmux/**
 !.config/upkeep/
 !.config/upkeep/**
 .config/upkeep/.dart_tool/
+.config/upkeep/coverage/
 !.config/vscode-shared/
 !.config/vscode-shared/**
 !.config/zsh/
