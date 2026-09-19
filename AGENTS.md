@@ -188,8 +188,7 @@ Local Web App & UI Verification ("Show Me First"):
   - **Live Server Prerequisite**: Always ensure the dev server is actively
     running in the background (`IsDaemon: true`) and responsive (`curl -s ...`).
   - **Mandatory Link & URL Artifact**: Create a `<App Name>.url.json` artifact
-    using `http://<hostname>:<PORT>/...` (e.g.
-    `http://kevmoo.c.googlers.com:<PORT>/...`) so it pins in the UI sidebar, and
+    using `http://<hostname>:<PORT>/...` so it pins in the UI sidebar, and
     output the clickable preview URL and visual screenshot directly in visible
     chat.
   - **No Premature Landing Modals**: NEVER trigger an `ask_question` modal
@@ -244,8 +243,7 @@ Local Web App & UI Verification ("Show Me First"):
       `~/.agents/skills/<skill_name>/` (tracked via `dot`)
     - _Personal / OSS Skills_:
       `~/github/kevmoo/kevmoo_skills/skills/<skill_name>/`
-    - _Google3 Skills_: `//depot/google3/experimental/users/kevmoo/skills/...`
-      or `//depot/configs/users/kevmoo/_agents/skills/...`
+    - _Internal / Corp Skills_: configured via `~/.dotfiles-corp` rules
 - **External Repos (`~/github`)**: Sync and open all external GitHub
   repositories under `~/github`.
   - **Personal Repositories (`github.com/kevmoo`)**: Exclusively clone and nest
@@ -272,7 +270,7 @@ Local Web App & UI Verification ("Show Me First"):
   dotfiles in `$HOME`, consult the `personal-dotfiles` skill
   (`~/.agents/skills/personal-dotfiles/SKILL.md`) for the required Anti-Universe
   bare-repo protocol and ignore rules.
-- **Private Corp Dotfiles (`~/.dotfiles-corp`)**: On gLinux corp machines (e.g.
+- **Private Corp Dotfiles (`~/.dotfiles-corp`)**: On corp machines (e.g.
   workstations, Cloudtops), internal configurations (like `local.zsh`,
   `config.local`, and `settings.json`) and corp-specific agent rules are managed
   via the private bare repository at `~/.dotfiles-corp` and the `dotcorp` CLI.
@@ -318,17 +316,17 @@ Local Web App & UI Verification ("Show Me First"):
     - 🍎🏎️✨ **`Darwin Pro`** (`gMac M4` · `macos_arm64`)
     - 🐧🛠️🐳 **`Bluefin-DX`** (`Personal Linux` · `ostree`/Quadlet)
   - **Two-Channel Routing & Strict Zero-Corp-Secret Rule**:
-    - **Corp-Private Channel (`personal/kevmoo-relay` on FoG
-      `depot.code.corp.goog` via `ggh`, cloned at `~/fog/kevmoo-relay`)**:
-      REQUIRED for any Google-internal context (`//depot/google3/...`, `cl/`,
-      `b/`, `go/`, `cs/`, internal strategy, or Cloudtop ↔ gMac corp handoffs).
+    - **Corp-Private Channel (`$AGENT_RELAY_CORP_REPO` via `ggh`, cloned at
+      `$AGENT_RELAY_CORP_DIR`)**: REQUIRED for any internal corporate context
+      (internal monorepo paths, internal shortlinks `cl/`, `b/`, `go/`, `cs/`,
+      internal strategy, or Cloudtop ↔ gMac corp handoffs).
     - **Public-Safe External Channel (`kevmoo/agent-relay` on `github.com` via
       `gh`, cloned at `~/github/kevmoo/agent-relay`)**: STRICTLY for
       general-knowledge, dotfiles (`~/.dotfiles`), and open-source
       (`dart-lang/*`, `flutter/*`, `kevmoo/*`) work with **~zero corporate
       secret risk** (enabling `Bluefin-DX` 🐧 participation). NEVER post
-      `google3` paths, internal shortlinks (`cl/`, `b/`, `go/`),
-      `.corp.google.com` URLs, or confidential Google context to
+      internal monorepo paths, internal shortlinks (`cl/`, `b/`, `go/`),
+      internal `.corp` URLs, or confidential corporate context to
       `kevmoo/agent-relay` or `gh gist`.
   - **Transport Mechanics**: Prefer Issue Threads (`ggh issue` / `gh issue` with
     `--body-file -`) for serialized, zero-merge-conflict chat turns, and commit

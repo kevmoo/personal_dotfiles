@@ -10,36 +10,6 @@ HOST_SHORT="${HOSTNAME:-$(hostname -s 2>/dev/null || echo unknown)}"
 HOST_SHORT="${HOST_SHORT%%.*}"
 NOW_PT="$(TZ=America/Los_Angeles date '+%Y-%m-%d %H:%M PT')"
 
-# Detect Persona
-if [[ "$UNAME_S" == "Darwin" ]]; then
-  MONIKER="🍎🏎️✨ Darwin Pro"
-  SLUG="darwin-pro"
-  ARCH_TAG="macos_${UNAME_M}"
-  DEFAULT_TO="☁️🐧⚡ Enterprise Rodete"
-elif [[ -f /run/ostree-booted ]] || grep -qi "bluefin" /etc/os-release 2>/dev/null; then
-  MONIKER="🐧🛠️🐳 Bluefin-DX"
-  SLUG="bluefin-dx"
-  ARCH_TAG="linux_${UNAME_M}"
-  DEFAULT_TO="☁️🐧⚡ Enterprise Rodete, 🍎🏎️✨ Darwin Pro"
-else
-  MONIKER="☁️🐧⚡ Enterprise Rodete"
-  SLUG="enterprise-rodete"
-  ARCH_TAG="linux_${UNAME_M}"
-  DEFAULT_TO="🍎🏎️✨ Darwin Pro"
-fi
-
-# Detect Session / Workspace
-SESSION_ID="${ANTIGRAVITY_CONVERSATION_ID:-${CLAUDE_SESSION_ID:-local}}"
-SESSION_SHORT="${SESSION_ID:0:8}"
-
-WORKSPACE="$(basename "$PWD")"
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  REPO_ROOT="$(basename "$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")")"
-  BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "HEAD")"
-  SHA="$(git rev-parse --short HEAD 2>/dev/null || echo "")"
-  WORKSPACE="${REPO_ROOT} (${BRANCH}${SHA:+ @ $SHA})"
-fi
-
 HAS_GGH="false"
 if command -v ggh >/dev/null 2>&1; then
   HAS_GGH="true"
@@ -50,11 +20,78 @@ if command -v gh >/dev/null 2>&1; then
   HAS_GH="true"
 fi
 
+# Resolve Corp Relay Repo from env, ~/.config/zsh/rc.d/local.zsh, or ~/fog/*-relay clone
+CORP_REPO="${AGENT_RELAY_CORP_REPO:-}"
+if [[ -z "$CORP_REPO" && -f "$HOME/.config/zsh/rc.d/local.zsh" ]]; then
+  CORP_REPO="$(sed -n 's/^export AGENT_RELAY_CORP_REPO="\([^"]*\)".*/\1/p' "$HOME/.config/zsh/rc.d/local.zsh" | head -n 1)"
+fi
+if [[ -z "$CORP_REPO" && -d "$HOME/fog" ]]; then
+  for d in "$HOME"/fog/*-relay; do
+    if [[ -d "$d/.git" ]]; then
+      REMOTE_URL="$(git -C "$d" remote get-url origin 2>/dev/null || true)"
+      if [[ -n "$REMOTE_URL" ]]; then
+        CORP_REPO="$(printf '%s' "$REMOTE_URL" | sed -E 's#.*[:/]([^/:]+/[^/:]+)(\.git)?$#\1#')"
+        break
+      fi
+    fi
+  done
+fi
+OSS_REPO="${AGENT_RELAY_OSS_REPO:-kevmoo/agent-relay}"
+
+# Detect Persona (positive OS/container checks; never default unknown Linux to corp)
+if [[ "$UNAME_S" == "Darwin" ]]; then
+  MONIKER="🍎🏎️✨ Darwin Pro"
+  SLUG="darwin-pro"
+  ARCH_TAG="macos_${UNAME_M}"
+  DEFAULT_TO="☁️🐧⚡ Enterprise Rodete"
+elif [[ -f /run/ostree-booted ]] || grep -qi "bluefin" /etc/os-release /run/host/etc/os-release 2>/dev/null; then
+  MONIKER="🐧🛠️🐳 Bluefin-DX"
+  SLUG="bluefin-dx"
+  ARCH_TAG="linux_${UNAME_M}"
+  DEFAULT_TO="☁️🐧⚡ Enterprise Rodete, 🍎🏎️✨ Darwin Pro"
+elif grep -qi "rodete" /etc/os-release /run/host/etc/os-release 2>/dev/null || [[ "$HAS_GGH" == "true" || -n "$CORP_REPO" ]]; then
+  MONIKER="☁️🐧⚡ Enterprise Rodete"
+  SLUG="enterprise-rodete"
+  ARCH_TAG="linux_${UNAME_M}"
+  DEFAULT_TO="🍎🏎️✨ Darwin Pro"
+else
+  MONIKER="❓ Unknown Linux Host"
+  SLUG="unknown-linux"
+  ARCH_TAG="linux_${UNAME_M}"
+  DEFAULT_TO="☁️🐧⚡ Enterprise Rodete"
+fi
+
+# Detect Session / Workspace
+SESSION_ID="${ANTIGRAVITY_CONVERSATION_ID:-${CLAUDE_CODE_SESSION_ID:-${CLAUDE_SESSION_ID:-local}}}"
+SESSION_SHORT="${SESSION_ID:0:8}"
+
+WORKSPACE="$(basename "$PWD")"
+PUBLIC_GITHUB_REPO=""
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  REPO_ROOT="$(basename "$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")")"
+  BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "HEAD")"
+  SHA="$(git rev-parse --short HEAD 2>/dev/null || echo "")"
+  WORKSPACE="${REPO_ROOT} (${BRANCH}${SHA:+ @ $SHA})"
+  ORIGIN_URL="$(git remote get-url origin 2>/dev/null || true)"
+  if [[ "$ORIGIN_URL" =~ github\.com[:/]([^/:]+/[^/:]+)(\.git)?$ ]]; then
+    PUBLIC_GITHUB_REPO="${BASH_REMATCH[1]%.git}${SHA:+ @ $SHA}"
+  fi
+fi
+
 MODE="info"
 TO_TARGET="$DEFAULT_TO"
 THREAD_LABEL="#<N> <topic>"
 STATE_TAG="HANDOFF"
 CHANNEL="auto"
+REPO_OVERRIDE=""
+MODEL_OVERRIDE="${ANTIGRAVITY_MODEL:-${CLAUDE_MODEL:-}}"
+
+require_arg() {
+  if [[ "$2" -lt 2 ]]; then
+    echo "Error: Flag '$1' requires an argument. Run 'relay-whoami --help' for usage." >&2
+    exit 2
+  fi
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -67,19 +104,33 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --to)
+      require_arg "$1" "$#"
       TO_TARGET="$2"
       shift 2
       ;;
     --thread)
+      require_arg "$1" "$#"
       THREAD_LABEL="$2"
       shift 2
       ;;
     --state)
+      require_arg "$1" "$#"
       STATE_TAG="$2"
       shift 2
       ;;
     --channel)
+      require_arg "$1" "$#"
       CHANNEL="$2"
+      shift 2
+      ;;
+    --repo)
+      require_arg "$1" "$#"
+      REPO_OVERRIDE="$2"
+      shift 2
+      ;;
+    --model)
+      require_arg "$1" "$#"
+      MODEL_OVERRIDE="$2"
       shift 2
       ;;
     -h|--help)
@@ -88,7 +139,7 @@ Usage: relay-whoami [--check | --header] [options]
 
 Commands / Modes:
   (default)             Print detected persona, capabilities, and sample envelope
-  --check, status       List open threads across FoG (personal/kevmoo-relay) and GitHub (kevmoo/agent-relay)
+  --check, status       List open threads across Corp Relay (ggh) and GitHub Relay (gh)
   --header              Emit only the Markdown message envelope header
 
 Options for --header:
@@ -96,33 +147,63 @@ Options for --header:
   --thread "#1 Topic"   Thread number and short title
   --state <STATE>       HANDOFF | REPORT | ACKED (default: HANDOFF)
   --channel <corp|oss>  Sets classification tag (CORP_PRIVATE vs PUBLIC_SAFE_OSS)
+  --repo <owner/repo>   Explicit repository tag for PUBLIC_SAFE_OSS headers
+  --model <model-name>  Optional LLM model identifier tag
 EOF
       exit 0
       ;;
     *)
-      shift
+      echo "Error: Unknown option '$1'. Run 'relay-whoami --help' for usage." >&2
+      exit 2
       ;;
   esac
 done
 
-if [[ "$CHANNEL" == "auto" ]]; then
-  if [[ "$HAS_GGH" == "true" ]]; then
-    CLASSIFICATION="CORP_PRIVATE (or PUBLIC_SAFE_OSS on GitHub)"
-  else
+case "$CHANNEL" in
+  auto)
+    if [[ "$HAS_GGH" == "true" && -n "$CORP_REPO" ]]; then
+      CHANNEL_RESOLVED="corp"
+      CLASSIFICATION="CORP_PRIVATE (or PUBLIC_SAFE_OSS on GitHub)"
+    else
+      CHANNEL_RESOLVED="oss"
+      CLASSIFICATION="PUBLIC_SAFE_OSS"
+    fi
+    ;;
+  corp)
+    CHANNEL_RESOLVED="corp"
+    CLASSIFICATION="CORP_PRIVATE"
+    ;;
+  oss)
+    CHANNEL_RESOLVED="oss"
     CLASSIFICATION="PUBLIC_SAFE_OSS"
-  fi
-elif [[ "$CHANNEL" == "corp" ]]; then
-  CLASSIFICATION="CORP_PRIVATE"
-else
-  CLASSIFICATION="PUBLIC_SAFE_OSS"
+    ;;
+  *)
+    echo "Error: Invalid --channel '${CHANNEL}'. Expected 'corp' or 'oss'." >&2
+    exit 2
+    ;;
+esac
+
+MODEL_SEGMENT=""
+if [[ -n "$MODEL_OVERRIDE" ]]; then
+  MODEL_SEGMENT=" · **Model**: \`${MODEL_OVERRIDE}\`"
 fi
 
 print_header() {
-  cat << EOF
+  if [[ "$CHANNEL_RESOLVED" == "oss" ]]; then
+    local repo_tag="${REPO_OVERRIDE:-${PUBLIC_GITHUB_REPO:-$OSS_REPO}}"
+    cat << EOF
 ### ${MONIKER} (\`${HOST_SHORT}\` · \`${ARCH_TAG}\`) → ${TO_TARGET}
 > **Thread**: \`${THREAD_LABEL}\` | **State**: \`${STATE_TAG}\` | **Time**: \`${NOW_PT}\`
-> **Workspace**: \`${WORKSPACE}\` · **Session**: \`${SESSION_SHORT}\` · **Classification**: \`${CLASSIFICATION}\`
+> **Repo**: \`${repo_tag}\`${MODEL_SEGMENT} · **Session**: \`${SESSION_SHORT}\` · **Classification**: \`${CLASSIFICATION}\`
 EOF
+  else
+    local ws_tag="${REPO_OVERRIDE:-$WORKSPACE}"
+    cat << EOF
+### ${MONIKER} (\`${HOST_SHORT}\` · \`${ARCH_TAG}\`) → ${TO_TARGET}
+> **Thread**: \`${THREAD_LABEL}\` | **State**: \`${STATE_TAG}\` | **Time**: \`${NOW_PT}\`
+> **Workspace**: \`${ws_tag}\`${MODEL_SEGMENT} · **Session**: \`${SESSION_SHORT}\` · **Classification**: \`${CLASSIFICATION}\`
+EOF
+  fi
 }
 
 if [[ "$MODE" == "header" ]]; then
@@ -133,19 +214,19 @@ fi
 if [[ "$MODE" == "check" ]]; then
   echo "📟 Active Persona: ${MONIKER} (${HOST_SHORT} · ${ARCH_TAG}) | ${NOW_PT}"
   echo ""
-  if [[ "$HAS_GGH" == "true" ]]; then
-    echo "=== 🔒 Corp-Private FoG Relay (personal/kevmoo-relay via ggh) ==="
-    ggh issue list -R personal/kevmoo-relay --state open --limit 10 2>&1 || echo "⚠️ (ggh query failed — check gcert)"
+  if [[ "$HAS_GGH" == "true" && -n "$CORP_REPO" ]]; then
+    echo "=== 🔒 Corp-Private Relay (${CORP_REPO} via ggh) ==="
+    ggh issue list -R "$CORP_REPO" --state open --limit 10 2>&1 || echo "⚠️ (ggh query failed — check gcert)"
     echo ""
   else
-    echo "=== 🔒 Corp-Private FoG Relay: N/A (ggh not installed on this host) ==="
+    echo "=== 🔒 Corp-Private Relay: N/A (ggh or AGENT_RELAY_CORP_REPO not configured on this host) ==="
     echo ""
   fi
   if [[ "$HAS_GH" == "true" ]]; then
-    echo "=== 🌐 Public-Safe OSS GitHub Relay (kevmoo/agent-relay via gh) ==="
-    GH_OUT="$(gh issue list -R kevmoo/agent-relay --state open --limit 10 2>&1 || echo "⚠️ (gh query failed)")"
+    echo "=== 🌐 Public-Safe OSS GitHub Relay (${OSS_REPO} via gh) ==="
+    GH_OUT="$(gh issue list -R "$OSS_REPO" --state open --limit 10 2>&1 || echo "⚠️ (gh query failed)")"
     if [[ -z "$GH_OUT" ]]; then
-      echo "no open issues in kevmoo/agent-relay"
+      echo "no open issues in ${OSS_REPO}"
     else
       echo "$GH_OUT"
     fi
