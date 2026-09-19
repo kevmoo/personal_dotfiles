@@ -118,9 +118,10 @@ also enforced by each agent's permission settings — these rules state intent.
   messages rather than inside intermediate reasoning/thought blocks or tool
   preambles (which get collapsed into "thoughts for 5s" in Web UI).
 - **Command Execution & Non-Interactive Flags**: Always pass non-interactive
-  flags (`--yes`, `PAGER=cat`, `EDITOR=true`) to CLI tools to prevent blocking
-  on interactive `stdin` prompts. Enforce execution timeouts (`timeout 45s`,
-  `dart test --timeout 30s`).
+  flags (`--yes`, `PAGER=cat`, `GIT_EDITOR=true`, `EDITOR=true`) to CLI tools to
+  prevent blocking on interactive `stdin` prompts or opening `core.editor`
+  (`codium --wait`) during `git rebase --continue` / `merge` / `commit`. Enforce
+  execution timeouts (`timeout 45s`, `dart test --timeout 30s`).
   - **Git Status & Diff Token Efficiency**: When inspecting Git repositories via
     shell commands, prefer `git status -s --untracked=no` (short format without
     untracked file noise) and `git diff --name-status` (file names and status
