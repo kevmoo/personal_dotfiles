@@ -116,9 +116,13 @@ require_arg() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --check|check|status|--sync|sync)
+    --check)
       MODE="check"
       shift
+      ;;
+    check|status|--sync|sync)
+      echo "Error: Unknown subcommand '$1'. Did you mean 'relay-whoami --check'?" >&2
+      exit 2
       ;;
     --no-save|--dry-run)
       SAVE_SYNC="false"
@@ -128,9 +132,13 @@ while [[ $# -gt 0 ]]; do
       RESET_SYNC="true"
       shift
       ;;
-    --header|header)
+    --header)
       MODE="header"
       shift
+      ;;
+    header)
+      echo "Error: Unknown subcommand '$1'. Did you mean 'relay-whoami --header'?" >&2
+      exit 2
       ;;
     --to)
       require_arg "$1" "$#" "${2:-}"
@@ -168,7 +176,7 @@ Usage: relay-whoami [--check | --header] [options]
 
 Commands / Modes:
   (default)             Print detected persona, capabilities, and sample envelope
-  --check, status       Sync relay git repos, show git/issue deltas since last sync,
+  --check               Sync relay git repos, show git/issue deltas since last sync,
                         and highlight inbound action items + outbound "waiting on" threads
   --header              Emit only the Markdown message envelope header
 
@@ -265,7 +273,7 @@ sync_git_repo() {
     prev_sha="$before_sha"
   fi
 
-  git -C "$dir" fetch origin --quiet 2>/dev/null || true
+  GIT_TERMINAL_PROMPT=0 git -C "$dir" fetch origin --quiet 2>/dev/null || true
 
   local dirty
   dirty="$(git -C "$dir" status --porcelain 2>/dev/null || true)"
@@ -298,15 +306,60 @@ sync_git_repo() {
   fi
 }
 
+# Fetch open (--limit 50) + closed (--limit 15) issues for a channel without swallowing CLI errors
+fetch_channel_issues() {
+  local cli="$1"
+  local repo="$2"
+  local out_json_var="$3"
+  local out_ok_var="$4"
+  local out_err_var="$5"
+
+  local open_raw closed_raw combined
+  if ! open_raw="$("$cli" issue list -R "$repo" --state open --limit 50 --json number,title,state,updatedAt,createdAt,url,body,comments 2>&1)"; then
+    printf -v "$out_json_var" "%s" "[]"
+    printf -v "$out_ok_var" "%s" "false"
+    printf -v "$out_err_var" "%s" "$(printf '%s' "$open_raw" | head -n 1)"
+    return 0
+  fi
+
+  if ! closed_raw="$("$cli" issue list -R "$repo" --state closed --limit 15 --json number,title,state,updatedAt,createdAt,url,body,comments 2>&1)"; then
+    printf -v "$out_json_var" "%s" "[]"
+    printf -v "$out_ok_var" "%s" "false"
+    printf -v "$out_err_var" "%s" "$(printf '%s' "$closed_raw" | head -n 1)"
+    return 0
+  fi
+
+  if ! combined="$(jq -n --argjson o "$open_raw" --argjson c "$closed_raw" '($o + $c) | unique_by(.number) | sort_by(-.number)' 2>/dev/null)"; then
+    printf -v "$out_json_var" "%s" "[]"
+    printf -v "$out_ok_var" "%s" "false"
+    printf -v "$out_err_var" "%s" "invalid JSON response from $cli"
+    return 0
+  fi
+
+  printf -v "$out_json_var" "%s" "$combined"
+  printf -v "$out_ok_var" "%s" "true"
+  printf -v "$out_err_var" "%s" ""
+}
+
 if [[ "$MODE" == "check" ]]; then
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "Error: 'jq' is required for 'relay-whoami --check'. Install jq and retry." >&2
+    exit 1
+  fi
+
   STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/agent-relay"
   STATE_FILE="${STATE_DIR}/sync_state.json"
   mkdir -p "$STATE_DIR"
 
+  DEFAULT_STATE_JSON='{"last_sync_utc":"","last_sync_pt":"initial sync","corp":{"git_head":"","issues":{}},"oss":{"git_head":"","issues":{}}}'
   if [[ "$RESET_SYNC" == "true" || ! -f "$STATE_FILE" ]]; then
-    PREV_STATE_JSON='{"last_sync_utc":"","last_sync_pt":"initial sync","corp":{"git_head":"","issues":{}},"oss":{"git_head":"","issues":{}}}'
+    PREV_STATE_JSON="$DEFAULT_STATE_JSON"
   else
-    PREV_STATE_JSON="$(cat "$STATE_FILE" 2>/dev/null || echo '{"last_sync_utc":"","last_sync_pt":"initial sync","corp":{"git_head":"","issues":{}},"oss":{"git_head":"","issues":{}}}')"
+    PREV_STATE_JSON="$(cat "$STATE_FILE" 2>/dev/null || true)"
+    if [[ -z "$PREV_STATE_JSON" ]] || ! printf '%s' "$PREV_STATE_JSON" | jq -e 'type == "object"' >/dev/null 2>&1; then
+      echo "⚠️  Sync watermark unreadable (${STATE_FILE}); starting fresh (or pass --reset-sync)." >&2
+      PREV_STATE_JSON="$DEFAULT_STATE_JSON"
+    fi
   fi
 
   LAST_SYNC_PT="$(printf '%s' "$PREV_STATE_JSON" | jq -r '.last_sync_pt // "initial sync"')"
@@ -330,13 +383,21 @@ if [[ "$MODE" == "check" ]]; then
   echo ""
 
   CORP_ISSUES_JSON="[]"
+  CORP_OK="false"
+  CORP_ERR=""
   if [[ "$HAS_GGH" == "true" && -n "$CORP_REPO" ]]; then
-    CORP_ISSUES_JSON="$(ggh issue list -R "$CORP_REPO" --state all --limit 20 --json number,title,state,updatedAt,createdAt,url,body,comments 2>/dev/null || echo "[]")"
+    fetch_channel_issues "ggh" "$CORP_REPO" CORP_ISSUES_JSON CORP_OK CORP_ERR
+  else
+    CORP_OK="skipped"
   fi
 
   OSS_ISSUES_JSON="[]"
+  OSS_OK="false"
+  OSS_ERR=""
   if [[ "$HAS_GH" == "true" ]]; then
-    OSS_ISSUES_JSON="$(gh issue list -R "$OSS_REPO" --state all --limit 20 --json number,title,state,updatedAt,createdAt,url,body,comments 2>/dev/null || echo "[]")"
+    fetch_channel_issues "gh" "$OSS_REPO" OSS_ISSUES_JSON OSS_OK OSS_ERR
+  else
+    OSS_OK="skipped"
   fi
 
   ANALYSIS_OUT="$(jq -n \
@@ -345,6 +406,10 @@ if [[ "$MODE" == "check" ]]; then
     --arg match_pat "$MATCH_PATTERN" \
     --arg corp_repo "${CORP_REPO:-corp}" \
     --arg oss_repo "$OSS_REPO" \
+    --arg corp_ok "$CORP_OK" \
+    --arg corp_err "$CORP_ERR" \
+    --arg oss_ok "$OSS_OK" \
+    --arg oss_err "$OSS_ERR" \
     --arg now_utc "$NOW_UTC" \
     --arg now_pt "$NOW_PT" \
     --arg new_corp_sha "$NEW_CORP_SHA" \
@@ -419,8 +484,8 @@ if [[ "$MODE" == "check" ]]; then
         end
       ];
 
-    def to_state_map($list):
-      reduce $list[] as $i ({}; .[$i.key] = {
+    def merge_state_map($prev_map; $list):
+      reduce $list[] as $i ($prev_map; .[$i.key] = {
         state: $i.state,
         updatedAt: $i.updatedAt,
         comment_count: $i.comment_count,
@@ -432,7 +497,10 @@ if [[ "$MODE" == "check" ]]; then
     ($corp_issues | map(enrich_issue("corp"; $corp_repo))) as $corp_enriched
     | ($oss_issues | map(enrich_issue("oss"; $oss_repo))) as $oss_enriched
     | ($corp_enriched + $oss_enriched) as $all_issues
-    | (compute_deltas($corp_enriched; ($prev.corp.issues // {})) + compute_deltas($oss_enriched; ($prev.oss.issues // {}))) as $deltas
+    | (
+        (if $corp_ok == "false" then ["  ⚠️  [🔒 \($corp_repo)] Issue query FAILED (\($corp_err)) — watermark preserved"] else compute_deltas($corp_enriched; ($prev.corp.issues // {})) end) +
+        (if $oss_ok == "false" then ["  ⚠️  [🌐 \($oss_repo)] Issue query FAILED (\($oss_err)) — watermark preserved"] else compute_deltas($oss_enriched; ($prev.oss.issues // {})) end)
+      ) as $deltas
     | [ $all_issues[] | select(.state == "OPEN" and (.latest_from_me | not) and .addressed_to_me) ] as $inbound_on_us
     | [ $all_issues[] | select(.state == "OPEN" and (.latest_from_me or (.opened_by_me and (.addressed_to_me | not)))) ] as $waiting_on_others
     | [ $all_issues[] | select(.state == "OPEN" and ((.latest_from_me | not) and (.addressed_to_me | not) and (.opened_by_me | not))) ] as $fyi_other
@@ -445,8 +513,14 @@ if [[ "$MODE" == "check" ]]; then
              ($deltas | join("\n")) + "\n"
            end) +
           "\n=== 📥 3. Action Required — Waiting on Us (" + $moniker + ") [" + ($inbound_on_us | length | tostring) + "] ===\n" +
+          (if $corp_ok == "false" then "  ⚠️  [🔒 " + $corp_repo + "] Query failed; open corp issues could not be checked.\n" else "" end) +
+          (if $oss_ok == "false" then "  ⚠️  [🌐 " + $oss_repo + "] Query failed; open GitHub issues could not be checked.\n" else "" end) +
           (if ($inbound_on_us | length) == 0 then
-             "  ✅ Nothing waiting on " + $moniker + " right now.\n"
+             (if ($corp_ok == "false" or $oss_ok == "false") then
+                "  ⚪ 0 verified inbound threads on reachable channels.\n"
+              else
+                "  ✅ Nothing waiting on " + $moniker + " right now.\n"
+              end)
            else
              ([ $inbound_on_us[] |
                 "  🔴 [" + .channel_badge + "] #" + (.number | tostring) + ": " + .title +
@@ -463,7 +537,11 @@ if [[ "$MODE" == "check" ]]; then
            end) +
           "\n=== ⏳ 4. Outbound — Waiting on Other Agents [" + ($waiting_on_others | length | tostring) + "] ===\n" +
           (if ($waiting_on_others | length) == 0 then
-             "  ✅ Not waiting on any other agents (all outbound relays ACKED/closed).\n"
+             (if ($corp_ok == "false" or $oss_ok == "false") then
+                "  ⚪ 0 verified outbound threads on reachable channels.\n"
+              else
+                "  ✅ Not waiting on any other agents (all outbound relays ACKED/closed).\n"
+              end)
            else
              ([ $waiting_on_others[] |
                 "  ⏳ [" + .channel_badge + "] #" + (.number | tostring) + ": " + .title +
@@ -486,15 +564,15 @@ if [[ "$MODE" == "check" ]]; then
            else "" end)
         ),
         new_state: {
-          last_sync_utc: $now_utc,
-          last_sync_pt: $now_pt,
+          last_sync_utc: (if ($corp_ok == "false" or $oss_ok == "false") then ($prev.last_sync_utc // $now_utc) else $now_utc end),
+          last_sync_pt: (if ($corp_ok == "false" or $oss_ok == "false") then ($prev.last_sync_pt // $now_pt) else $now_pt end),
           corp: {
-            git_head: $new_corp_sha,
-            issues: to_state_map($corp_enriched)
+            git_head: (if $new_corp_sha != "" then $new_corp_sha else ($prev.corp.git_head // "") end),
+            issues: (if $corp_ok == "true" then merge_state_map(($prev.corp.issues // {}); $corp_enriched) else ($prev.corp.issues // {}) end)
           },
           oss: {
-            git_head: $new_oss_sha,
-            issues: to_state_map($oss_enriched)
+            git_head: (if $new_oss_sha != "" then $new_oss_sha else ($prev.oss.git_head // "") end),
+            issues: (if $oss_ok == "true" then merge_state_map(($prev.oss.issues // {}); $oss_enriched) else ($prev.oss.issues // {}) end)
           }
         }
       }
@@ -503,7 +581,12 @@ if [[ "$MODE" == "check" ]]; then
   printf '%s\n' "$ANALYSIS_OUT" | jq -r '.report'
 
   if [[ "$SAVE_SYNC" == "true" ]]; then
-    printf '%s\n' "$ANALYSIS_OUT" | jq '.new_state' > "$STATE_FILE"
+    TMP_STATE="${STATE_FILE}.tmp.$$"
+    if printf '%s\n' "$ANALYSIS_OUT" | jq '.new_state' > "$TMP_STATE" && [[ -s "$TMP_STATE" ]]; then
+      mv -f "$TMP_STATE" "$STATE_FILE"
+    else
+      rm -f "$TMP_STATE"
+    fi
   fi
   exit 0
 fi
