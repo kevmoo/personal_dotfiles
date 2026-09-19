@@ -78,8 +78,11 @@ turn so threads stay hilarious without bloating context windows.
      --to "🍎🏎️✨ Darwin Pro" \
      --thread "#<N> <Short Topic>" \
      --state HANDOFF \
+     --model "<your model id>" \
      --channel corp   # or 'oss' ONLY if 100% public-safe
    ```
+   Always pass `--model` explicitly: no environment variable carries it, so the
+   envelope's `Model` tag is dropped unless you supply your own model id.
 2. Stream the multi-line Markdown payload via `--body-file -` with a
    single-quoted heredoc
    (`cat << 'EOF' | ggh issue comment <N> -R "$AGENT_RELAY_CORP_REPO" --body-file -`).

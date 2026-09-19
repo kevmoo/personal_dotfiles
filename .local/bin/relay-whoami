@@ -87,8 +87,10 @@ REPO_OVERRIDE=""
 MODEL_OVERRIDE="${ANTIGRAVITY_MODEL:-${CLAUDE_MODEL:-}}"
 
 require_arg() {
-  if [[ "$2" -lt 2 ]]; then
-    echo "Error: Flag '$1' requires an argument. Run 'relay-whoami --help' for usage." >&2
+  # $1=flag, $2=remaining arg count, $3=candidate value. A value that looks like
+  # another flag means the real value was omitted (e.g. `--to --state ACKED`).
+  if [[ "$2" -lt 2 || "${3:-}" == --* ]]; then
+    echo "Error: Flag '$1' requires a value. Run 'relay-whoami --help' for usage." >&2
     exit 2
   fi
 }
@@ -104,32 +106,32 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --to)
-      require_arg "$1" "$#"
+      require_arg "$1" "$#" "${2:-}"
       TO_TARGET="$2"
       shift 2
       ;;
     --thread)
-      require_arg "$1" "$#"
+      require_arg "$1" "$#" "${2:-}"
       THREAD_LABEL="$2"
       shift 2
       ;;
     --state)
-      require_arg "$1" "$#"
+      require_arg "$1" "$#" "${2:-}"
       STATE_TAG="$2"
       shift 2
       ;;
     --channel)
-      require_arg "$1" "$#"
+      require_arg "$1" "$#" "${2:-}"
       CHANNEL="$2"
       shift 2
       ;;
     --repo)
-      require_arg "$1" "$#"
+      require_arg "$1" "$#" "${2:-}"
       REPO_OVERRIDE="$2"
       shift 2
       ;;
     --model)
-      require_arg "$1" "$#"
+      require_arg "$1" "$#" "${2:-}"
       MODEL_OVERRIDE="$2"
       shift 2
       ;;
