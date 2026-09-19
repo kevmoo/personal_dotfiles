@@ -6,7 +6,8 @@ set -e
 cd "$(git rev-parse --show-toplevel)"
 
 # Find all staged Dart files (Added, Copied, Modified)
-staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' || true)
+# Skip vendored agent skills (synced verbatim by `npx skills`).
+staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' | grep -v '^\.agents/skills/' || true)
 
 if [ -z "$staged_files" ]; then
   exit 0

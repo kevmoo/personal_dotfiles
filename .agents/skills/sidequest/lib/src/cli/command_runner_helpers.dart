@@ -1,9 +1,7 @@
 import 'package:meta/meta.dart';
-
 import '../models/enums.dart';
 import '../models/sidequest_data.dart';
 import '../models/vcs_state.dart';
-
 import 'dart:io';
 import 'dart:math';
 

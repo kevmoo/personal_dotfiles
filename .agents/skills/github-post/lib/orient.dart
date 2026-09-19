@@ -5,11 +5,12 @@ import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 
 /// Command runner type for testability.
-typedef CommandRunner = Future<String> Function(
-  String command,
-  List<String> args, {
-  String? workingDirectory,
-});
+typedef CommandRunner =
+    Future<String> Function(
+      String command,
+      List<String> args, {
+      String? workingDirectory,
+    });
 
 Future<String> defaultCommandRunner(
   String command,

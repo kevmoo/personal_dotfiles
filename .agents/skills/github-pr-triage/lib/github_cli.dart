@@ -11,7 +11,6 @@ export 'pr_context.dart'
         PrGraphData,
         fetchPrChecks,
         fetchPrGraphQLData;
-
 import 'dart:convert';
 import 'dart:io';
 
