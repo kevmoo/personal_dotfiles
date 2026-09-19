@@ -35,10 +35,12 @@ exceptions. You MUST use one of the two solutions below to track new files:
     modifications, even if it technically matches an ignore pattern.
 
 *   **Solution 2: Explicitly Un-ignore All Parent Directories**
-    If you prefer to maintain the `~/.dotfiles/info/exclude` file, you MUST
-    explicitly un-ignore every single parent directory down to the file, using
-    trailing slashes to tell Git to descend. For example, to track a file under
-    `.config/git/hooks/`:
+    `~/.dotfiles/info/exclude` is **not tracked**. Edit the tracked copy
+    `~/.config/dot/info-exclude.example`, then copy it to
+    `~/.dotfiles/info/exclude` (`dot-check-ignores` verifies they match). You
+    MUST explicitly un-ignore every single parent directory down to the file,
+    using trailing slashes to tell Git to descend. For example, to track a
+    file under `.config/git/hooks/`:
     ```text
     *
     !.config/
@@ -46,6 +48,11 @@ exceptions. You MUST use one of the two solutions below to track new files:
     !.config/git/hooks/
     !.config/git/hooks/*
     ```
+
+### 🔄 Syncing Another Machine
+Follow "Syncing an Existing Machine" in `~/README.md`: discard re-synced
+`.agents/` changes if blocking, `dot pull --ff-only`, `dot-check-ignores`,
+then `upkeep update skills` to link new skills into `~/.claude/skills`.
 
 ### 🌌 Repository Architecture: Bare Dotfiles + Gitdir Proxy
 AI coding assistants and IDEs (like VS Code) working inside the proxy workspace

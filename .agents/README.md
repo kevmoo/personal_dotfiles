@@ -13,6 +13,9 @@ skill it records the upstream repo, the path within that repo, and the pinned
 commit hash. If you want to know where a skill came from, look there — don't
 guess from the folder name.
 
+**Exception:** `personal-dotfiles` and `upkeep` are authored directly in this
+repo (they are not in `.skill-lock.json`). Edit them here.
+
 Some upstreams are my own repos (e.g. `kevmoo/kevmoo_skills`,
 `kevmoo/dash_skills`); most are not (`flutter/skills`, `dart-lang/skills`, …).
 

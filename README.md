@@ -90,14 +90,33 @@ Because the working tree is your entire `$HOME` directory, a standard `git statu
     mkdir -p ~/.dotfiles/info
     dot show HEAD:.config/dot/info-exclude.example > ~/.dotfiles/info/exclude
     ```
-3.  **Checkout Content**:
+4.  **Checkout Content**:
     ```bash
     dot checkout
     ```
-4.  **Validate**:
+5.  **Validate**:
     ```bash
     dot-check-ignores
     ```
+6.  **Wire Up Agent Skills**: `upkeep update skills` links every skill in
+    `~/.agents/skills` into `~/.claude/skills` (Gemini reads
+    `~/.agents/skills` directly).
+
+### Syncing an Existing Machine
+1.  **Check for local changes**: `dot fetch && dot status -sb --untracked=no`. If only
+    `.agents/` files are modified, a local `npx skills update` re-synced
+    skills another machine already pushed. Confirm the lock hashes match
+    (`dot diff @{u} -- .agents/.skill-lock.json` shows only `updatedAt` or
+    added/removed skills), then discard: `dot checkout -- .agents`.
+2.  **Pull**: `dot pull --ff-only`.
+3.  **Exclude rules**: `dot-check-ignores`. If out of sync, restore with
+    `cp ~/.config/dot/info-exclude.example ~/.dotfiles/info/exclude`.
+4.  **Skills**: `upkeep update skills` re-links new skills into
+    `~/.claude/skills` and prunes dangling links for retired ones (a plain
+    `dot pull` does not). It also runs `npx skills update`; if that changes
+    anything under `.agents/`, commit and push it right away (see
+    [`.agents/README.md`](.agents/README.md)) so other machines don't
+    diverge.
 
 ---
 
