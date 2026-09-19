@@ -41,6 +41,7 @@
 !.local/bin/dot
 !.local/bin/gh
 !.local/bin/net-diag
+!.local/bin/relay-whoami
 !.local/bin/upkeep
 !.gemini/**
 !.zshrc.d/**
