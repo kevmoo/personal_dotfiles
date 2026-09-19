@@ -286,8 +286,11 @@ Local Web App & UI Verification ("Show Me First"):
       `resolveWorkspaceSymbol`, `definition`, `signatureHelp`) before running
       raw text `grep_search` across source trees. Fall back to `grep_search`
       only if `lsp` returns empty or errors.
-    - **Diagnostics**: ALWAYS call `analyze_files` for instant in-memory
-      diagnostics before running standalone CLI test suites or batch analyzers.
+    - **Diagnostics & Auto-Fixes**: ALWAYS call `analyze_files` for instant
+      in-memory diagnostics before running standalone CLI test suites or batch
+      analyzers. Pass `applyFixes: true` (or run `dart fix --apply`) to
+      auto-remediate mechanical lints (`directives_ordering`, `unused_import`,
+      etc.) rather than fixing imports manually via `replace_file_content`.
     - **Dependencies & Packages**: ALWAYS call `read_package_uris` or
       `rip_grep_packages` when inspecting third-party package dependencies
       instead of scanning filesystem caches manually. Use `pub_dev_search` /
