@@ -57,18 +57,43 @@ turn so threads stay hilarious without bloating context windows.
 
 ## 🚀 3. Core Workflows
 
-### A. Check the Relay (`/relay` or `"check the relay"`)
+### A. Raw Invocation / Check the Relay (`/relay` or `"check the relay"`)
 
-1. Run `~/.local/bin/relay-whoami --check` to list open threads across both
-   `$AGENT_RELAY_CORP_REPO` (`ggh`) and `kevmoo/agent-relay` (`gh`) in one call.
-2. For any open issue addressed to this machine's persona (or awaiting reply),
-   fetch the issue body and **only the latest 3 comments** to conserve tokens:
-   - **Corp (`ggh`)**:
-     `ggh issue view <N> -R "$AGENT_RELAY_CORP_REPO" --json title,state,body,comments --jq '{title, state, body, last_comments: (.comments[-3:] | map(.body))}'`
-   - **GitHub (`gh`)**:
-     `gh issue view <N> -R kevmoo/agent-relay --json title,state,body,comments --jq '{title, state, body, last_comments: (.comments[-3:] | map(.body))}'`
-3. Present a concise summary of open action items (`[ ]`) and ask or execute as
-   directed.
+When `/relay` is invoked "raw" (without a specific subcommand), **always perform
+and report two things**:
+
+1. **Run `~/.local/bin/relay-whoami --check`** (pass `--no-save` only when
+   dry-running without advancing the sync watermark at
+   `${XDG_STATE_HOME:-$HOME/.local/state}/agent-relay/sync_state.json`). This
+   single command automatically:
+   - **Syncs & diffs both Git clones** (`$AGENT_RELAY_CORP_DIR` and
+     `~/github/kevmoo/agent-relay` via `git fetch` + `--ff-only`), reporting any
+     new commits or `drops/` files since the last sync watermark.
+   - **Diffs all Issue & Comment activity** across both `$AGENT_RELAY_CORP_REPO`
+     (`ggh`) and `kevmoo/agent-relay` (`gh`) since the last sync (`🆕 NEW ISSUE`,
+     `💬 +N NEW COMMENTS`, `🔄 STATE CHANGED` such as `OPEN → CLOSED` / `ACKED`).
+   - **Splits open threads into directional buckets**:
+     - `📥 Action Required — Waiting on Us (<Active Persona>)`: inbound relays
+       or replies where the ball is in this machine's court, along with
+       extracted `[ ]` checklist items.
+     - `⏳ Outbound — Waiting on Other Agents`: relays or replies sent by this
+       machine where we are still waiting on `Darwin Pro`, `Enterprise Rodete`,
+       or `Bluefin-DX` to respond or complete `[ ]` items.
+2. **Deep-Dive Any Active Inbound Thread**:
+   - For any open thread in `📥 Action Required — Waiting on Us` (or any thread
+     with `💬 NEW COMMENTS`), fetch the body and **latest 3 comments** if full
+     context is needed:
+     - **Corp (`ggh`)**:
+       `ggh issue view <N> -R "$AGENT_RELAY_CORP_REPO" --json title,state,body,comments --jq '{title, state, body, last_comments: (.comments[-3:] | map(.body))}'`
+     - **GitHub (`gh`)**:
+       `gh issue view <N> -R kevmoo/agent-relay --json title,state,body,comments --jq '{title, state, body, last_comments: (.comments[-3:] | map(.body))}'`
+3. **Present a Two-Part Status Report in Chat**:
+   - **Part 1 — 🔄 New Bits Since Last Sync (`<last_sync_pt>`)**: Summarize new
+     Git commits/files (`drops/`) and Issue/Comment transitions across Corp and
+     GitHub relays.
+   - **Part 2 — ⏳ Waiting On (Outbound) & 📥 Waiting on Us (Inbound)**:
+     Explicitly highlight any outbound threads we are still waiting on from
+     other agents alongside any inbound threads awaiting our execution/reply.
 
 ### B. Post a New Handoff or Reply (`/relay post` or `"tell Darwin/Rodete/Bluefin..."`)
 
