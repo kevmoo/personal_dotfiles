@@ -235,12 +235,12 @@ Local Web App & UI Verification ("Show Me First"):
     Skills)**: `~/.agents/skills/` is the deployed runtime directory for active
     agent skills synced via `npx skills` (tracked in
     `~/.agents/.skill-lock.json`). Do not edit synced skills in
-    `~/.agents/skills/` directly — **except** `personal-dotfiles` and `upkeep`,
-    which are authored directly in `~/.agents/skills/` inside the
+    `~/.agents/skills/` directly — **except** `personal-dotfiles`, `upkeep`, and
+    `relay`, which are authored directly in `~/.agents/skills/` inside the
     `personal_dotfiles` repository.
   - **Edit Authoritative Source Repositories**: Always locate and modify skills
     in their respective source repositories:
-    - _Dotfiles-Authored Skills (`personal-dotfiles`, `upkeep`)_:
+    - _Dotfiles-Authored Skills (`personal-dotfiles`, `upkeep`, `relay`)_:
       `~/.agents/skills/<skill_name>/` (tracked via `dot`)
     - _Personal / OSS Skills_:
       `~/github/kevmoo/kevmoo_skills/skills/<skill_name>/`
