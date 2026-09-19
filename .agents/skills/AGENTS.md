@@ -4,6 +4,9 @@ Every folder here is a **synced copy** pulled from an upstream repo by the
 `skills` CLI (`npx skills`). Editing these files directly is pointless: the
 next sync **overwrites** them.
 
+**Exception:** `personal-dotfiles/` and `upkeep/` are authored here (not in
+the lock). Edit them in place.
+
 - To change a skill, edit its **upstream** repo. See `../.skill-lock.json` for
   each skill's source repo, path, and pinned commit.
 - To add / update / remove skills, use `npx skills` — not manual file ops.
