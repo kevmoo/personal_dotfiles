@@ -50,6 +50,7 @@ if [[ -d "$HOME/fog" ]]; then
     fi
   done
 fi
+CORP_REPO="${CORP_REPO%.git}"
 OSS_REPO="${AGENT_RELAY_OSS_REPO:-kevmoo/agent-relay}"
 OSS_DIR="${AGENT_RELAY_OSS_DIR:-$HOME/github/kevmoo/agent-relay}"
 
