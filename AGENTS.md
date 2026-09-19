@@ -230,11 +230,17 @@ Local Web App & UI Verification ("Show Me First"):
 ## Workspace & Repository Layout
 
 - **Agent Skills Layout (`~/.agents/skills`)**:
-  - **No Direct Edits in `~/.agents/skills/`**: `~/.agents/skills/` is the
-    deployed runtime directory for active agent skills. NEVER edit files or
-    directories in `~/.agents/skills/` directly.
+  - **No Direct Edits in `~/.agents/skills/` (Except Dotfiles-Authored
+    Skills)**: `~/.agents/skills/` is the deployed runtime directory for active
+    agent skills synced via `npx skills` (tracked in
+    `~/.agents/.skill-lock.json`). Do not edit synced skills in
+    `~/.agents/skills/` directly — **except** `personal-dotfiles` and `upkeep`,
+    which are authored directly in `~/.agents/skills/` inside the
+    `personal_dotfiles` repository.
   - **Edit Authoritative Source Repositories**: Always locate and modify skills
     in their respective source repositories:
+    - _Dotfiles-Authored Skills (`personal-dotfiles`, `upkeep`)_:
+      `~/.agents/skills/<skill_name>/` (tracked via `dot`)
     - _Personal / OSS Skills_:
       `~/github/kevmoo/kevmoo_skills/skills/<skill_name>/`
     - _Google3 Skills_: `//depot/google3/experimental/users/kevmoo/skills/...`
