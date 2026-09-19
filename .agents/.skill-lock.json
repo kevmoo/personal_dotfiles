@@ -153,6 +153,15 @@
       "skillFolderHash": "87ccee6363c8c95d5280dff922ea62c39c7c966e",
       "installedAt": "2026-09-18T21:08:20.394Z",
       "updatedAt": "2026-09-18T21:08:20.394Z"
+    },
+    "duckdb": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/duckdb/SKILL.md",
+      "skillFolderHash": "b2612cdfc1911e484dbe767c47154910d724240b",
+      "installedAt": "2026-09-19T23:34:39.724Z",
+      "updatedAt": "2026-09-19T23:34:39.724Z"
     }
   },
   "dismissed": {
