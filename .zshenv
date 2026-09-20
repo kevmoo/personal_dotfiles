@@ -1,5 +1,11 @@
-# Ensure Dart install binaries, ~/.local/bin, and mise shims are always in PATH (including non-interactive agent subshells)
-export PATH="$HOME/.local/state/Dart/install/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+# Ensure Dart install binaries, ~/.local/bin, and mise shims are always at the front of PATH
+# (including non-interactive agent subshells via BASH_ENV, without duplicating across nested bash -c calls)
+_user_path="$HOME/.local/state/Dart/install/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims"
+case "$PATH" in
+  "$_user_path:"*) ;;
+  *) export PATH="$_user_path:$PATH" ;;
+esac
+unset _user_path
 
 # Smart SSH Agent socket recovery
 # If SSH_AUTH_SOCK is empty, or points to a non-existent/invalid socket file,

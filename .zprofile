@@ -7,4 +7,9 @@ if [[ -d "/opt/homebrew/bin" ]]; then
 fi
 
 # Ensure Dart install binaries, ~/.local/bin, and mise shims take precedence over Homebrew/system PATH
-export PATH="$HOME/.local/state/Dart/install/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+_user_path="$HOME/.local/state/Dart/install/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims"
+case "$PATH" in
+  "$_user_path:"*) ;;
+  *) export PATH="$_user_path:$PATH" ;;
+esac
+unset _user_path
