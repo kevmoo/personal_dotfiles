@@ -38,6 +38,7 @@
 !.local/bin/brewall
 !.local/bin/brew-check
 !.local/bin/dot-check-ignores
+!.local/bin/duckdb
 !.local/bin/dot
 !.local/bin/gh
 !.local/bin/net-diag
