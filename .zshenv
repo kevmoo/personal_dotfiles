@@ -1,12 +1,3 @@
-# Ensure Dart install binaries, ~/.local/bin, and mise shims are always at the front of PATH
-# (including non-interactive agent subshells via BASH_ENV, without duplicating across nested bash -c calls)
-_user_path="$HOME/.local/state/Dart/install/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims"
-case "$PATH" in
-  "$_user_path:"*) ;;
-  *) export PATH="$_user_path:$PATH" ;;
-esac
-unset _user_path
-
 # Smart SSH Agent socket recovery
 # If SSH_AUTH_SOCK is empty, or points to a non-existent/invalid socket file,
 # try to recover by finding a living socket in ~/.ssh/agent/
@@ -36,6 +27,15 @@ if [[ "$(uname)" == "Darwin" ]]; then
     . "$ELAN_HOME/env"
   fi
 fi
+
+# Ensure Dart install binaries, ~/.local/bin, and mise shims are always at the front of PATH
+# (placed after cargo/elan env so ~/.cargo/env does not prepend ahead of _user_path and defeat the prefix guard)
+_user_path="$HOME/.local/state/Dart/install/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims"
+case "$PATH" in
+  "$_user_path:"*) ;;
+  *) export PATH="$_user_path:$PATH" ;;
+esac
+unset _user_path
 
 # Disable formatting/styling and paging for the AI agent (needs to be in .zshenv for non-interactive shell commands)
 if [[ "$TERM" == "dumb" ]]; then
