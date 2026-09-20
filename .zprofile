@@ -6,12 +6,5 @@ if [[ -d "/opt/homebrew/bin" ]]; then
   export PATH="/opt/homebrew/bin:$PATH"
 fi
 
-# Initialize mise shims for non-interactive login shells (interactive login shells will use full activation in ~/.zshrc)
-if [[ ! -o interactive ]] && command -v mise >/dev/null 2>&1; then
-  eval "$(mise activate zsh --shims)"
-fi
-
-# Ensure local bin is on the PATH
-if [[ -d "$HOME/.local/bin" ]]; then
-  export PATH="$HOME/.local/bin:$PATH"
-fi
+# Ensure Dart install binaries, ~/.local/bin, and mise shims take precedence over Homebrew/system PATH
+export PATH="$HOME/.local/state/Dart/install/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
