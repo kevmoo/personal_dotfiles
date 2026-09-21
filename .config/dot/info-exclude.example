@@ -56,6 +56,11 @@
 !.agents/.skill-lock.json
 !.agents/skills/
 !.agents/skills/**
+.agents/skills/**/.dart_tool/
+.agents/skills/**/pubspec.lock
+.agents/skills/wynette/
+.agents/skills/okf-harvester
+.agents/skills/okf-harvester/
 !.config/environment.d/
 !.config/environment.d/10-dart-install.conf
 

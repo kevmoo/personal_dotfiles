@@ -15,9 +15,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/github-pr-triage/SKILL.md",
-      "skillFolderHash": "cc29daa796a1cf18351149e5ed9f46b880005316",
+      "skillFolderHash": "2b9ad8333ec80a8bdadeb28836bafeb4ba7ead75",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-09-18T21:07:10.142Z"
+      "updatedAt": "2026-09-21T17:55:47.322Z"
     },
     "gob-curl": {
       "source": "kevmoo/kevmoo_skills",
