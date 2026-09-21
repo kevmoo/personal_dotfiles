@@ -109,6 +109,8 @@ SAVE_SYNC="true"
 RESET_SYNC="false"
 
 require_arg() {
+  # $1=flag, $2=remaining arg count, $3=candidate value. A value that looks like
+  # another flag means the real value was omitted (e.g. `--to --state ACKED`).
   if [[ "$2" -lt 2 || "${3:-}" == --* ]]; then
     echo "Error: Flag '$1' requires a value. Run 'relay-whoami --help' for usage." >&2
     exit 2
