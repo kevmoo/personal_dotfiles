@@ -43,3 +43,6 @@ if [[ "$TERM" == "dumb" ]]; then
   export PAGER=cat
 fi
 
+# Local checkout directory for kevmoo_scripts (`kscripts` binary staleness checks)
+export KSCRIPTS_REPO_DIR="$HOME/github/kevmoo/scripts.dart"
+
