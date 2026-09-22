@@ -403,6 +403,16 @@ if [[ "$MODE" == "check" ]]; then
     OSS_OK="skipped"
   fi
 
+  # Large payloads (issue bodies + every comment body) go to jq via files, not
+  # argv. Passing them with --argjson made the whole command line exceed
+  # ARG_MAX on long threads, and jq died with "Argument list too long" --
+  # taking the entire issue-diff half of --check down with it.
+  JQ_ARG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/relay-whoami.XXXXXX")"
+  trap 'rm -rf "$JQ_ARG_DIR"' EXIT
+  printf '%s' "$PREV_STATE_JSON"  > "$JQ_ARG_DIR/prev.json"
+  printf '%s' "$CORP_ISSUES_JSON" > "$JQ_ARG_DIR/corp.json"
+  printf '%s' "$OSS_ISSUES_JSON"  > "$JQ_ARG_DIR/oss.json"
+
   ANALYSIS_OUT="$(jq -n \
     --arg moniker "$MONIKER" \
     --arg slug "$SLUG" \
@@ -417,9 +427,13 @@ if [[ "$MODE" == "check" ]]; then
     --arg now_pt "$NOW_PT" \
     --arg new_corp_sha "$NEW_CORP_SHA" \
     --arg new_oss_sha "$NEW_OSS_SHA" \
-    --argjson prev "$PREV_STATE_JSON" \
-    --argjson corp_issues "$CORP_ISSUES_JSON" \
-    --argjson oss_issues "$OSS_ISSUES_JSON" '
+    --slurpfile prev_arr "$JQ_ARG_DIR/prev.json" \
+    --slurpfile corp_issues_arr "$JQ_ARG_DIR/corp.json" \
+    --slurpfile oss_issues_arr "$JQ_ARG_DIR/oss.json" '
+    ($prev_arr[0]) as $prev
+    | ($corp_issues_arr[0]) as $corp_issues
+    | ($oss_issues_arr[0]) as $oss_issues
+    |
     def parse_envelope($text; $fallback_title):
       ($text // "") as $t
       | ($t | split("\n")) as $lines
