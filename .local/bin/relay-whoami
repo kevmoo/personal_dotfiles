@@ -332,7 +332,19 @@ fetch_channel_issues() {
     return 0
   fi
 
-  if ! combined="$(jq -n --argjson o "$open_raw" --argjson c "$closed_raw" '($o + $c) | unique_by(.number) | sort_by(-.number)' 2>/dev/null)"; then
+  # Same ARG_MAX hazard as the analysis step below: these two payloads carry
+  # every issue body and every comment body, so they go to jq via files.
+  local fetch_dir
+  fetch_dir="$(mktemp -d "${TMPDIR:-/tmp}/relay-fetch.XXXXXX")"
+  printf '%s' "$open_raw"   > "$fetch_dir/open.json"
+  printf '%s' "$closed_raw" > "$fetch_dir/closed.json"
+  local jq_rc=0
+  combined="$(jq -n \
+    --slurpfile o "$fetch_dir/open.json" \
+    --slurpfile c "$fetch_dir/closed.json" \
+    'if ($o[0] | type) != "array" or ($c[0] | type) != "array" then error("expected JSON arrays") else ($o[0] + $c[0]) | unique_by(.number) | sort_by(-.number) end' 2>/dev/null)" || jq_rc=$?
+  rm -rf "$fetch_dir"
+  if [[ $jq_rc -ne 0 || -z "$combined" ]]; then
     printf -v "$out_json_var" "%s" "[]"
     printf -v "$out_ok_var" "%s" "false"
     printf -v "$out_err_var" "%s" "invalid JSON response from $cli"
@@ -403,6 +415,16 @@ if [[ "$MODE" == "check" ]]; then
     OSS_OK="skipped"
   fi
 
+  # Large payloads (issue bodies + every comment body) go to jq via files, not
+  # argv. Passing them with --argjson made the whole command line exceed
+  # ARG_MAX on long threads, and jq died with "Argument list too long" --
+  # taking the entire issue-diff half of --check down with it.
+  JQ_ARG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/relay-whoami.XXXXXX")"
+  trap 'rm -rf "$JQ_ARG_DIR"' EXIT
+  printf '%s' "$PREV_STATE_JSON"  > "$JQ_ARG_DIR/prev.json"
+  printf '%s' "$CORP_ISSUES_JSON" > "$JQ_ARG_DIR/corp.json"
+  printf '%s' "$OSS_ISSUES_JSON"  > "$JQ_ARG_DIR/oss.json"
+
   ANALYSIS_OUT="$(jq -n \
     --arg moniker "$MONIKER" \
     --arg slug "$SLUG" \
@@ -417,9 +439,13 @@ if [[ "$MODE" == "check" ]]; then
     --arg now_pt "$NOW_PT" \
     --arg new_corp_sha "$NEW_CORP_SHA" \
     --arg new_oss_sha "$NEW_OSS_SHA" \
-    --argjson prev "$PREV_STATE_JSON" \
-    --argjson corp_issues "$CORP_ISSUES_JSON" \
-    --argjson oss_issues "$OSS_ISSUES_JSON" '
+    --slurpfile prev_arr "$JQ_ARG_DIR/prev.json" \
+    --slurpfile corp_issues_arr "$JQ_ARG_DIR/corp.json" \
+    --slurpfile oss_issues_arr "$JQ_ARG_DIR/oss.json" '
+    ($prev_arr[0]) as $prev
+    | ($corp_issues_arr[0]) as $corp_issues
+    | ($oss_issues_arr[0]) as $oss_issues
+    |
     def parse_envelope($text; $fallback_title):
       ($text // "") as $t
       | ($t | split("\n")) as $lines
