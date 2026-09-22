@@ -338,11 +338,11 @@ fetch_channel_issues() {
   fetch_dir="$(mktemp -d "${TMPDIR:-/tmp}/relay-fetch.XXXXXX")"
   printf '%s' "$open_raw"   > "$fetch_dir/open.json"
   printf '%s' "$closed_raw" > "$fetch_dir/closed.json"
+  local jq_rc=0
   combined="$(jq -n \
     --slurpfile o "$fetch_dir/open.json" \
     --slurpfile c "$fetch_dir/closed.json" \
-    '($o[0] + $c[0]) | unique_by(.number) | sort_by(-.number)' 2>/dev/null)"
-  local jq_rc=$?
+    'if ($o[0] | type) != "array" or ($c[0] | type) != "array" then error("expected JSON arrays") else ($o[0] + $c[0]) | unique_by(.number) | sort_by(-.number) end' 2>/dev/null)" || jq_rc=$?
   rm -rf "$fetch_dir"
   if [[ $jq_rc -ne 0 || -z "$combined" ]]; then
     printf -v "$out_json_var" "%s" "[]"
