@@ -127,11 +127,23 @@ also enforced by each agent's permission settings — these rules state intent.
     untracked file noise) and `git diff --name-status` (file names and status
     only without full patch payloads) to conserve token budget and prevent
     terminal pager deadlocks.
-- **Zero-Token Waiting (Zero-Tool Background Yield)**: Whenever a command or
-  tool runs in the background as an asynchronous task, immediately terminate
-  your turn without calling further tools. The runtime automatically resumes
-  execution upon process termination. Never execute bash `sleep` loops or manual
-  polling turns.
+- **Zero-Token Waiting & Kill-Before-Pivot (`WaitMsBeforeAsync` / Background
+  Tasks)**: Whenever `run_command` (`WaitMsBeforeAsync`) or
+  `Bash(run_in_background)` returns a running background task (`<task-id>`), the
+  timeout did **not** kill the process—it is still running. You have **two valid
+  choices**:
+  1. **Wait (Zero-Tool Yield)**: If you still need the command's output,
+     immediately terminate your turn with **zero** tool calls. The runtime
+     automatically resumes execution upon process termination. Never execute
+     bash `sleep` loops or manual polling turns.
+  2. **Pivot (`manage_task(kill)` / `TaskStop` First)**: If you decide the
+     command is too slow/stuck and want to pivot to another tool (`code_search`
+     / `Grep`, `view_file` / `Read`, or a revised command), you **MUST** call
+     `manage_task(Action: "kill", TaskId: "<task-id>")` (or `TaskStop` in Claude
+     Code) in that very next step before (or alongside) calling the replacement
+     tool. Never abandon a running `<task-id>` in the background (and never rely
+     on `| head -n N` to bound recursive `grep -r` / `find` / `glob.glob`, as
+     `< N` matches never trigger `SIGPIPE`).
 
 ## Engineering Discipline
 

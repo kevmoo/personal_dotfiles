@@ -5,18 +5,19 @@
 #   2. No silent flag or argument rewriting
 #   3. Prescriptive FuzzyCommandRunner-style hints on common agent mistakes
 #   4. Normalizes `gh pr checks` Exit Code 8 (pending) -> Exit 0 with explicit status & next-step guidance
+#   5. Bounds interactive `--watch` / `-w` and `gh run watch` to 180s across Linux and macOS
 
 set -uo pipefail
 
-# Resolve real gh binary on PATH (excluding this wrapper)
+# Resolve real gh binary on PATH (excluding this wrapper via inode identity -ef)
 REAL_GH="${GH_WRAPPER_REAL_GH:-}"
 if [[ -z "$REAL_GH" ]]; then
   while IFS= read -r candidate; do
-    if [[ -n "$candidate" && "$candidate" != "$HOME/.local/bin/gh" && -x "$candidate" ]]; then
+    if [[ -n "$candidate" && ! "$candidate" -ef "${BASH_SOURCE[0]}" && -x "$candidate" ]]; then
       REAL_GH="$candidate"
       break
     fi
-  done < <(which -a gh 2>/dev/null)
+  done < <(type -ap gh 2>/dev/null)
 fi
 
 if [[ -z "$REAL_GH" ]]; then
@@ -39,20 +40,78 @@ resolve_github_repo() {
   fi
 }
 
-# Pass through interactive `--watch` invocations directly
+# Extract positional subcommands (skipping global flags like -R/--repo/-H/--hostname)
+sub1=""
+sub2=""
+skip_next=0
 for arg in "$@"; do
-  if [[ "$arg" == "--watch" ]]; then
-    exec "$REAL_GH" "$@"
+  if [[ "$skip_next" -eq 1 ]]; then
+    skip_next=0
+    continue
+  fi
+  case "$arg" in
+    -R|--repo|-H|--hostname) skip_next=1; continue ;;
+    -*) continue ;;
+    *)
+      if [[ -z "$sub1" ]]; then
+        sub1="$arg"
+      elif [[ -z "$sub2" ]]; then
+        sub2="$arg"
+        break
+      fi
+      ;;
+  esac
+done
+
+# Bound interactive `--watch` / `pr checks -w` and `run watch` invocations to 180s
+is_watch=0
+has_json=0
+if [[ "$sub1" == "run" && "$sub2" == "watch" ]]; then
+  is_watch=1
+fi
+for arg in "$@"; do
+  if [[ "$arg" == "--watch" || "$arg" == --watch=* ]]; then
+    is_watch=1
+  elif [[ "$sub1" == "pr" && "$sub2" == "checks" && "$arg" =~ ^-[a-zA-Z]*w[a-zA-Z]*$ ]]; then
+    is_watch=1
+  fi
+  if [[ "$arg" == "--json" || "$arg" == --json=* ]]; then
+    has_json=1
   fi
 done
 
-tmp_out=$(mktemp)
-trap 'rm -f "$tmp_out"' EXIT
+if [[ "$is_watch" -eq 1 ]]; then
+  TIMEOUT_BIN="$(command -v timeout 2>/dev/null || command -v gtimeout 2>/dev/null || true)"
+  if [[ -n "$TIMEOUT_BIN" ]]; then
+    "$TIMEOUT_BIN" --foreground --kill-after=2s 180s "$REAL_GH" "$@"
+    wrc=$?
+  else
+    echo "⚠️  [gh] neither 'timeout' nor 'gtimeout' on PATH; watch is UNBOUNDED (brew install coreutils)" >&2
+    "$REAL_GH" "$@"
+    wrc=$?
+  fi
+  if [[ "$wrc" -eq 124 || "$wrc" -eq 137 ]]; then
+    echo ""
+    echo "⏳ [gh] Watch window (180s) elapsed while CI checks are still in progress."
+    echo "💡 Next step: Yield and schedule an async timer (schedule tool), then run a single 'gh pr checks' snapshot."
+    exit 0
+  fi
+  exit "$wrc"
+fi
 
-"$REAL_GH" "$@" >"$tmp_out" 2>&1
+tmp_out=$(mktemp)
+tmp_err=$(mktemp)
+trap 'rm -f "$tmp_out" "$tmp_err"' EXIT
+
+"$REAL_GH" "$@" >"$tmp_out" 2>"$tmp_err"
 rc=$?
 
-cat "$tmp_out"
+if [[ -s "$tmp_out" ]]; then
+  cat "$tmp_out"
+fi
+if [[ -s "$tmp_err" ]]; then
+  cat "$tmp_err" >&2
+fi
 
 # If command succeeded, exit 0 immediately
 if [[ "$rc" -eq 0 ]]; then
@@ -60,19 +119,19 @@ if [[ "$rc" -eq 0 ]]; then
 fi
 
 # 1. Prescriptive handling for `gh pr checks`
-if [[ "${1:-}" == "pr" && "${2:-}" == "checks" ]]; then
-  # Case A: Exit Code 8 (Checks pending/in-progress) -> Normalize to 0 with prescriptive guidance
-  if [[ "$rc" -eq 8 ]]; then
+if [[ "$sub1" == "pr" && "$sub2" == "checks" ]]; then
+  # Case A: Exit Code 8 (Checks pending/in-progress) -> Normalize to 0 with prescriptive guidance (unless --json is requested)
+  if [[ "$rc" -eq 8 && "$has_json" -eq 0 ]]; then
     echo ""
     echo "⏳ [gh] CI STATUS: PENDING (Exit code 8 normalized to 0: checks are queued or running)."
     echo "💡 Next step: Do NOT poll in a bash sleep loop."
-    echo "   • To wait reactively for completion: gh run list --limit 5  ->  gh run watch <run-id>"
+    echo "   • To wait reactively (bounded to 180s): gh run list --limit 5  ->  gh run watch <run-id>"
     echo "   • Or yield and schedule an async timer."
     exit 0
   fi
 
-  # Case B: Exit Code 1 right after git push ("no checks reported on the '...' branch")
-  if [[ "$rc" -eq 1 ]] && grep -q "no checks reported on the" "$tmp_out"; then
+  # Case B: Exit Code 1 right after git push ("no checks reported on the '...' branch") (unless --json is requested)
+  if [[ "$rc" -eq 1 && "$has_json" -eq 0 ]] && grep -q "no checks reported on the" "$tmp_out" "$tmp_err"; then
     echo ""
     echo "⏳ [gh] CI STATUS: STARTING (Exit code 1 normalized to 0: GitHub Actions has not registered check runs yet)."
     echo "💡 Next step: Wait ~15 seconds, then check active runs with: gh run list --limit 5"
@@ -80,7 +139,7 @@ if [[ "${1:-}" == "pr" && "${2:-}" == "checks" ]]; then
   fi
 
   # Case C: Unknown JSON field "url" -> Prescriptive failure hint (keep Exit Code 1)
-  if grep -q 'Unknown JSON field: "url"' "$tmp_out"; then
+  if grep -q 'Unknown JSON field: "url"' "$tmp_out" "$tmp_err"; then
     echo "" >&2
     echo "💡 Prescriptive Hint: 'gh pr checks' uses 'link' instead of 'url' for check URLs." >&2
     echo "   Canonical invocation: gh pr checks --json name,state,link" >&2
@@ -89,7 +148,7 @@ if [[ "${1:-}" == "pr" && "${2:-}" == "checks" ]]; then
 fi
 
 # 2. Prescriptive hint for secondary Git worktrees missing default remote repository
-if grep -q "No default remote repository has been set" "$tmp_out"; then
+if grep -q "No default remote repository has been set" "$tmp_out" "$tmp_err"; then
   repo_slug=$(resolve_github_repo)
   echo "" >&2
   if [[ -n "$repo_slug" ]]; then
