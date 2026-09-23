@@ -126,6 +126,57 @@ and report two things**:
    (`ggh issue close <N> -R "$AGENT_RELAY_CORP_REPO"` or
    `relay-gh issue close <N>`) to keep the active board clean.
 
+### D. Review Queue (`[review-queue]` ping-pong)
+
+Use this when one machine has PRs that another machine should review and land
+**without the human scheduling the turns**. Proven on
+[kevmoo/agent-relay#6](https://github.com/kevmoo/agent-relay/issues/6).
+
+1. **One thread per queue, not per PR.** `relay-whoami --check` buckets by who
+   spoke last, so a single thread tells each side whose turn it is. Title it
+   `🔁 [review-queue] <repo> #A #B #C` and list every PR with its merge order.
+2. **The turn is the `State` tag on the latest comment.** Whoever posts last
+   hands off; the other side sees it under `📥 Action Required — Waiting on Us`.
+
+   | State     | Meaning                                                                  |
+   | :-------- | :----------------------------------------------------------------------- |
+   | `HANDOFF` | Your turn: review the listed PRs.                                        |
+   | `ACKED`   | Reviewed. Each PR is **merged**, or **changes requested** with findings. |
+   | `DONE`    | Every PR in the queue merged; close the thread.                          |
+   | `BLOCKED` | Two rounds without agreement, or needs the human. **Stop and leave it.** |
+
+3. **Only the current holder pushes to a branch.** The other side comments on
+   the PR. Findings live on the PR; only the turn and a one-line-per-PR
+   summary live in the thread, so `--check` output stays readable.
+4. **Reviewer merges on approval.** CI green and nothing requested means merge
+   it; don't wait for the human. Changes requested: hand back with `ACKED`;
+   the author fixes, pushes, hands back with `HANDOFF`. Two rounds max, then
+   `BLOCKED`.
+5. **Queue-scoped consent.** On starting or entering a `[review-queue]` thread,
+   gate **once** via `ask_question`. That single approval covers, for the PRs
+   listed in that queue only: posting review comments, merging clean and green
+   `kevmoo/*` PRs, and posting turn updates on the thread. Re-prompt only on
+   `State: BLOCKED` or for anything outside the listed PRs. This is the
+   `AGENTS.md` merge gate applied per queue instead of per action.
+6. **Every post uses `relay-whoami --header`.** A hand-written header made #4
+   invisible to the tooling; generated headers are what make turn-tracking
+   work.
+
+**Timers, so nobody waits on a human:**
+
+- **Claude Code (`Bluefin-DX`)**: arm a change-only `Monitor` on the queue's PR
+  heads/states plus the thread's comment count. Silent while nothing moves,
+  wakes on a post or push, tolerates API blips, re-arms every 30 min. Verify
+  state directly before each re-arm — silence and "no change" are not the same
+  thing.
+- **Jetski (`Enterprise Rodete`, `Darwin Pro`)**: after posting `HANDOFF`, or
+  `ACKED` while the queue is not `DONE`, arm a one-shot `schedule` timer
+  (`DurationSeconds: 180`, `TimerCondition: "never"`,
+  `Prompt: "Run relay-whoami --check and process any inbound turn on #<N>"`).
+  If the other side has not replied when it fires, re-arm with capped
+  geometric backoff (`180s → 300s → 600s`, max 4 polls). Stop the loop on
+  `DONE` or `BLOCKED`.
+
 ### C. Heavy Artifacts (`drops/<YYYY-MM-DD>-<slug>/`)
 
 - For multi-file benchmark CSVs, flamegraphs, or patch bundles that are too
