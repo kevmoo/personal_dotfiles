@@ -1,3 +1,8 @@
 #!/bin/sh
 # Multicall shim for kevmoo_scripts (`kscripts`) subcommands.
-exec kscripts "$(basename "$0")" "$@"
+#
+# Pass the subcommand via KSCRIPTS_AS rather than as an argument so kscripts can
+# tell a shim invocation from a typed command. When this build of kscripts is
+# older than the dotfiles that installed the shim, it reports that plainly
+# ("run dart install ...") instead of "Unknown subcommand" or bare usage.
+KSCRIPTS_AS="$(basename "$0")" exec kscripts "$@"
