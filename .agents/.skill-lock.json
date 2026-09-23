@@ -168,18 +168,18 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/pr-cleanup/SKILL.md",
-      "skillFolderHash": "41d706ce1b1e8d518bf7b27d2ab2d50b2b51102c",
+      "skillFolderHash": "88b2c7c897053bd02f7686c11bd68fdf5f4168d0",
       "installedAt": "2026-09-22T23:18:55.708Z",
-      "updatedAt": "2026-09-22T23:18:55.708Z"
+      "updatedAt": "2026-09-23T02:11:41.479Z"
     },
     "repo-align": {
       "source": "kevmoo/scripts.dart",
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/repo-align/SKILL.md",
-      "skillFolderHash": "fb6b71adae94b9e37480d71f572828b8dcc69420",
+      "skillFolderHash": "1fda74f99f3975c9155c30a9093390c0c14dc9cf",
       "installedAt": "2026-09-22T23:18:55.710Z",
-      "updatedAt": "2026-09-22T23:18:55.710Z"
+      "updatedAt": "2026-09-23T02:11:41.479Z"
     }
   },
   "dismissed": {
