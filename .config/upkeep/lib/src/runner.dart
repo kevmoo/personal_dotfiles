@@ -11,13 +11,17 @@ class UpkeepRunner {
             BrewUpkeeper(),
             BrewfileUpkeeper(),
             MiseUpkeeper(),
+            // Refresh `dart install` binaries before pulling dotfiles: the
+            // dotfiles tree ships `_kscripts_shim` symlinks that dispatch to
+            // `kscripts <subcommand>`, so landing a new shim ahead of the
+            // binary that knows the subcommand breaks that command until the
+            // next run. `updateSelected` runs in this order.
+            DartInstallUpkeeper(),
             DotfilesUpkeeper(),
             DotfilesCorpUpkeeper(),
             GuacamoleUpkeeper(),
             SkillsUpkeeper(),
-            DartInstallUpkeeper(),
             DartPubGlobalUpkeeper(),
-            ScriptsDartUpkeeper(),
             FlutterRepoUpkeeper(),
             OsUpkeeper(),
             BeadsDoltUpkeeper(),
