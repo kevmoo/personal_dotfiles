@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:meta/meta.dart';
@@ -149,10 +150,13 @@ class SkillsUpkeeper implements Upkeeper {
         localSuccess = localProc.exitCode == 0;
       }
 
-      // 3. Reconcile symlinks in ~/.claude/skills/
+      // 3. Normalize .agents/.skill-lock.json (pin updatedAt -> installedAt)
+      normalizeSkillLock(home);
+
+      // 4. Reconcile symlinks in ~/.claude/skills/
       reconcileSymlinks(home);
 
-      // 4. Report any uncommitted/untracked files under .agents in ~/.dotfiles
+      // 5. Report any uncommitted/untracked files under .agents in ~/.dotfiles
       final dirty = await uncommittedSkillFiles(home);
       final dirtySuffix = dirty.isNotEmpty
           ? ' (${dirty.length} uncommitted/untracked file(s) in ~/.agents/)'
@@ -183,6 +187,42 @@ class SkillsUpkeeper implements Upkeeper {
         message: 'Failed to run npx skills update',
         errorMessage: e.toString(),
       );
+    }
+  }
+
+  /// Pins `updatedAt` to `installedAt` for every entry in
+  /// `.agents/.skill-lock.json` so `npx skills` timestamp churn does not dirty
+  /// `~/.dotfiles` across machines.
+  @visibleForTesting
+  void normalizeSkillLock(String home) {
+    final lockFile = File(p.join(home, '.agents', '.skill-lock.json'));
+    if (!lockFile.existsSync()) return;
+    try {
+      final raw = lockFile.readAsStringSync();
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return;
+      final skills = decoded['skills'];
+      if (skills is! Map<String, dynamic>) return;
+
+      var changed = false;
+      for (final entry in skills.values) {
+        if (entry is Map<String, dynamic>) {
+          final installedAt = entry['installedAt'];
+          if (installedAt is String && entry['updatedAt'] != installedAt) {
+            entry['updatedAt'] = installedAt;
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        final normalized = const JsonEncoder.withIndent('  ').convert(decoded);
+        if (normalized != raw) {
+          lockFile.writeAsStringSync(normalized);
+        }
+      }
+    } catch (_) {
+      // Ignore malformed lockfile; leave untouched for git/user inspection.
     }
   }
 

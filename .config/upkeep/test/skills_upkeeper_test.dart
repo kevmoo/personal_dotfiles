@@ -171,5 +171,64 @@ void main() {
 
       evalFile.deleteSync();
     });
+
+    test(
+      'normalizeSkillLock pins updatedAt to installedAt in .skill-lock.json',
+      () async {
+        final dotfilesBare = Directory(path(['.dotfiles']));
+        await Process.run('git', ['init', '--bare', dotfilesBare.path]);
+        File(p.join(dotfilesBare.path, 'info', 'exclude'))
+            .writeAsStringSync('*\n!.agents/\n!.agents/.skill-lock.json\n');
+
+        final lockFile = File(path(['.agents', '.skill-lock.json']))
+          ..createSync(recursive: true)
+          ..writeAsStringSync(
+            '{\n'
+            '  "version": 3,\n'
+            '  "skills": {\n'
+            '    "alpha": {\n'
+            '      "installedAt": "2026-06-05T01:21:48.061Z",\n'
+            '      "updatedAt": "2026-06-05T01:21:48.061Z"\n'
+            '    }\n'
+            '  }\n'
+            '}',
+          );
+
+        await Process.run('git', [
+          '--git-dir=${dotfilesBare.path}',
+          '--work-tree=$home',
+          'add',
+          '.agents/.skill-lock.json',
+        ]);
+        await Process.run('git', [
+          '--git-dir=${dotfilesBare.path}',
+          '--work-tree=$home',
+          'commit',
+          '-m',
+          'initial lock',
+        ]);
+
+        // Simulate `npx skills update` bumping only updatedAt.
+        lockFile.writeAsStringSync(
+          '{\n'
+          '  "version": 3,\n'
+          '  "skills": {\n'
+          '    "alpha": {\n'
+          '      "installedAt": "2026-06-05T01:21:48.061Z",\n'
+          '      "updatedAt": "2026-09-23T18:00:00.000Z"\n'
+          '    }\n'
+          '  }\n'
+          '}',
+        );
+
+        upkeeper.normalizeSkillLock(home);
+
+        final dirty = await upkeeper.uncommittedSkillFiles(home);
+        check(dirty).isEmpty();
+        check(lockFile.readAsStringSync())
+            .contains('"updatedAt": "2026-06-05T01:21:48.061Z"');
+        check(lockFile.readAsStringSync().endsWith('\n')).isFalse();
+      },
+    );
   });
 }
