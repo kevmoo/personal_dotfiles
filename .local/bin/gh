@@ -39,12 +39,27 @@ resolve_github_repo() {
   fi
 }
 
-# Pass through interactive `--watch` invocations directly
+# Bound interactive `--watch` and `run watch` invocations to 180s so stalled CI runners never hang background tasks forever
+is_watch=0
+if [[ "${1:-}" == "run" && "${2:-}" == "watch" ]]; then
+  is_watch=1
+fi
 for arg in "$@"; do
   if [[ "$arg" == "--watch" ]]; then
-    exec "$REAL_GH" "$@"
+    is_watch=1
   fi
 done
+if [[ "$is_watch" -eq 1 ]]; then
+  /usr/bin/timeout --kill-after=2s 180s "$REAL_GH" "$@"
+  wrc=$?
+  if [[ "$wrc" -eq 124 || "$wrc" -eq 137 ]]; then
+    echo ""
+    echo "⏳ [gh] Watch window (180s) elapsed while CI checks are still in progress."
+    echo "💡 Next step: Check latest status via 'gh pr checks' or schedule a timer rather than holding an open watch pipe."
+    exit 0
+  fi
+  exit "$wrc"
+fi
 
 tmp_out=$(mktemp)
 trap 'rm -f "$tmp_out"' EXIT
