@@ -155,4 +155,23 @@ void main() {
       check(updateResults.first.upkeeperId).equals('sub1');
     });
   });
+
+  group('UpkeepRunner default registry order', () {
+    test('dart_install runs before dotfiles in the default registry', () {
+      // `updateSelected` runs sequentially in registry order. Dotfiles ship
+      // `_kscripts_shim` symlinks that dispatch to `kscripts <subcommand>`;
+      // pulling a new shim before refreshing the binary that knows the
+      // subcommand leaves that command broken until the next run.
+      final ids = UpkeepRunner().upkeepers.map((u) => u.id).toList();
+      final dartInstall = ids.indexOf('dart_install');
+      final dotfiles = ids.indexOf('dotfiles');
+      check(dartInstall).isGreaterThan(-1);
+      check(dotfiles).isGreaterThan(-1);
+      check(
+        because:
+            'dart_install must precede dotfiles so shims never outrun kscripts',
+        dartInstall,
+      ).isLessThan(dotfiles);
+    });
+  });
 }
