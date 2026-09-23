@@ -22,10 +22,10 @@ enforcing the corporate secret boundary.
 
 Before posting any issue, comment, or file, classify the payload:
 
-| Channel                     | CLI & Repo                       | Local Clone                   | Permitted Content                                                                                                                                                                |
-| :-------------------------- | :------------------------------- | :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **🔒 Corp-Private**         | `ggh` · `$AGENT_RELAY_CORP_REPO` | `$AGENT_RELAY_CORP_DIR`       | **Required for ALL internal corp work**: internal monorepo paths, shortlinks (`cl/`, `b/`, `go/`, `cs/`), internal strategy, or Cloudtop ↔ gMac corp handoffs.                   |
-| **🌐 Public-Safe (GitHub)** | `gh` · `kevmoo/agent-relay`      | `~/github/kevmoo/agent-relay` | **STRICTLY public-safe / OSS (`~zero corp secret risk`)**: `dart-lang/*`, `flutter/*`, `kevmoo/*`, public benchmarks, and `~/.dotfiles` (enables `Bluefin-DX` 🐧 participation). |
+| Channel                     | CLI & Repo                        | Local Clone                   | Permitted Content                                                                                                                                                                |
+| :-------------------------- | :-------------------------------- | :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **🔒 Corp-Private**         | `ggh` · `$AGENT_RELAY_CORP_REPO`  | `$AGENT_RELAY_CORP_DIR`       | **Required for ALL internal corp work**: internal monorepo paths, shortlinks (`cl/`, `b/`, `go/`, `cs/`), internal strategy, or Cloudtop ↔ gMac corp handoffs.                   |
+| **🌐 Public-Safe (GitHub)** | `relay-gh` · `kevmoo/agent-relay` | `~/github/kevmoo/agent-relay` | **STRICTLY public-safe / OSS (`~zero corp secret risk`)**: `dart-lang/*`, `flutter/*`, `kevmoo/*`, public benchmarks, and `~/.dotfiles` (enables `Bluefin-DX` 🐧 participation). |
 
 > [!CAUTION] **Hard Boundary**: NEVER post internal monorepo paths, internal
 > shortlinks (`cl/`, `b/`, `go/`, `cs/`), internal `.corp` URLs, or confidential
@@ -85,8 +85,8 @@ and report two things**:
      context is needed:
      - **Corp (`ggh`)**:
        `ggh issue view <N> -R "$AGENT_RELAY_CORP_REPO" --json title,state,body,comments --jq '{title, state, body, last_comments: (.comments[-3:] | map(.body))}'`
-     - **GitHub (`gh`)**:
-       `gh issue view <N> -R kevmoo/agent-relay --json title,state,body,comments --jq '{title, state, body, last_comments: (.comments[-3:] | map(.body))}'`
+     - **GitHub (`relay-gh`)**:
+       `relay-gh issue view <N> --json title,state,body,comments --jq '{title, state, body, last_comments: (.comments[-3:] | map(.body))}'`
 3. **Present a Two-Part Status Report in Chat**:
    - **Part 1 — 🔄 New Bits Since Last Sync (`<last_sync_pt>`)**: Summarize new
      Git commits/files (`drops/`) and Issue/Comment transitions across Corp and
@@ -106,15 +106,25 @@ and report two things**:
      --model "<your model id>" \
      --channel corp   # or 'oss' ONLY if 100% public-safe
    ```
-   Always pass `--model` explicitly: no environment variable carries it, so the
-   envelope's `Model` tag is dropped unless you supply your own model id.
-2. Stream the multi-line Markdown payload via `--body-file -` with a
-   single-quoted heredoc
-   (`cat << 'EOF' | ggh issue comment <N> -R "$AGENT_RELAY_CORP_REPO" --body-file -`).
+   `--model` falls back to `ANTIGRAVITY_MODEL`, `CLAUDE_MODEL`, then
+   `GEMINI_MODEL`; pass it explicitly when none of those carries your model id,
+   or the envelope's `Model` tag is dropped.
+2. Write the Markdown payload to a file, then pass that **path** to
+   `--body-file`:
+   - **Corp (`ggh`)**:
+     `cat << 'EOF' > /tmp/relay.md` ... `ggh issue comment <N> -R "$AGENT_RELAY_CORP_REPO" --body-file /tmp/relay.md`
+   - **GitHub (`relay-gh`)**:
+     `relay-gh issue comment <N> --body-file /tmp/relay.md`
+
+   Use a real path rather than `cat ... | relay-gh ... --body-file -`. A
+   pipeline's leading command is `cat`, which the `Bash(relay-gh:*)` allowlist
+   cannot match, so the heredoc form re-introduces an approval prompt on every
+   relay turn.
+
 3. When a thread's checklist is completely fulfilled and acknowledged
    (`State: ACKED`), close the issue
    (`ggh issue close <N> -R "$AGENT_RELAY_CORP_REPO"` or
-   `gh issue close <N> -R kevmoo/agent-relay`) to keep the active board clean.
+   `relay-gh issue close <N>`) to keep the active board clean.
 
 ### C. Heavy Artifacts (`drops/<YYYY-MM-DD>-<slug>/`)
 

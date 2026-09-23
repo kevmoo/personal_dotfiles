@@ -1,48 +1,67 @@
 #!/bin/sh
 # Repo-pinned `gh issue` wrapper for the public-safe agent relay.
 #
-# Principles:
-#   1. The repository is hardcoded and cannot be overridden. Any -R/--repo
-#      argument is refused rather than silently ignored, because `gh` honors
-#      the LAST -R it sees -- a trailing override would otherwise escape the pin.
-#   2. Only `issue` subcommands needed by the relay workflow are permitted.
-#   3. No flag or argument rewriting beyond injecting -R.
+# The pin must not be escapable, because this script is what makes
+# `"Bash(relay-gh:*)"` safe to allowlist. `gh` offers three distinct ways to
+# retarget a command, and all three are refused here:
 #
-# Exists so relay traffic can be allowlisted in Claude Code settings
-# (`Bash(relay-gh:*)`) without granting write access to every GitHub repo.
+#   1. `-R` / `--repo`        gh honors the LAST one it is given.
+#   2. short-flag clustering  pflag parses `-cR other/repo` as `-c -R other/repo`,
+#                             so a plain `-R*` prefix test misses it.
+#   3. a URL positional       `gh issue view https://github.com/o/r/issues/1`
+#                             resolves the repo from the URL and ignores `-R`
+#                             entirely -- ordering cannot help here.
+#
+# Defenses, in order of strength:
+#   * the issue selector must be a bare number, which removes (3) structurally
+#     rather than by blacklisting URL spellings;
+#   * (1) and (2) are rejected outright rather than ignored;
+#   * the pinned `-R` is passed LAST so pflag's last-wins favors the pin even
+#     if some future spelling slips past the checks, with GH_REPO as a backstop.
 set -eu
 
 REPO='kevmoo/agent-relay'
 
+die() { echo "relay-gh: $1" >&2; exit 2; }
+
 usage() {
-  echo "usage: relay-gh issue <view|list|comment|create|close|reopen> [args...]" >&2
-  echo "       (repo is pinned to $REPO)" >&2
+  echo "usage: relay-gh issue <view|list|comment|create|close|reopen> [<number>] [args...]" >&2
+  echo "       repo is pinned to $REPO; the issue selector must be a bare number" >&2
 }
+
+if [ "${1:-}" != 'issue' ]; then
+  usage
+  die "only 'issue' commands are permitted (got '${1:-}')"
+fi
+
+case "${2:-}" in
+  view|list|comment|create|close|reopen) subcommand="$2" ;;
+  *) usage; die "subcommand '${2:-}' is not permitted" ;;
+esac
+shift 2
 
 for arg in "$@"; do
   case "$arg" in
     -R*|--repo|--repo=*)
-      echo "relay-gh: refusing explicit repo override ('$arg'); $REPO is pinned." >&2
-      exit 2
-      ;;
+      die "refusing repo override ('$arg'); $REPO is pinned" ;;
+    -[!-]*R*)
+      die "refusing short-flag cluster containing R ('$arg'); $REPO is pinned" ;;
+    --)
+      die "refusing '--'; it would let a repo override through as a positional" ;;
+    http://*|https://*|*github.com*)
+      die "refusing URL argument ('$arg'); a URL selector retargets the repo" ;;
   esac
 done
 
-if [ "${1:-}" != 'issue' ]; then
-  echo "relay-gh: only 'issue' commands are permitted (got '${1:-}')." >&2
-  usage
-  exit 2
-fi
-
-case "${2:-}" in
-  view|list|comment|create|close|reopen) ;;
-  *)
-    echo "relay-gh: subcommand '${2:-}' is not permitted." >&2
-    usage
-    exit 2
+# `view`, `comment`, `close` and `reopen` accept an issue selector that gh will
+# happily read as a URL. Requiring a bare number removes that vector entirely.
+case "$subcommand" in
+  view|comment|close|reopen)
+    case "${1:-}" in
+      '') usage; die "'$subcommand' requires an issue number" ;;
+      *[!0-9]*) die "issue selector must be a bare number (got '$1')" ;;
+    esac
     ;;
 esac
 
-subcommand="$2"
-shift 2
-exec gh issue "$subcommand" -R "$REPO" "$@"
+exec env GH_REPO="$REPO" gh issue "$subcommand" "$@" -R "$REPO"
