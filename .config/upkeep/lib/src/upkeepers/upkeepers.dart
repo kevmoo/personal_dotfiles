@@ -9,7 +9,6 @@ export 'flutter_repo_upkeeper.dart';
 export 'guacamole_upkeeper.dart';
 export 'mise_upkeeper.dart';
 export 'os_upkeeper.dart';
-export 'scripts_dart_upkeeper.dart';
 export 'skills_upkeeper.dart';
 export 'upkeeper.dart';
 export 'vscode_upkeeper.dart';

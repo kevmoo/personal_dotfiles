@@ -56,7 +56,7 @@ flowchart TD
     C --> C2[mise]
     C --> C3[dotfiles]
     C --> C4[skills]
-    C --> C5[scripts_dart]
+    C --> C5[dart_install]
     C --> C6[os]
     C --> C7[beads / guacamole / vscode]
 ```
@@ -68,13 +68,13 @@ flowchart TD
 | `mise` | Checks `mise outdated --json`; runs `mise upgrade`. |
 | `dotfiles` | `git fetch` on the `personal_dotfiles` repo; reports/pulls when behind. |
 | `skills` | Runs `npx skills check`; on update, runs `npx skills update -g` + local sync and reconciles skill symlinks. |
-| `scripts_dart` | Checks/activates `scripts.dart` from GitHub (`dart pub global activate --source git …`). |
+| `dart_install` | Audits `dart install` app bundles (hosted / git / path) against pub.dev, `git ls-remote`, or the local checkout, and reinstalls outdated ones. This is what keeps `kscripts` current. |
 | `os` | OS updates — e.g. `ujust update` on home Linux (`ostree`); on gLinux/cloudtop checks `gcertstatus`, `/var/run/reboot-required`, and `apt list --upgradable` (`~0.76s`), updating via `sudo apt-get upgrade -y`; no-op on macOS. |
 | `beads` | `beads` / Dolt-backed issue store upkeep (`bd` / `dolt`). On cloudtop, dynamically bypasses Homebrew checks and installs/upgrades directly via `go install`. |
 | `guacamole` | Apache Guacamole (personal Linux host). |
 | `vscode` | VS Code extension and settings symlink updates (automatically skipped on cloudtop). |
 
-> Several upkeepers (`scripts_dart`, `guacamole`, `beads`, `os`, `skills`,
+> Several upkeepers (`guacamole`, `beads`, `os`, `skills`,
 > `vscode`) are specific to this author's setup. `isSupported()` dynamically hides them on
 > hosts where they don't apply (for example, `brew`, `brewfile`, and `vscode` skip when
 > running on cloudtop/gLinux, while `beads` adapts to use `go install` directly).
@@ -120,7 +120,7 @@ upkeep list                  # registered upkeepers + support status
     { "id": "mise", "displayName": "Mise Tool Versions", "state": "outdated", "summary": "3 tool version(s) outdated" },
     { "id": "dotfiles", "displayName": "Personal Dotfiles Repository", "state": "upToDate", "summary": "Dotfiles repository is up to date" },
     { "id": "skills", "displayName": "Agent Skills", "state": "upToDate", "summary": "Agent skills up to date" },
-    { "id": "scripts_dart", "displayName": "Scripts.dart Package (GitHub)", "state": "outdated", "summary": "Click update to sync latest GitHub HEAD" }
+    { "id": "dart_install", "displayName": "Dart Install Binaries & Tools", "state": "outdated", "summary": "1 tool(s) outdated (kevmoo_scripts)" }
   ]
 }
 ```
@@ -158,7 +158,7 @@ upkeep list                  # registered upkeepers + support status
 │           ├── mise_upkeeper.dart
 │           ├── dotfiles_upkeeper.dart
 │           ├── skills_upkeeper.dart
-│           ├── scripts_dart_upkeeper.dart
+│           ├── dart_install_upkeeper.dart
 │           ├── os_upkeeper.dart
 │           ├── beads_dolt_upkeeper.dart
 │           ├── guacamole_upkeeper.dart

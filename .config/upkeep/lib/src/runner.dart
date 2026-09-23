@@ -22,7 +22,6 @@ class UpkeepRunner {
             GuacamoleUpkeeper(),
             SkillsUpkeeper(),
             DartPubGlobalUpkeeper(),
-            ScriptsDartUpkeeper(),
             FlutterRepoUpkeeper(),
             OsUpkeeper(),
             BeadsDoltUpkeeper(),
