@@ -65,6 +65,7 @@ done
 
 # Bound interactive `--watch` / `pr checks -w` and `run watch` invocations to 180s
 is_watch=0
+has_json=0
 if [[ "$sub1" == "run" && "$sub2" == "watch" ]]; then
   is_watch=1
 fi
@@ -74,14 +75,18 @@ for arg in "$@"; do
   elif [[ "$sub1" == "pr" && "$sub2" == "checks" && "$arg" =~ ^-[a-zA-Z]*w[a-zA-Z]*$ ]]; then
     is_watch=1
   fi
+  if [[ "$arg" == "--json" || "$arg" == --json=* ]]; then
+    has_json=1
+  fi
 done
 
 if [[ "$is_watch" -eq 1 ]]; then
   TIMEOUT_BIN="$(command -v timeout 2>/dev/null || command -v gtimeout 2>/dev/null || true)"
   if [[ -n "$TIMEOUT_BIN" ]]; then
-    "$TIMEOUT_BIN" --kill-after=2s 180s "$REAL_GH" "$@"
+    "$TIMEOUT_BIN" --foreground --kill-after=2s 180s "$REAL_GH" "$@"
     wrc=$?
   else
+    echo "⚠️  [gh] neither 'timeout' nor 'gtimeout' on PATH; watch is UNBOUNDED (brew install coreutils)" >&2
     "$REAL_GH" "$@"
     wrc=$?
   fi
@@ -115,8 +120,8 @@ fi
 
 # 1. Prescriptive handling for `gh pr checks`
 if [[ "$sub1" == "pr" && "$sub2" == "checks" ]]; then
-  # Case A: Exit Code 8 (Checks pending/in-progress) -> Normalize to 0 with prescriptive guidance
-  if [[ "$rc" -eq 8 ]]; then
+  # Case A: Exit Code 8 (Checks pending/in-progress) -> Normalize to 0 with prescriptive guidance (unless --json is requested)
+  if [[ "$rc" -eq 8 && "$has_json" -eq 0 ]]; then
     echo ""
     echo "⏳ [gh] CI STATUS: PENDING (Exit code 8 normalized to 0: checks are queued or running)."
     echo "💡 Next step: Do NOT poll in a bash sleep loop."
@@ -125,8 +130,8 @@ if [[ "$sub1" == "pr" && "$sub2" == "checks" ]]; then
     exit 0
   fi
 
-  # Case B: Exit Code 1 right after git push ("no checks reported on the '...' branch")
-  if [[ "$rc" -eq 1 ]] && grep -q "no checks reported on the" "$tmp_out" "$tmp_err"; then
+  # Case B: Exit Code 1 right after git push ("no checks reported on the '...' branch") (unless --json is requested)
+  if [[ "$rc" -eq 1 && "$has_json" -eq 0 ]] && grep -q "no checks reported on the" "$tmp_out" "$tmp_err"; then
     echo ""
     echo "⏳ [gh] CI STATUS: STARTING (Exit code 1 normalized to 0: GitHub Actions has not registered check runs yet)."
     echo "💡 Next step: Wait ~15 seconds, then check active runs with: gh run list --limit 5"

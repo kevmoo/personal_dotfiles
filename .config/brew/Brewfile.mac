@@ -1,6 +1,7 @@
 # ~/.Brewfile.mac - macOS specific apps and tools
 
 # Development Utilities
+brew "coreutils"    # GNU coreutils (provides timeout/gtimeout for gh/grep/find guards)
 brew "dotnet"       # Needed for shelf compliance!
 brew "fvm"          # Flutter version manager
 brew "geckodriver"  # WebDriver <-> Marionette proxy
