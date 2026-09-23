@@ -32,14 +32,22 @@ fi
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 
+# Assign first so a jq failure triggers set -e instead of being masked by printf.
 # Command substitution strips the trailing newline, matching how `npx skills`
 # writes the file, so the only diff is the updatedAt values themselves.
-printf '%s' "$(jq '.skills |= with_entries(
+normalized=$(jq '.skills |= with_entries(
   if .value.installedAt then .value.updatedAt = .value.installedAt else . end
-)' "$lock")" > "$tmp"
+)' "$lock")
+printf '%s' "$normalized" > "$tmp"
 
 if ! cmp -s "$tmp" "$lock"; then
   cat "$tmp" > "$lock"
   git add "$lock"
   echo "🔧 Normalized updatedAt -> installedAt in $lock"
+fi
+
+# Fail if normalizing the lock reverted all staged changes, resulting in an empty commit.
+if [ -z "$(git diff --cached --name-only)" ]; then
+  echo "❌ Error: Normalizing $lock reverted all staged changes, resulting in an empty commit."
+  exit 1
 fi
