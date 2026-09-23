@@ -15,7 +15,8 @@
       "Bash(gh issue view:*)",
       "Bash(gh issue list:*)",
       "Bash(gh run view:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(relay-gh:*)"
     ],
     "ask": [
       "Bash(git commit:*)",

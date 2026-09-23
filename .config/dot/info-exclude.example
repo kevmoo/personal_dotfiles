@@ -52,6 +52,7 @@
 !.local/bin/net-diag
 !.local/bin/pr-check
 !.local/bin/puppy
+!.local/bin/relay-gh
 !.local/bin/relay-whoami
 !.local/bin/repo-align
 !.local/bin/tighten
