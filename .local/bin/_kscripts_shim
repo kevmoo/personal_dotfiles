@@ -1,0 +1,3 @@
+#!/bin/sh
+# Multicall shim for kevmoo_scripts (`kscripts`) subcommands.
+exec kscripts "$(basename "$0")" "$@"

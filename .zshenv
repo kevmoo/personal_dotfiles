@@ -30,16 +30,24 @@ fi
 
 # Ensure Dart install binaries, ~/.local/bin, and mise shims are always at the front of PATH
 # (placed after cargo/elan env so ~/.cargo/env does not prepend ahead of _user_path and defeat the prefix guard)
-_user_path="$HOME/.local/state/Dart/install/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims"
+if [[ "$(uname)" == "Darwin" ]]; then
+  _dart_install_bin="$HOME/Library/Application Support/Dart/install/bin"
+else
+  _dart_install_bin="$HOME/.local/state/Dart/install/bin"
+fi
+_user_path="$_dart_install_bin:$HOME/.local/bin:$HOME/.local/share/mise/shims"
 case "$PATH" in
   "$_user_path:"*) ;;
   *) export PATH="$_user_path:$PATH" ;;
 esac
-unset _user_path
+unset _user_path _dart_install_bin
 
 # Disable formatting/styling and paging for the AI agent (needs to be in .zshenv for non-interactive shell commands)
 if [[ "$TERM" == "dumb" ]]; then
   export NO_COLOR=1
   export PAGER=cat
 fi
+
+# Local checkout directory for kevmoo_scripts (`kscripts` binary staleness checks)
+export KSCRIPTS_REPO_DIR="$HOME/github/kevmoo/scripts.dart"
 
