@@ -1,13 +1,29 @@
 ---
-name: github-pr-triage
-description: |-
-  Triage open PR comments/reviews and associated CI/CD workflow failures using
-  the `triage.dart` helper script and formulate an actionable plan.
-key_features:
-  - Review feedback triaging
-  - CI log extraction
-  - Action plan generation
+name: pr-triage
+description: >-
+  Triages open GitHub pull request comments, review threads, merge conflicts,
+  and CI workflow failures, empirically verifying reviewer claims before
+  proposing a structured action plan. Use when asked to triage or address PR
+  comments, review feedback, merge conflicts, or failing CI checks on a GitHub
+  pull request, or when invoked via /pr-triage. Don't use for multi-repo PR
+  cleanup sweeps (use pr-cleanup), initial adversarial code review (use
+  pr-review), or Google3 Piper changelist triage (use cl-triage).
 ---
+
+# GitHub PR Triage (`/pr-triage`)
+
+## Quick Start
+
+```bash
+# Triage the active PR for a target repository checkout or worktree:
+kscripts pr-triage --dir /path/to/target-repository
+
+# Target a specific PR number or GitHub URL:
+kscripts pr-triage --dir /path/to/target-repository --pr 123
+
+# Reply to a comment and resolve a review thread:
+kscripts pr-triage resolve --dir /path/to/target-repository <thread_id> <comment_id> "<reply_body>"
+```
 
 ## When to use this skill
 
@@ -17,9 +33,6 @@ key_features:
 - This skill MUST be activated when the user asks you to "look at comments on my
   PR", "address comments/reviews", "fix the build/checks", or provides a PR
   URL/branch and asks you to fix it.
-- _Note_: For continuous autonomous iteration loops with AI code review bots
-  (such as Gemini Code Assist), use the `pr-loop` skill instead, which uses this
-  skill's `triage.dart` script as its underlying triage engine.
 
 ## 🧠 Critical Mindset: Reviewer Feedback is NOT Gospel
 
@@ -58,30 +71,27 @@ key_features:
   the user (using `ask_question` or chat) to clarify which PR or branch to
   target before taking action.
 
-1. **Run the Triage Script**: Execute the `triage.dart` helper script using the
-   `run_command` tool. Use the `--dir` (or `-C`) option to specify the path to
-   the target repository directory (the project you want to triage). This
-   ensures that the underlying `git` and `gh` commands resolve to the correct
-   repository and branch:
+1. **Run `kscripts pr-triage`**: Execute `kscripts pr-triage` (or the bare
+   `pr-triage` shim) using `run_command`. Pass `--dir` (or `-C`) to specify the
+   target repository or worktree directory:
 
    ```bash
-   dart run <path-to-github-pr-triage-skill>/bin/triage.dart --dir <path-to-target-repository>
+   kscripts pr-triage --dir <path-to-target-repository>
    ```
 
-   _Note_: If you need to target a specific PR or URL, you can also pass `--pr`:
+   _Note_: If you need to target a specific PR or URL, also pass `--pr`:
 
    ```bash
-   dart run <path-to-github-pr-triage-skill>/bin/triage.dart --dir <path-to-target-repository> --pr <pr-number-or-url>
+   kscripts pr-triage --dir <path-to-target-repository> --pr <pr-number-or-url>
    ```
 
-   **Save the raw stdout of this script** as a new markdown artifact named
-   `raw_triage_output.md` in the artifacts directory (using the `write_to_file`
-   tool).
+   **Save the raw stdout of this command** as a new markdown artifact named
+   `raw_triage_output.md` in the artifacts directory (using `write_to_file`).
 
 2. **Verify Workspace State**:
-   - The script output will show the PR URL, title, branch, Remote Commit SHA,
-     Local Commit SHA, and Sync Status (`in_sync`, `behind_remote`,
-     `ahead_of_remote`, `diverged`, or `branch_mismatch`).
+   - The output shows the PR URL, title, branch, Remote Commit SHA, Local Commit
+     SHA, and Sync Status (`in_sync`, `behind_remote`, `ahead_of_remote`,
+     `diverged`, or `branch_mismatch`).
    - Verify that your current git branch matches the PR source branch
      (`headRefName`).
    - Check the **Sync Status**:
@@ -91,10 +101,9 @@ key_features:
        commits (`git push`).
      - Do not start making code edits while the local workspace is out of sync
        with the remote PR.
-
    - Check the **Mergeable Status**:
      - If `Mergeable` is `CONFLICTING` (or `mergeStateStatus` is `DIRTY`),
-       `triage.dart` automatically runs `git fetch` + `git merge-tree` +
+       `kscripts pr-triage` automatically runs `git fetch` + `git merge-tree` +
        `git log` and emits a top-level `## ⚠️ Merge Conflicts` section listing
        the conflicting files and the upstream commits on `origin/<baseRefName>`
        that introduced the clash.
@@ -106,7 +115,7 @@ key_features:
        rather than `git rebase` (since force-pushing is prohibited).
 
 3. **Analyze Open Comments**:
-   - The script lists all unresolved review threads, top-level review comments
+   - The command lists all unresolved review threads, top-level review comments
      (overall review summaries), and general PR conversation comments.
    - Read the conversations carefully to understand what reviewers are
      requesting.
@@ -116,7 +125,7 @@ key_features:
      reviewer's comment.
 
 4. **Analyze CI Status & Failures**:
-   - The script lists status checks (both failed and active/pending).
+   - The command lists status checks (both failed and active/pending).
    - **Active/Pending CI Handling**: If any CI status checks are currently
      running or pending:
      - Inform the user and call `ask_question` to ask their preference:
@@ -127,9 +136,6 @@ key_features:
        Report) or create the `pr_triage_report.md` artifact until the user has
        answered, because final CI results might change the triage plan and
        action items.
-     - _(Note: This interactive prompt and hard block are bypassed when
-       operating within an outer orchestrator skill like `pr-loop`, which
-       handles background timers automatically)_.
    - Analyze the stack traces, compile errors, or analyzer failures to
      understand why any failed checks failed.
 
@@ -139,9 +145,7 @@ key_features:
      prompt from Step 4.
    - Create a markdown artifact named `pr_triage_report.md` in the artifacts
      directory (using `write_to_file` with `RequestFeedback: true` in
-     `ArtifactMetadata` to render an interactive 'Proceed' button). (Note: This
-     step is bypassed ONLY IF operating within an outer orchestrator skill like
-     `pr-loop` with upfront user consent).
+     `ArtifactMetadata` to render an interactive 'Proceed' button).
    - **Link to Raw Output**: Include a markdown link to the
      `raw_triage_output.md` artifact at the top of the report.
    - The report MUST group associated comments and CI failures into cohesive
@@ -157,9 +161,8 @@ key_features:
      - **Thread & Comment/Review Identifiers (For Comments)**: Explicitly
        preserve the `Thread ID` (e.g. `PRRT_...`), `Comment ID` (e.g.
        `3438780787`), or `Review ID` (e.g. `PRR_...`) from the header in
-       `raw_triage_output.md` under each action item so the resolution step
-       (`gh api` or `gh pr comment`) has immediate access to the identifiers
-       without extra API lookups.
+       `raw_triage_output.md` under each action item so the resolution step has
+       immediate access to the identifiers without extra API lookups.
      - **Agent Assessment (For Comments)**:
        - **Agreement Level**: A short indicator of your agreement using one of
          these categories:
@@ -192,8 +195,7 @@ key_features:
 6. **Wait for Approval**:
    - DO NOT edit files or make changes until the user explicitly approves the
      proposed plan via the interactive 'Proceed' button (or explicit chat
-     confirmation). (Note: This step is bypassed ONLY IF operating within an
-     outer orchestrator skill like `pr-loop` with upfront user consent).
+     confirmation).
 
 7. **Surgical Implementation & Verification (Red-Green TDD)**:
    - Once approved, address the comments and failures one by one.
@@ -213,16 +215,10 @@ key_features:
      before finishing.
 
 8. **Verify Git State and Offer Unified Resolution Menu**:
-   - **Outer Skill Exception**: Step 8 is bypassed entirely ONLY IF operating
-     within an outer orchestrator skill (such as `pr-loop`) that has already
-     obtained upfront user consent for autonomous VCS commits and pushes.
-   - **Check Git Status first**: Run `git status` to check whether uncommitted
-     fixes or unpushed commits exist.
-   - **Present Completion Options (`ask_question`)**: Use the `ask_question`
-     tool to present a unified completion menu based on the working tree state
-     (passing the options as a list parameter). Do NOT output raw text. By
-     selecting an option that includes committing or pushing, the user
-     explicitly authorizes those VCS operations for this workflow.
+   - **Check Git Status first**: Run `git status -s --untracked=no` to check
+     whether uncommitted fixes or unpushed commits exist.
+   - **Present Completion Options (`ask_question`)**: Use `ask_question` to
+     present a unified completion menu based on the working tree state:
      - **If uncommitted changes or unpushed commits exist**, offer:
        1. `(Recommended) Commit fixes, push branch, reply to comments, and resolve threads`
        2. `Commit fixes and push branch only`
@@ -232,27 +228,26 @@ key_features:
        1. `(Recommended) Reply to comments and resolve threads`
        2. `Do nothing`
    - **Execute Selected Actions**:
-     - If committing is selected, stage all modified and new files (using
-       `git add <files>` or `git add .` if no untracked scratch files exist) and
-       create a descriptive commit.
+     - If committing is selected, stage all modified and new files and create a
+       descriptive commit.
      - If pushing is selected, run `git push`.
-     - If replying and resolving is selected, execute the `triage.dart resolve`
-       commands using the patterns listed below.
+     - If replying and resolving is selected, execute the
+       `kscripts pr-triage resolve` commands below.
 
 ## Replying and Resolving Comments
 
 For every addressed review thread, you MUST execute thread resolution (thread
 resolution is explicit, mandatory, and un-skippable).
 
-Use the `resolve` subcommand in `triage.dart` to programmatically reply to
-comments and resolve threads without shell-escaping issues:
+Use the `resolve` subcommand in `kscripts pr-triage` to programmatically reply
+to comments and resolve threads without shell-escaping issues:
 
 ```bash
 # Reply to a comment and resolve its thread (pass --dir if outside target repo):
-dart run <path-to-github-pr-triage-skill>/bin/triage.dart resolve --dir <path-to-target-repository> <thread_graphql_id> <comment_database_id> "<your reply body>"
+kscripts pr-triage resolve --dir <path-to-target-repository> <thread_graphql_id> <comment_database_id> "<your reply body>"
 
 # Or resolve a thread without posting a reply:
-dart run <path-to-github-pr-triage-skill>/bin/triage.dart resolve --dir <path-to-target-repository> <thread_graphql_id>
+kscripts pr-triage resolve --dir <path-to-target-repository> <thread_graphql_id>
 ```
 
 _Note: `<thread_graphql_id>` is the GraphQL node ID (e.g., `PRRT_...`) and
@@ -264,19 +259,14 @@ as output in `raw_triage_output.md`._
 - **Hard CI Gate**: If CI checks are running or pending, you MUST halt execution
   after calling `ask_question` in Step 4 and DO NOT proceed to Step 5 or
   generate `pr_triage_report.md` until the user responds, as pending CI results
-  may alter the final triage plan. (Note: Bypassed ONLY IF operating within an
-  outer orchestrator skill like `pr-loop`).
+  may alter the final triage plan.
 - **CRITICAL**: You MUST NOT modify files or make any code edits to address PR
   comments or CI failures before generating a `pr_triage_report.md` artifact and
-  obtaining explicit user approval on the plan. (Note: This constraint is
-  bypassed ONLY IF operating within an outer orchestrator skill like `pr-loop`
-  with upfront user consent).
+  obtaining explicit user approval on the plan.
 - **VCS Authorization**: Selecting an option in `ask_question` that explicitly
   mentions committing or pushing serves as the user's explicit permission to
   perform those operations for the triage fixes. Do NOT ask for permission a
-  second time if the user selects one of those options. (Note: This constraint
-  is bypassed ONLY IF operating within an outer orchestrator skill like
-  `pr-loop` with upfront user consent).
+  second time if the user selects one of those options.
 - **Sync Code Before Comments**: Do not post "Done" or "Fixed" comment replies
   or resolve threads on GitHub while the corresponding code fixes remain
   uncommitted or unpushed.
@@ -285,5 +275,5 @@ as output in `raw_triage_output.md`._
   strictly prohibited. Always create new, atomic commits.
 - **NO Force Pushes**: Force pushing (`git push -f` or `--force-with-lease`) is
   strictly prohibited under any circumstances.
-- Always use the `triage.dart` script to fetch PR information instead of manual
-  API calls to ensure consistency and minimize context bloat.
+- Always use `kscripts pr-triage` to fetch PR information instead of manual API
+  calls to ensure consistency and minimize context bloat.

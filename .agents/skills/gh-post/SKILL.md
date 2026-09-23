@@ -1,40 +1,48 @@
 ---
-name: github-post
+name: gh-post
 description: >-
-  Author and submit high-signal, anti-slop GitHub issues (bug reports, feature
-  proposals) and pull requests. Enforces empirical reproduction, literal logs,
-  exact commit/environment targeting, repository convention orientation,
-  structured artifact drafting, and strict anti-AI formatting (strips emojis,
-  pleasantry preambles, gratuitous horizontal rules, and speculative essays).
-  Includes hard stops for target disambiguation and mandatory user approval
-  before submission. Use when triggered via /github-post or when asked to file,
-  draft, format, or submit a GitHub issue, bug report, feature request, or pull
-  request.
+  Authors and submits high-signal, anti-slop GitHub issues (bug reports, feature
+  proposals) and pull requests by scanning repository conventions, maintainers,
+  title prefixes, and templates, drafting into an artifact, and gating on user
+  approval before submission. Use when triggered via /gh-post or when asked to
+  file, draft, format, or submit a GitHub issue, bug report, feature request, or
+  pull request. Don't use for triaging existing PR comments (use pr-triage),
+  reviewing a PR diff (use pr-review), or Google3 Piper CLs (use cl-finalize).
 ---
 
-# GitHub Post (`/github-post`)
+# GitHub Post (`/gh-post`)
 
 Guidelines, automated orientation tooling, and execution protocols for authoring
 and submitting high-signal, anti-slop GitHub issues and pull requests without AI
 formatting noise.
 
+## Quick Start
+
+```bash
+# Orient with a local Git repository checkout's conventions:
+kscripts gh-orient --dir /path/to/repo
+
+# Orient with a remote GitHub repository (zero local clone required):
+kscripts gh-orient -R invertase/melos
+```
+
 ## Invocation Style & Slash Command
 
-Trigger the skill using the `/github-post` slash command or natural language
+Trigger the skill via the `/gh-post` slash command or natural language
 equivalents:
 
 ```markdown
-/github-post a PR with these changes
-/github-post a new issue requesting the feature we discussed
-/github-post a bug report for the crash when passing empty config
-/github-post draft a feature proposal for smart dependent versioning in invertase/melos
+/gh-post a PR with these changes
+/gh-post a new issue requesting the feature we discussed
+/gh-post a bug report for the crash when passing empty config
+/gh-post draft a feature proposal for smart dependent versioning in invertase/melos
 ```
 
 ## The 5-Step Workflow
 
 ```mermaid
 graph TD
-    A["1. Intake & Disambiguation<br><b>STOP. DON'T GUESS.</b>"] --> B["2. Repository Orientation<br><code>orient.dart [-R repo]</code>"]
+    A["1. Intake & Disambiguation<br><b>STOP. DON'T GUESS.</b>"] --> B["2. Repository Orientation<br><code>kscripts gh-orient [-R repo]</code>"]
     B --> C["3. Draft into Artifact<br><code>draft_github_[owner]_[repo]_issue.md</code> / <code>draft_github_[owner]_[repo]_pr.md</code>"]
     C --> D["4. Mandatory Approval Gate<br><code>ask_question</code> (Hard Stop)"]
     D --> E["5. Execution & Verification<br><code>gh issue/pr create --body-file</code>"]
@@ -62,16 +70,16 @@ doing any work:
 
 ### Step 2: Repository Orientation
 
-Before drafting, run the bundled orientation tool to inspect the target
-repository's maintainers, title prefixes, label vocabulary, and native
-templates:
+Before drafting, run `kscripts gh-orient` (or the bare `gh-orient` shim) to
+inspect the target repository's maintainers, title prefixes, label vocabulary,
+and native templates:
 
 ```bash
 # For a local git repository checkout:
-dart run skills/github-post/bin/orient.dart
+kscripts gh-orient --dir <path-to-repo>
 
 # For a remote repository (zero local clone required):
-dart run skills/github-post/bin/orient.dart -R invertase/melos
+kscripts gh-orient -R invertase/melos
 ```
 
 - **What it gathers**:
@@ -94,10 +102,10 @@ before touching the GitHub CLI, explicitly namespaced by repository:
 
 - **For Issues**: `draft_github_<owner>_<repo>_issue.md` _(e.g.,
   `draft_github_invertase_melos_issue.md` or
-  `draft_github_kevmoo_kevmoo_skills_issue.md`)_
+  `draft_github_kevmoo_scripts_dart_issue.md`)_
 - **For Pull Requests**: `draft_github_<owner>_<repo>_pr.md` _(e.g.,
   `draft_github_invertase_melos_pr.md` or
-  `draft_github_kevmoo_kevmoo_skills_pr.md`)_
+  `draft_github_kevmoo_scripts_dart_pr.md`)_
 
 Always provide `ArtifactMetadata` with `RequestFeedback: true` so the user can
 review the rendered draft directly in the UI.
@@ -129,8 +137,7 @@ seconds to triage. Strictly enforce:
 ### Step 4: Mandatory Approval Gate (Hard Stop)
 
 Before running `gh issue create` or `gh pr create`, the agent MUST halt
-execution and prompt the user for explicit confirmation using the `ask_question`
-tool.
+execution and prompt the user for explicit confirmation using `ask_question`.
 
 ```dart
 // Example confirmation prompt
