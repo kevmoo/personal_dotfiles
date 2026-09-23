@@ -230,7 +230,6 @@ class SkillsUpkeeper implements Upkeeper {
   /// using `git status --porcelain -u -- .agents`.
   @visibleForTesting
   Future<List<String>> uncommittedSkillFiles(String home) async {
-    normalizeSkillLock(home);
     final gitDir = p.join(home, '.dotfiles');
     if (!Directory(gitDir).existsSync()) return const [];
     try {
