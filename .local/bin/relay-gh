@@ -1,0 +1,48 @@
+#!/bin/sh
+# Repo-pinned `gh issue` wrapper for the public-safe agent relay.
+#
+# Principles:
+#   1. The repository is hardcoded and cannot be overridden. Any -R/--repo
+#      argument is refused rather than silently ignored, because `gh` honors
+#      the LAST -R it sees -- a trailing override would otherwise escape the pin.
+#   2. Only `issue` subcommands needed by the relay workflow are permitted.
+#   3. No flag or argument rewriting beyond injecting -R.
+#
+# Exists so relay traffic can be allowlisted in Claude Code settings
+# (`Bash(relay-gh:*)`) without granting write access to every GitHub repo.
+set -eu
+
+REPO='kevmoo/agent-relay'
+
+usage() {
+  echo "usage: relay-gh issue <view|list|comment|create|close|reopen> [args...]" >&2
+  echo "       (repo is pinned to $REPO)" >&2
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    -R*|--repo|--repo=*)
+      echo "relay-gh: refusing explicit repo override ('$arg'); $REPO is pinned." >&2
+      exit 2
+      ;;
+  esac
+done
+
+if [ "${1:-}" != 'issue' ]; then
+  echo "relay-gh: only 'issue' commands are permitted (got '${1:-}')." >&2
+  usage
+  exit 2
+fi
+
+case "${2:-}" in
+  view|list|comment|create|close|reopen) ;;
+  *)
+    echo "relay-gh: subcommand '${2:-}' is not permitted." >&2
+    usage
+    exit 2
+    ;;
+esac
+
+subcommand="$2"
+shift 2
+exec gh issue "$subcommand" -R "$REPO" "$@"
