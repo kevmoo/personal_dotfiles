@@ -457,10 +457,13 @@ if [[ "$MODE" == "check" ]]; then
                to: ($parts[1] // "" | gsub("^\\s+|\\s+$"; ""))
              }
          else
-           { from: "unknown", to: $fallback_title }
+           {
+             from: (([ $t | capture("\\*\\*From:?\\*\\*:?\\s*(?<fr>[^\\n]+)").fr | gsub("^\\s+|\\s+$"; "") ][0]) // "unknown"),
+             to: (([ $t | capture("\\*\\*To:?\\*\\*:?\\s*(?<to>[^\\n]+)").to | gsub("^\\s+|\\s+$"; "") ][0]) // "all")
+           }
          end) as $actors
-      | (try ($t | capture("\\*\\*State\\*\\*:\\s*`?(?<st>[A-Z_]+)`?").st) catch "OPEN") as $state_tag
-      | (try ($t | capture("\\*\\*Time\\*\\*:\\s*`?(?<tm>[0-9]{4}-[0-9]{2}-[0-9]{2}[^`|\\n]+)`?").tm | gsub("^\\s+|\\s+$"; "")) catch "") as $time_pt
+      | (([ $t | capture("\\*\\*State\\*\\*:\\s*`?(?<st>[A-Z_]+)`?").st ][0]) // "OPEN") as $state_tag
+      | (([ $t | capture("\\*\\*Time\\*\\*:\\s*`?(?<tm>[0-9]{4}-[0-9]{2}-[0-9]{2}[^`|\\n]+)`?").tm | gsub("^\\s+|\\s+$"; "") ][0]) // "") as $time_pt
       | ([ $lines[] | select(test("^\\s*[-*]?\\s*\\[ \\]\\s+")) | gsub("^\\s*[-*]?\\s*\\[ \\]\\s+"; "") ]) as $todos
       | {
           from: $actors.from,
