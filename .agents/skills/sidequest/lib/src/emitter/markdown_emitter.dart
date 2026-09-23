@@ -137,22 +137,16 @@ class MarkdownEmitter {
     SubQuest sq,
     int lastCompletionOrder,
   ) {
-    final checkbox = switch (sq.status) {
-      TaskStatus.completed => '[x]',
-      TaskStatus.inProgress => '[-]',
-      TaskStatus.pending || TaskStatus.parked => '[ ]',
-    };
+    final isDone = sq.status == TaskStatus.completed;
+    final checkbox = isDone ? '[x]' : '[ ]';
     final tag = _orderTag(sq.completionOrder, lastCompletionOrder);
-    final prefixIcon = sq.status == TaskStatus.parked ? '🎒 🛡️' : '🛡️';
-    final statusSuffix = switch (sq.status) {
-      TaskStatus.completed => ' -> *Done*',
-      TaskStatus.inProgress => ' *(IN PROGRESS)*',
-      TaskStatus.parked => ' *(PARKED)*',
-      TaskStatus.pending => '',
-    };
+    final inProgressTag = (!isDone && sq.status == TaskStatus.inProgress)
+        ? ' *(IN PROGRESS)*'
+        : '';
+    final doneTag = isDone ? ' -> *Done*' : '';
 
     buffer.writeln(
-      '* $checkbox $tag$prefixIcon **Sub-Quest ${sq.id}:** ${sq.title}$statusSuffix',
+      '* $checkbox $tag🛡️ **Sub-Quest ${sq.id}:** ${sq.title}$inProgressTag$doneTag',
     );
 
     for (final item in sq.items) {
@@ -166,11 +160,7 @@ class MarkdownEmitter {
     int lastCompletionOrder,
   ) {
     final isDone = item.status == TaskStatus.completed;
-    final checkbox = switch (item.status) {
-      TaskStatus.completed => '[x]',
-      TaskStatus.inProgress => '[-]',
-      TaskStatus.pending || TaskStatus.parked => '[ ]',
-    };
+    final checkbox = isDone ? '[x]' : '[ ]';
     final tag = _orderTag(item.completionOrder, lastCompletionOrder);
     final isBlocker = item.type == TaskType.blocker;
     final label = isBlocker ? 'Blocker' : 'Step';
@@ -186,19 +176,7 @@ class MarkdownEmitter {
         '  * $checkbox $tag$icon ~~*$label ${item.id}:* ${item.title}~~ -> *$doneLabel*',
       );
     } else {
-      final statusPrefix = switch (item.status) {
-        TaskStatus.inProgress => '⚡ ',
-        TaskStatus.parked => '🎒 ',
-        TaskStatus.pending || TaskStatus.completed => '',
-      };
-      final statusSuffix = switch (item.status) {
-        TaskStatus.inProgress => ' *(IN PROGRESS)*',
-        TaskStatus.parked => ' *(PARKED)*',
-        TaskStatus.pending || TaskStatus.completed => '',
-      };
-      buffer.writeln(
-        '  * $checkbox $statusPrefix$icon *$label ${item.id}:* ${item.title}$statusSuffix',
-      );
+      buffer.writeln('  * $checkbox $icon *$label ${item.id}:* ${item.title}');
     }
   }
 

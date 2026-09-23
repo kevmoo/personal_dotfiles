@@ -50,12 +50,9 @@ void printSubQuests(List<SubQuest> subQuests, int lastCompletionOrder) {
 
   stdout.writeln('   Sub-Quests & Steps:');
   for (final sq in subQuests) {
-    final doneStr = switch (sq.status) {
-      TaskStatus.completed => '✔ (Done)',
-      TaskStatus.inProgress => '⏳ (In Progress)',
-      TaskStatus.pending => '🗓️ (Pending)',
-      TaskStatus.parked => '🎒 (Parked)',
-    };
+    final doneStr = sq.status == TaskStatus.completed
+        ? '✔ (Done)'
+        : '⏳ (In Progress)';
     stdout.writeln('     🛡️  Sub-Quest ${sq.id}: "${sq.title}" $doneStr');
     for (final item in sq.items) {
       _printTaskItem(item, lastCompletionOrder);
@@ -64,12 +61,7 @@ void printSubQuests(List<SubQuest> subQuests, int lastCompletionOrder) {
 }
 
 void _printTaskItem(TaskItem item, int lastCompletionOrder) {
-  final itemDone = switch (item.status) {
-    TaskStatus.completed => '✔',
-    TaskStatus.inProgress => '▶',
-    TaskStatus.parked => '🎒',
-    TaskStatus.pending => ' ',
-  };
+  final itemDone = item.status == TaskStatus.completed ? '✔' : ' ';
   final icon = item.type == TaskType.blocker ? '👾' : '👣';
   final order = item.completionOrder != null
       ? (item.completionOrder == lastCompletionOrder
@@ -77,13 +69,8 @@ void _printTaskItem(TaskItem item, int lastCompletionOrder) {
             : '[#${item.completionOrder}]')
       : '';
   final orderStr = order.isNotEmpty ? '$order ' : '';
-  final statusSuffix = switch (item.status) {
-    TaskStatus.inProgress => ' (IN PROGRESS)',
-    TaskStatus.parked => ' (PARKED)',
-    TaskStatus.pending || TaskStatus.completed => '',
-  };
   stdout.writeln(
-    '        [$itemDone] $orderStr$icon ${item.id}: "${item.title}"$statusSuffix',
+    '        [$itemDone] $orderStr$icon ${item.id}: "${item.title}"',
   );
 }
 
@@ -185,102 +172,9 @@ ItemCompleteResult _completeSideQuest(SideQuest sq, String id, int nextOrder) {
   return ItemCompleteResult.completedWithOrder;
 }
 
-@internal
-void syncParentOnChildStatusChange(
-  SidequestData data,
-  MainQuest quest,
-  SubQuest sub, {
-  required TaskStatus childStatus,
-}) {
-  if (childStatus == TaskStatus.inProgress) {
-    if (quest.status == QuestStatus.completed) {
-      quest.status = QuestStatus.active;
-    }
-    if (sub.status != TaskStatus.inProgress) {
-      final hadOrder = sub.completionOrder != null;
-      sub.status = TaskStatus.inProgress;
-      sub.completionOrder = null;
-      if (hadOrder) recalculateMaxCompletionOrder(data);
-    }
-    return;
-  }
-
-  if (childStatus != TaskStatus.completed &&
-      sub.status == TaskStatus.completed) {
-    if (quest.status == QuestStatus.completed) {
-      quest.status = QuestStatus.active;
-    }
-    sub.completionOrder = null;
-    sub.status = sub.items.any((i) => i.status == TaskStatus.inProgress)
-        ? TaskStatus.inProgress
-        : TaskStatus.pending;
-    recalculateMaxCompletionOrder(data);
-  }
-}
-
-@internal
-bool startSingleItem(SidequestData data, String id) {
-  for (final q in data.quests) {
-    if (_startQuest(data, q, id)) return true;
-  }
-
-  for (final sq in data.globalSideQuests) {
-    if (sq.id == id) {
-      sq.status = SideQuestStatus.active;
-      sq.completionOrder = null;
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool _startQuest(SidequestData data, MainQuest q, String id) {
-  if (q.id == id) {
-    q.status = QuestStatus.active;
-    return true;
-  }
-  for (final sq in q.subQuests) {
-    if (_startSubQuest(data, q, sq, id)) return true;
-  }
-  for (final sq in q.sideQuests) {
-    if (sq.id == id) {
-      sq.status = SideQuestStatus.active;
-      sq.completionOrder = null;
-      return true;
-    }
-  }
-  return false;
-}
-
-bool _startSubQuest(SidequestData data, MainQuest q, SubQuest sq, String id) {
-  if (sq.id == id) {
-    if (q.status == QuestStatus.completed) {
-      q.status = QuestStatus.active;
-    }
-    sq.status = TaskStatus.inProgress;
-    sq.completionOrder = null;
-    return true;
-  }
-  for (final item in sq.items) {
-    if (item.id == id) {
-      item.status = TaskStatus.inProgress;
-      item.completionOrder = null;
-      syncParentOnChildStatusChange(
-        data,
-        q,
-        sq,
-        childStatus: TaskStatus.inProgress,
-      );
-      return true;
-    }
-  }
-  return false;
-}
-
 bool reopenSingleItem(SidequestData data, String id) {
   for (final q in data.quests) {
-    if (_reopenQuest(data, q, id)) return true;
+    if (_reopenQuest(q, id)) return true;
   }
 
   for (final sq in data.globalSideQuests) {
@@ -294,48 +188,29 @@ bool reopenSingleItem(SidequestData data, String id) {
   return false;
 }
 
-bool _reopenQuest(SidequestData data, MainQuest q, String id) {
+bool _reopenQuest(MainQuest q, String id) {
   if (q.id == id) {
     q.status = QuestStatus.active;
     return true;
   }
   for (final sq in q.subQuests) {
-    if (_reopenSubQuest(data, q, sq, id)) return true;
+    if (sq.id == id) {
+      sq.status = TaskStatus.inProgress;
+      sq.completionOrder = null;
+      return true;
+    }
+    for (final item in sq.items) {
+      if (item.id == id) {
+        item.status = TaskStatus.pending;
+        item.completionOrder = null;
+        return true;
+      }
+    }
   }
   for (final sq in q.sideQuests) {
     if (sq.id == id) {
       sq.status = SideQuestStatus.active;
       sq.completionOrder = null;
-      return true;
-    }
-  }
-  return false;
-}
-
-bool _reopenSubQuest(SidequestData data, MainQuest q, SubQuest sq, String id) {
-  if (sq.id == id) {
-    if (q.status == QuestStatus.completed) {
-      q.status = QuestStatus.active;
-    }
-    sq.status = TaskStatus.pending;
-    sq.completionOrder = null;
-    for (final item in sq.items) {
-      if (item.status == TaskStatus.inProgress) {
-        item.status = TaskStatus.pending;
-      }
-    }
-    return true;
-  }
-  for (final item in sq.items) {
-    if (item.id == id) {
-      item.status = TaskStatus.pending;
-      item.completionOrder = null;
-      syncParentOnChildStatusChange(
-        data,
-        q,
-        sq,
-        childStatus: TaskStatus.pending,
-      );
       return true;
     }
   }
@@ -397,7 +272,6 @@ int _countBatchMapOperations(Map<String, dynamic> decoded) {
   }
   final mapOps = [
     decoded['addSubQuest'],
-    decoded['start'],
     decoded['complete'],
     decoded['vcs'],
   ].whereType<Object>().length;
@@ -439,22 +313,6 @@ void _applyCompletionResult(
 
 int _applyLegacyBatchMap(SidequestData data, Map<String, dynamic> map) {
   int count = 0;
-  if (map['addSubQuest'] case final Map<String, dynamic> sqMap) {
-    _applyBatchSubQuestAdd(data, sqMap, defaultTitle: 'New SubQuest');
-    count++;
-  }
-
-  if (map['start'] case final List<dynamic> startIds) {
-    for (final rawId in startIds) {
-      final id = rawId.toString();
-      if (!startSingleItem(data, id)) {
-        throw StateError('Item "$id" not found for start.');
-      }
-      count++;
-    }
-    recalculateMaxCompletionOrder(data);
-  }
-
   if (map['complete'] case final List<dynamic> completeIds) {
     for (final rawId in completeIds) {
       final id = rawId.toString();
@@ -463,6 +321,11 @@ int _applyLegacyBatchMap(SidequestData data, Map<String, dynamic> map) {
       _applyCompletionResult(data, id, result, nextOrder);
       count++;
     }
+  }
+
+  if (map['addSubQuest'] case final Map<String, dynamic> sqMap) {
+    _applyBatchSubQuestAdd(data, sqMap, defaultTitle: 'New SubQuest');
+    count++;
   }
 
   if (map['vcs'] case final Map<String, dynamic> vcsMap) {
@@ -479,12 +342,8 @@ void _applyBatchOp(SidequestData data, Map<String, dynamic> op) {
   switch (type) {
     case 'quest_add':
       _applyBatchQuestAdd(data, op);
-    case 'start':
-      _applyBatchStart(data, op);
     case 'complete':
       _applyBatchComplete(data, op);
-    case 'reopen':
-      _applyBatchReopen(data, op);
     case 'subquest_add':
       _applyBatchSubQuestAdd(data, op);
     case 'step_add':
@@ -533,62 +392,20 @@ void _applyBatchQuestAdd(SidequestData data, Map<String, dynamic> op) {
   );
 }
 
-List<String> _extractBatchIds(
-  Map<String, dynamic> op, {
-  required String action,
-}) {
+void _applyBatchComplete(SidequestData data, Map<String, dynamic> op) {
   final rawIds = op['ids'] ?? op['id'];
   final idList = rawIds is List
       ? rawIds.map((e) => e.toString().trim()).toList()
       : [rawIds?.toString().trim() ?? ''];
   final validIds = idList.where((s) => s.isNotEmpty).toList();
   if (validIds.isEmpty) {
-    throw StateError('No IDs specified for $action operation.');
+    throw StateError('No IDs specified for complete operation.');
   }
-  return validIds;
-}
-
-void _applyBatchStart(SidequestData data, Map<String, dynamic> op) {
-  final validIds = _extractBatchIds(op, action: 'start');
-  for (final id in validIds) {
-    if (!startSingleItem(data, id)) {
-      throw StateError('Item "$id" not found for start.');
-    }
-  }
-  recalculateMaxCompletionOrder(data);
-}
-
-void _applyBatchReopen(SidequestData data, Map<String, dynamic> op) {
-  final validIds = _extractBatchIds(op, action: 'reopen');
-  for (final id in validIds) {
-    if (!reopenSingleItem(data, id)) {
-      throw StateError('Item "$id" not found for reopen.');
-    }
-  }
-  recalculateMaxCompletionOrder(data);
-}
-
-void _applyBatchComplete(SidequestData data, Map<String, dynamic> op) {
-  final validIds = _extractBatchIds(op, action: 'complete');
   for (final id in validIds) {
     final nextOrder = data.lastCompletionOrder + 1;
     final result = completeSingleItem(data, id, nextOrder);
     _applyCompletionResult(data, id, result, nextOrder);
   }
-}
-
-TaskStatus _resolveBatchTaskStatus(
-  Map<String, dynamic> op, {
-  required TaskStatus defaultStatus,
-}) {
-  if (op['start'] == true) {
-    return TaskStatus.inProgress;
-  }
-  final rawStatus = op['status']?.toString();
-  if (rawStatus != null && rawStatus.trim().isNotEmpty) {
-    return TaskStatus.fromJson(rawStatus.trim());
-  }
-  return defaultStatus;
 }
 
 void _applyBatchSubQuestAdd(
@@ -602,11 +419,9 @@ void _applyBatchSubQuestAdd(
   final quest = _requireQuest(data, qId);
   final nextSubNumber = nextSuffixNumber(quest.subQuests.map((sq) => sq.id));
   final subId = '$qId.$nextSubNumber';
-  final status = _resolveBatchTaskStatus(op, defaultStatus: TaskStatus.pending);
-  if (quest.status == QuestStatus.completed && status != TaskStatus.completed) {
-    quest.status = QuestStatus.active;
-  }
-  quest.subQuests.add(SubQuest(id: subId, title: title, status: status));
+  quest.subQuests.add(
+    SubQuest(id: subId, title: title, status: TaskStatus.inProgress),
+  );
 }
 
 void _applyBatchStepAdd(SidequestData data, Map<String, dynamic> op) {
@@ -615,7 +430,7 @@ void _applyBatchStepAdd(SidequestData data, Map<String, dynamic> op) {
     op,
     type: TaskType.step,
     defaultTitle: 'Step',
-    status: _resolveBatchTaskStatus(op, defaultStatus: TaskStatus.pending),
+    status: TaskStatus.pending,
   );
 }
 
@@ -625,7 +440,7 @@ void _applyBatchBlockerAdd(SidequestData data, Map<String, dynamic> op) {
     op,
     type: TaskType.blocker,
     defaultTitle: 'Blocker',
-    status: _resolveBatchTaskStatus(op, defaultStatus: TaskStatus.inProgress),
+    status: TaskStatus.inProgress,
   );
 }
 
@@ -643,11 +458,10 @@ void _applyBatchTaskItemAdd(
       '1.1';
   final title =
       op['title']?.toString() ?? op['description']?.toString() ?? defaultTitle;
-  final found = findQuestAndSubQuest(data, subId, silent: true);
-  if (found == null) {
+  final sub = findSubQuest(data, subId, silent: true);
+  if (sub == null) {
     throw StateError('Sub-Quest "$subId" not found.');
   }
-  final (quest, sub) = found;
   final nextNumber = nextSuffixNumber(sub.items.map((i) => i.id));
   sub.items.add(
     TaskItem(
@@ -657,7 +471,6 @@ void _applyBatchTaskItemAdd(
       status: status,
     ),
   );
-  syncParentOnChildStatusChange(data, quest, sub, childStatus: status);
 }
 
 @internal
@@ -726,26 +539,19 @@ MainQuest? findQuest(SidequestData data, String id, {bool silent = false}) {
 }
 
 @internal
-(MainQuest, SubQuest)? findQuestAndSubQuest(
+SubQuest? findSubQuest(
   SidequestData data,
   String subId, {
   bool silent = false,
 }) {
   for (final q in data.quests) {
     for (final sq in q.subQuests) {
-      if (sq.id == subId) return (q, sq);
+      if (sq.id == subId) return sq;
     }
   }
   if (!silent) stderr.writeln('Error: Sub-Quest "$subId" not found.');
   return null;
 }
-
-@internal
-SubQuest? findSubQuest(
-  SidequestData data,
-  String subId, {
-  bool silent = false,
-}) => findQuestAndSubQuest(data, subId, silent: silent)?.$2;
 
 @internal
 int nextSuffixNumber(Iterable<String> ids) =>

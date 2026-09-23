@@ -79,7 +79,7 @@ class SubQuest {
   SubQuest({
     required this.id,
     required this.title,
-    this.status = TaskStatus.pending,
+    this.status = TaskStatus.inProgress,
     this.completionOrder,
     List<TaskItem>? items,
   }) : items = items ?? [];
@@ -96,7 +96,7 @@ class SubQuest {
     return SubQuest(
       id: json['id'] as String,
       title: json['title'] as String,
-      status: TaskStatus.fromJson(json['status'] as String? ?? 'pending'),
+      status: TaskStatus.fromJson(json['status'] as String? ?? 'in_progress'),
       completionOrder: json['completionOrder'] as int?,
       items:
           (json['items'] as List<dynamic>?)
