@@ -18,3 +18,7 @@
 [hook "dart-format"]
 	event = pre-commit
 	command = ~/.config/git/hooks/dart_format_pre_commit.sh
+
+[hook "skill-lock-normalize"]
+	event = pre-commit
+	command = ~/.config/git/hooks/skill_lock_normalize_pre_commit.sh
