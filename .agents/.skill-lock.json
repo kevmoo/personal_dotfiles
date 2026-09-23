@@ -96,9 +96,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "571cff5b2431cb9fe54ec1bd60b25cd914e20b50",
+      "skillFolderHash": "a303fd88583928cbda07f8cd372d18cfb0541954",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-09-18T21:07:13.765Z"
+      "updatedAt": "2026-09-23T05:29:53.342Z"
     },
     "gws-calendar": {
       "source": "googleworkspace/cli",
