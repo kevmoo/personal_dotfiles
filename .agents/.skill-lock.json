@@ -8,7 +8,7 @@
       "skillPath": "skills/gerrit-stacked-cls/SKILL.md",
       "skillFolderHash": "783bde360705a4e8ef192279b771dac811ecd4f9",
       "installedAt": "2026-06-05T01:21:48.061Z",
-      "updatedAt": "2026-09-14T14:43:57.397Z"
+      "updatedAt": "2026-06-05T01:21:48.061Z"
     },
     "github-pr-triage": {
       "source": "kevmoo/kevmoo_skills",
@@ -17,7 +17,7 @@
       "skillPath": "skills/github-pr-triage/SKILL.md",
       "skillFolderHash": "87e0cef5f636f483083cb5a7a99347f91420d44d",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-09-21T19:51:53.033Z"
+      "updatedAt": "2026-06-05T01:21:48.062Z"
     },
     "gob-curl": {
       "source": "kevmoo/kevmoo_skills",
@@ -26,7 +26,7 @@
       "skillPath": "skills/gob-curl/SKILL.md",
       "skillFolderHash": "a819bcd5168e8ba1d585d12fc35c9e3fe9335a27",
       "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-09-14T14:44:01.258Z"
+      "updatedAt": "2026-06-05T01:21:48.062Z"
     },
     "pr-loop": {
       "source": "kevmoo/kevmoo_skills",
@@ -35,7 +35,7 @@
       "skillPath": "skills/pr-loop/SKILL.md",
       "skillFolderHash": "47019a028fc25c255c09c35bb07fc2f93afc2f99",
       "installedAt": "2026-06-25T18:17:01.797Z",
-      "updatedAt": "2026-09-21T19:51:54.571Z"
+      "updatedAt": "2026-06-25T18:17:01.797Z"
     },
     "grilling": {
       "source": "mattpocock/skills",
@@ -44,7 +44,7 @@
       "skillPath": "skills/productivity/grilling/SKILL.md",
       "skillFolderHash": "f0732035b8b1b60ae39454e4191caef32fa91903",
       "installedAt": "2026-06-25T18:29:07.130Z",
-      "updatedAt": "2026-08-22T19:50:12.915Z"
+      "updatedAt": "2026-06-25T18:29:07.130Z"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
@@ -53,7 +53,7 @@
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
       "skillFolderHash": "388c9822641805ca2dcd5038e68a1d5282437ee5",
       "installedAt": "2026-06-25T22:48:36.815Z",
-      "updatedAt": "2026-08-22T19:50:14.580Z"
+      "updatedAt": "2026-06-25T22:48:36.815Z"
     },
     "just-brainstorm": {
       "source": "kevmoo/kevmoo_skills",
@@ -62,7 +62,7 @@
       "skillPath": "skills/just-brainstorm/SKILL.md",
       "skillFolderHash": "49901e12ebef8692ac77da71d9c4cbafc5240033",
       "installedAt": "2026-06-29T19:19:37.574Z",
-      "updatedAt": "2026-09-14T14:44:05.323Z"
+      "updatedAt": "2026-06-29T19:19:37.574Z"
     },
     "markdown-long-lines": {
       "source": "kevmoo/kevmoo_skills",
@@ -71,7 +71,7 @@
       "skillPath": "skills/markdown-long-lines/SKILL.md",
       "skillFolderHash": "98af8aab9d84337d534f3ec95cfcce2d53ae9b6e",
       "installedAt": "2026-06-29T19:19:37.575Z",
-      "updatedAt": "2026-09-14T14:44:07.251Z"
+      "updatedAt": "2026-06-29T19:19:37.575Z"
     },
     "quick-question": {
       "source": "kevmoo/kevmoo_skills",
@@ -80,7 +80,7 @@
       "skillPath": "skills/quick-question/SKILL.md",
       "skillFolderHash": "0f785dd6e5607bb620986b014482b07a8ab47dd7",
       "installedAt": "2026-06-29T19:19:37.575Z",
-      "updatedAt": "2026-09-14T14:44:09.144Z"
+      "updatedAt": "2026-06-29T19:19:37.575Z"
     },
     "clarify-confirm-continue": {
       "source": "kevmoo/kevmoo_skills",
@@ -89,7 +89,7 @@
       "skillPath": "skills/clarify-confirm-continue/SKILL.md",
       "skillFolderHash": "b769443ff03c9a8f0c7f5e2ebc6409ca5dcc44b4",
       "installedAt": "2026-07-07T21:40:25.936Z",
-      "updatedAt": "2026-09-14T14:44:10.974Z"
+      "updatedAt": "2026-07-07T21:40:25.936Z"
     },
     "sidequest": {
       "source": "kevmoo/kevmoo_skills",
@@ -98,7 +98,7 @@
       "skillPath": "skills/sidequest/SKILL.md",
       "skillFolderHash": "a303fd88583928cbda07f8cd372d18cfb0541954",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-09-23T05:46:22.289Z"
+      "updatedAt": "2026-07-12T03:02:22.429Z"
     },
     "gws-calendar": {
       "source": "googleworkspace/cli",
@@ -107,7 +107,7 @@
       "skillPath": "skills/gws-calendar/SKILL.md",
       "skillFolderHash": "62a27859dbdf798c1f7288d04750e743283a6b4f",
       "installedAt": "2026-07-16T04:42:12.466Z",
-      "updatedAt": "2026-07-16T04:43:09.393Z"
+      "updatedAt": "2026-07-16T04:42:12.466Z"
     },
     "new-worktree": {
       "source": "kevmoo/kevmoo_skills",
@@ -116,7 +116,7 @@
       "skillPath": "skills/new-worktree/SKILL.md",
       "skillFolderHash": "3c468ebb11c9371d92c22ffa3a30510642bfae90",
       "installedAt": "2026-08-03T20:47:42.350Z",
-      "updatedAt": "2026-09-14T14:44:14.977Z"
+      "updatedAt": "2026-08-03T20:47:42.350Z"
     },
     "dart-cleanup": {
       "source": "kevmoo/kevmoo_skills",
@@ -125,7 +125,7 @@
       "skillPath": "skills/dart-cleanup/SKILL.md",
       "skillFolderHash": "072d04f7fdb51f031a2fd297a2ff8a0fafb25abf",
       "installedAt": "2026-08-08T05:46:03.701Z",
-      "updatedAt": "2026-09-22T20:56:18.972Z"
+      "updatedAt": "2026-08-08T05:46:03.701Z"
     },
     "sem-cli": {
       "source": "kevmoo/kevmoo_skills",
@@ -134,7 +134,7 @@
       "skillPath": "skills/sem-cli/SKILL.md",
       "skillFolderHash": "55b229e00db5b851e522b26c4fb42a2b689b8741",
       "installedAt": "2026-09-07T00:11:12.877Z",
-      "updatedAt": "2026-09-14T14:44:17.729Z"
+      "updatedAt": "2026-09-07T00:11:12.877Z"
     },
     "review-pr": {
       "source": "kevmoo/kevmoo_skills",
@@ -143,7 +143,7 @@
       "skillPath": "skills/review-pr/SKILL.md",
       "skillFolderHash": "b3db268affc690acb625a432469b57432f1ecbd3",
       "installedAt": "2026-09-13T00:09:48.443Z",
-      "updatedAt": "2026-09-14T14:44:19.244Z"
+      "updatedAt": "2026-09-13T00:09:48.443Z"
     },
     "github-post": {
       "source": "kevmoo/kevmoo_skills",
@@ -161,7 +161,7 @@
       "skillPath": "skills/duckdb/SKILL.md",
       "skillFolderHash": "03ba0823ae5b909f2bfcb379fa8810661045d03a",
       "installedAt": "2026-09-19T23:34:39.724Z",
-      "updatedAt": "2026-09-21T04:47:50.462Z"
+      "updatedAt": "2026-09-19T23:34:39.724Z"
     },
     "pr-cleanup": {
       "source": "kevmoo/scripts.dart",
@@ -170,7 +170,7 @@
       "skillPath": "skills/pr-cleanup/SKILL.md",
       "skillFolderHash": "88b2c7c897053bd02f7686c11bd68fdf5f4168d0",
       "installedAt": "2026-09-22T23:18:55.708Z",
-      "updatedAt": "2026-09-23T02:31:32.309Z"
+      "updatedAt": "2026-09-22T23:18:55.708Z"
     },
     "repo-align": {
       "source": "kevmoo/scripts.dart",
@@ -179,7 +179,7 @@
       "skillPath": "skills/repo-align/SKILL.md",
       "skillFolderHash": "1fda74f99f3975c9155c30a9093390c0c14dc9cf",
       "installedAt": "2026-09-22T23:18:55.710Z",
-      "updatedAt": "2026-09-23T02:31:33.855Z"
+      "updatedAt": "2026-09-22T23:18:55.710Z"
     }
   },
   "dismissed": {
