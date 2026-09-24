@@ -100,15 +100,26 @@ also enforced by each agent's permission settings — these rules state intent.
       enclosed **inside** the brackets `[]` (e.g., `[**bold link**](url)` or `[`
       `ClassName` `](url)`). Never wrap the link text brackets or the entire
       link in styling markers.
-- **Markdown Tables**: When displaying structured data in markdown tables, keep
-  each row on a single continuous line. Do not insert physical line breaks
-  (`\n`) inside cells. Let the Markdown renderer handle column wrapping
-  automatically to preserve standard table structure.
-  - **mdformat Protection**: In Google3/Piper workspaces, the automated
-    formatter (`mdformat` / `jj fix`) aggressively wraps table rows exceeding 80
-    columns into broken multi-line colon (`:`) syntax. To prevent this, always
-    wrap tables exceeding 80 columns in `<!-- mdformat off -->` and
-    `<!-- mdformat on -->` block guards.
+- **Markdown Tables & GitHub vs. Google3 Formatting**: When displaying
+  structured data in markdown tables, keep each row on a single continuous line.
+  Do not insert physical line breaks (`\n`) inside cells. Let the Markdown
+  renderer handle column wrapping automatically to preserve standard table
+  structure.
+  - **GitHub Flavored Markdown (`~/github`)**: Formatted by Prettier (`mdf`).
+    1. **GitHub Alerts (`> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`,
+       `> [!WARNING]`, `> [!CAUTION]`)**: GitHub requires `[!TYPE]` on its own
+       line, and Prettier (`--prose-wrap always`) collapses `> [!TYPE]\n> Text`
+       onto one line unless separated by an empty blockquote line (`>`). Always
+       write `> [!TYPE]\n>\n> Text` (with a blank `>` line between the tag and
+       body); never write single-line `> [!TYPE] Text`.
+    2. **No Google3 Directives on GitHub**: Never insert
+       `<!-- mdformat off -->`, `<!-- mdformat on -->`, or `[TOC]` in `~/github`
+       files or CLI `--markdown` outputs.
+  - **Google3 / Piper (`mdformat` Protection)**: In Google3/Piper workspaces
+    only, the automated formatter (`mdformat` / `jj fix`) aggressively wraps
+    table rows exceeding 80 columns into broken multi-line colon (`:`) syntax.
+    To prevent this, wrap tables exceeding 80 columns in `<!-- mdformat off -->`
+    and `<!-- mdformat on -->` block guards.
 - **Terse, Bulleted Output**: Default to compact bullet points over
   conversational prose. Fragment sentences are encouraged. Skip conversational
   filler ("Sure!", "I'd be glad to help..."). Optimize for token efficiency,
@@ -142,7 +153,13 @@ also enforced by each agent's permission settings — these rules state intent.
   1. **Wait (Zero-Tool Yield)**: If you still need the command's output,
      immediately terminate your turn with **zero** tool calls. The runtime
      automatically resumes execution upon process termination. Never execute
-     bash `sleep` loops or manual polling turns.
+     bash `sleep` loops, manual polling turns, or
+     `schedule(DurationSeconds=..., TimerCondition="<task-id>")` timers on newly
+     launched background tasks (pass `NotificationTimeoutSeconds` directly to
+     `run_command` instead; reserve
+     `schedule(CronExpression, MaxIterations, IsDaemon=false)` for 10m–6h
+     MCP/IAM propagation waits and `/automation` sidecars for standing
+     schedules).
   2. **Pivot (`manage_task(kill)` / `TaskStop` First)**: If you decide the
      command is too slow/stuck and want to pivot to another tool (`code_search`
      / `Grep`, `view_file` / `Read`, or a revised command), you **MUST** call
