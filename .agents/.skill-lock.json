@@ -132,7 +132,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/pr-cleanup/SKILL.md",
-      "skillFolderHash": "a8b68c9cbb589fa85a2b18009bdd35d3f80f8809",
+      "skillFolderHash": "9fe1af57c7d850d06b64195196aa7ff6b04d3e64",
       "installedAt": "2026-09-22T23:18:55.708Z",
       "updatedAt": "2026-09-22T23:18:55.708Z"
     },
@@ -168,7 +168,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/pr-triage/SKILL.md",
-      "skillFolderHash": "133f68004a9575f38826ff239677333d7562f72b",
+      "skillFolderHash": "0abb5ca33d5a9548574b3f2415ec8154787ebbff",
       "installedAt": "2026-09-23T23:36:39.383Z",
       "updatedAt": "2026-09-23T23:36:39.383Z"
     }
