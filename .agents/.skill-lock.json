@@ -10,15 +10,6 @@
       "installedAt": "2026-06-05T01:21:48.061Z",
       "updatedAt": "2026-06-05T01:21:48.061Z"
     },
-    "gob-curl": {
-      "source": "kevmoo/kevmoo_skills",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
-      "skillPath": "skills/gob-curl/SKILL.md",
-      "skillFolderHash": "a819bcd5168e8ba1d585d12fc35c9e3fe9335a27",
-      "installedAt": "2026-06-05T01:21:48.062Z",
-      "updatedAt": "2026-06-05T01:21:48.062Z"
-    },
     "grilling": {
       "source": "mattpocock/skills",
       "sourceType": "github",

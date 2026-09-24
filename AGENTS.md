@@ -127,6 +127,13 @@ also enforced by each agent's permission settings — these rules state intent.
     untracked file noise) and `git diff --name-status` (file names and status
     only without full patch payloads) to conserve token budget and prevent
     terminal pager deadlocks.
+  - **Single-Quoted Heredocs for Markdown Arguments (No Backticks in `"..."`)**:
+    Never pass Markdown backticks (`` `Identifier` ``) inside double-quoted bash
+    strings (`git commit -m "..."`, `gh pr create --body "..."`,
+    `agentapi send-message "..."`); Bash executes `` `...` `` as command
+    substitution (`<Identifier>: command not found`) and strips the text. Always
+    pass multi-line or backtick-containing text via single-quoted heredocs
+    (`git commit -F - << 'EOF'`, `gh pr create --body-file - << 'EOF'`).
 - **Zero-Token Waiting & Kill-Before-Pivot (`WaitMsBeforeAsync` / Background
   Tasks)**: Whenever `run_command` (`WaitMsBeforeAsync`) or
   `Bash(run_in_background)` returns a running background task (`<task-id>`), the
@@ -211,6 +218,11 @@ Local Web App & UI Verification ("Show Me First"):
 
 ## GitHub PRs & Commit Messages
 
+- **Pre-PR Local CI Parity Gate (`pr-check`)**: Before pushing and running
+  `gh pr create` in `~/github/kevmoo/*` repositories (and enforced automatically
+  by `~/.local/bin/gh`), run `pr-check` (`kscripts pr-check`) to verify `-wip`
+  version bumps, `CHANGELOG.md`, `dart format`, `dart analyze --fatal-infos`,
+  `cognitive_complexity`, `@TestOn('vm')`, and `prettier` locally in one pass.
 - New PRs: `gh pr create -f` when the branch is exactly one commit ahead of
   base; otherwise write explicit `--title`/`--body`.
 - Single-commit branches become the PR title/body, so commit messages serve

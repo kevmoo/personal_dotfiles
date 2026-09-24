@@ -40,6 +40,9 @@ case "$PATH" in
   "$_user_path:"*) ;;
   *) export PATH="$_user_path:$PATH" ;;
 esac
+if [[ -d "$HOME/github/depot_tools" && ":$PATH:" != *":$HOME/github/depot_tools:"* ]]; then
+  export PATH="$PATH:$HOME/github/depot_tools"
+fi
 unset _user_path _dart_install_bin
 
 # Disable formatting/styling and paging for the AI agent (needs to be in .zshenv for non-interactive shell commands)

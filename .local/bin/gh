@@ -99,6 +99,23 @@ if [[ "$is_watch" -eq 1 ]]; then
   exit "$wrc"
 fi
 
+# Deterministic pre-PR local CI parity gate (`pr-check`) for `gh pr create` in `kevmoo/*` repos
+if [[ "$sub1" == "pr" && "$sub2" == "create" && "${GH_SKIP_PR_CHECK:-0}" != "1" ]]; then
+  repo_slug="$(resolve_github_repo)"
+  if [[ "$repo_slug" == kevmoo/* && "$repo_slug" != "kevmoo/personal_dotfiles" && "$repo_slug" != "kevmoo/agent-relay" ]]; then
+    PR_CHECK_BIN="$(command -v pr-check 2>/dev/null || echo "$HOME/.local/bin/pr-check")"
+    if [[ -x "$PR_CHECK_BIN" ]]; then
+      echo "🔍 [gh] Running pre-PR CI parity check ('pr-check') for $repo_slug..." >&2
+      if ! "$PR_CHECK_BIN" >&2; then
+        echo "" >&2
+        echo "🛑 [gh] 'gh pr create' blocked because 'pr-check' found local CI parity violations." >&2
+        echo "💡 Fix the violations above, commit, push, and re-run 'gh pr create' (or set GH_SKIP_PR_CHECK=1 to bypass)." >&2
+        exit 1
+      fi
+    fi
+  fi
+fi
+
 tmp_out=$(mktemp)
 tmp_err=$(mktemp)
 trap 'rm -f "$tmp_out" "$tmp_err"' EXIT
