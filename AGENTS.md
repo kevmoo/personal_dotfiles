@@ -153,13 +153,7 @@ also enforced by each agent's permission settings — these rules state intent.
   1. **Wait (Zero-Tool Yield)**: If you still need the command's output,
      immediately terminate your turn with **zero** tool calls. The runtime
      automatically resumes execution upon process termination. Never execute
-     bash `sleep` loops, manual polling turns, or
-     `schedule(DurationSeconds=..., TimerCondition="<task-id>")` timers on newly
-     launched background tasks (pass `NotificationTimeoutSeconds` directly to
-     `run_command` instead; reserve
-     `schedule(CronExpression, MaxIterations, IsDaemon=false)` for 10m–6h
-     MCP/IAM propagation waits and `/automation` sidecars for standing
-     schedules).
+     bash `sleep` loops or manual polling turns.
   2. **Pivot (`manage_task(kill)` / `TaskStop` First)**: If you decide the
      command is too slow/stuck and want to pivot to another tool (`code_search`
      / `Grep`, `view_file` / `Read`, or a revised command), you **MUST** call

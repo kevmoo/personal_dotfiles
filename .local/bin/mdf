@@ -18,6 +18,7 @@ ALERT_INLINE_RE = re.compile(
 ALERT_HEADER_RE = re.compile(
     r"^([ \t]*>[ \t]*\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\])[ \t]*$"
 )
+FENCE_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})(.*)$")
 
 for arg in sys.argv[1:]:
     if arg.startswith("-") or not os.path.isfile(arg) or not arg.endswith(".md"):
@@ -31,10 +32,25 @@ for arg in sys.argv[1:]:
     out = []
     i = 0
     changed = False
+    active_fence = None
     while i < len(lines):
         line = lines[i]
         nl = "\r\n" if line.endswith("\r\n") else ("\n" if line.endswith("\n") else "\n")
         stripped = line.rstrip("\r\n")
+        m_fence = FENCE_RE.match(stripped)
+        if m_fence:
+            fence = m_fence.group(1)
+            if active_fence is None:
+                active_fence = fence
+            elif fence.startswith(active_fence) and not m_fence.group(2).strip():
+                active_fence = None
+            out.append(line)
+            i += 1
+            continue
+        if active_fence is not None:
+            out.append(line)
+            i += 1
+            continue
         m_inline = ALERT_INLINE_RE.match(stripped)
         if m_inline:
             header, rest = m_inline.group(1), m_inline.group(2)
@@ -48,7 +64,7 @@ for arg in sys.argv[1:]:
         m_header = ALERT_HEADER_RE.match(stripped)
         if m_header and i + 1 < len(lines):
             next_stripped = lines[i + 1].rstrip("\r\n")
-            if re.match(r"^[ \t]*>[ \t]+\S", next_stripped):
+            if re.match(r"^[ \t]*>[ \t]*\S", next_stripped):
                 header = m_header.group(1)
                 prefix = header.split("[!")[0].rstrip()
                 out.append(line)
@@ -59,8 +75,11 @@ for arg in sys.argv[1:]:
         out.append(line)
         i += 1
     if changed:
-        with open(arg, "w", encoding="utf-8") as f:
-            f.write("".join(out))
+        try:
+            with open(arg, "w", encoding="utf-8") as f:
+                f.write("".join(out))
+        except OSError:
+            pass
 PY
 fi
 
