@@ -101,6 +101,41 @@ Hard boundaries first; working style after.
   screenshot in chat, and **never** prompt to commit/ship (`ask_question`) until
   the user has inspected the live UI.
 
+## Epistemic Grounding & Fact Discipline (Reporting, Planning & Memory)
+
+- **Three-Bucket Epistemic Separation (Never Conflate in Prose or Tables)**:
+  1. **`[SHIPPED / VERIFIED FACT]`** _(past/present tense: `shipped`, `landed`,
+     `measured`)_: Requires a verified primary artifact (`*submitted*` CL,
+     `MERGED` PR, published doc, or empirical benchmark).
+  2. **`[COMMITTED PLAN / IN-FLIGHT]`** _(progressive/future tense: `in review`,
+     `staging`, `targeting Q4`)_: Requires an open tracking handle (`#XXXX`,
+     `b/...`, `*pending*` CL, or open PR).
+  3. **`[SPECULATION / PROPOSAL / HYPOTHESIS]`** _(conditional tense:
+     `proposed`, `option to`, `unverified estimate`)_: Isolate in a separate
+     `Proposals & Open Questions` section or
+     `<topic>_projections_and_proposals.md` brain artifact—never interleave with
+     shipped facts or committed roadmaps in Piper/GRAD docs.
+- **Verb-to-Artifact Binding & Authorship Attribution**:
+  - Never use accomplishment verbs (`shipped`, `built`, `authored`, `resolved`,
+    `drove`, `spearheaded`) without verifying: (a) terminal state (`*submitted*`
+    / `MERGED`, never `*pending*` or unshared same-day drafts) and (b)
+    **author/reviewer provenance**.
+  - Explicitly distinguish: **`[YOUR_WORK]`** (authored/driven by `kevmoo`),
+    **`[TEAM_CONTRIB]`** (reviewed, guided, or unblocked by `kevmoo`), and
+    **`[ECOSYSTEM_REF]`** (teammate/external PRs/CLs tracked for awareness).
+    Never claim `[ECOSYSTEM_REF]` items as user deliverables.
+- **PM-OS & Charter Docs Are Aspirational Until Proven Shipped**:
+  - Treat `README.md`, `PRD.md`, `SCORECARD.md`, `pm-orient` briefings, and open
+    Dolt tasks as **target state / plans**, never as completed work, unless
+    backed by a `CLOSED` task + `*submitted*`/`MERGED` artifact. Exclude
+    `experimental/users/kevmoo/` PM-OS bookkeeping commits from engineering
+    impact reports unless asked about PM-OS tooling.
+- **Memory Provenance Gate (`~/memory/default/projects/*.md`)**:
+  - Prefix every PR, CL, or doc saved in project memory with `[YOUR_WORK]`,
+    `[TEAM_CONTRIB]`, or `[ECOSYSTEM_REF]` plus its state (`MERGED`, `OPEN`,
+    `DRAFT`). Never store unlabeled external PRs or speculative brainstorms as
+    facts.
+
 ## GitHub PRs & Package Versioning
 
 - **Pre-PR CI Parity (`pr-check`)**: Run `pr-check` (`kscripts pr-check`) before
