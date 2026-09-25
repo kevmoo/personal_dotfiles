@@ -85,8 +85,6 @@
 !.agents/skills/gerrit-stacked-cls/**
 !.agents/skills/gh-post/
 !.agents/skills/gh-post/**
-!.agents/skills/gob-curl/
-!.agents/skills/gob-curl/**
 !.agents/skills/grilling/
 !.agents/skills/grilling/**
 !.agents/skills/gws-calendar/
