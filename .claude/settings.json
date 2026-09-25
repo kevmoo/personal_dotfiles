@@ -20,7 +20,6 @@
       "Bash(gh pr checks:*)",
       "Bash(gh pr diff:*)",
       "Bash(gh repo view:*)",
-      "Bash(gh api:*)",
       "Bash(relay-whoami:*)",
       "Bash(~/.local/bin/relay-whoami:*)"
     ],
