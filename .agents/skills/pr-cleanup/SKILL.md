@@ -16,7 +16,9 @@ metadata:
 
 # PR & Worktree Cleanup Sweep (`pr-cleanup`)
 
-> [!NOTE] This skill targets the personal repository layout (`~/github` and
+> [!NOTE]
+>
+> This skill targets the personal repository layout (`~/github` and
 > `~/github/kevmoo/*`) and invokes the unified `kscripts` AOT CLI.
 
 ## Quick Start & Prerequisites
@@ -32,12 +34,14 @@ Thereafter `upkeep update dart_install` keeps it current -- it re-reads the
 source descriptor from the installed bundle's own `pubspec.lock` and reinstalls
 from the same remote.
 
-> [!WARNING] Do **not** run `dart install ~/github/kevmoo/scripts.dart`.
-> Installing from a local path builds whatever branch that checkout is on, and
-> it _replaces_ the `app-bundles/kevmoo_scripts/git/<sha>/` bundle with a
-> `local/` one -- which permanently repoints `upkeep update dart_install` at
-> that checkout instead of the remote. Only use a path install to test
-> uncommitted work, and reinstall from Git afterwards.
+> [!WARNING]
+>
+> Do **not** run `dart install ~/github/kevmoo/scripts.dart`. Installing from a
+> local path builds whatever branch that checkout is on, and it _replaces_ the
+> `app-bundles/kevmoo_scripts/git/<sha>/` bundle with a `local/` one -- which
+> permanently repoints `upkeep update dart_install` at that checkout instead of
+> the remote. Only use a path install to test uncommitted work, and reinstall
+> from Git afterwards.
 
 ## 1. Read-Only Pre-Flight Sweep (Always Start Read-Only)
 
@@ -116,6 +120,19 @@ sweeps) divided into 3 buckets:
     `reviewRequests`. Even if an `@reviewer PTAL` comment was posted, the PR is
     not in their GitHub Review Queue (`review-requested:@me`) until re-requested
     via `gh pr edit <PR> -R <owner/repo> --add-reviewer <login>`.
+  - **Three-State `CHANGES_REQUESTED` Disambiguation (Zero Extra `gh` Calls)**:
+    1. `🔴 **Changes Requested** (@reviewer)`: Author has **not** yet pushed a
+       fix or replied since the review (`⚠️ Action Needed` — author's ball).
+    2. `🔄 **Re-request Review** (@reviewer)`: Author pushed a fix or replied
+       after the review and resolved threads, but `@reviewer` was dropped from
+       `reviewRequests` (`⚠️ Action Needed` — run `--add-reviewer <login>`).
+    3. `🟡 **Re-review Requested** (@reviewer)`: `@reviewer` is **already in
+       `reviewRequests`** (`🟡 In Review Queue` — reviewer's ball). Even though
+       GitHub's raw `reviewDecision` remains `CHANGES_REQUESTED`, do **not**
+       re-run `--add-reviewer` or run `pr-triage`. Only if another maintainer
+       has already `APPROVED` (`🟢 Approved (@approver)`) and the prior
+       `CHANGES_REQUESTED` review is a stale veto on an older commit, surface
+       the option (gated via `ask_question`) to dismiss the stale review.
 - **Bucket B — `✅ Safe to Prune Immediately` (Merged PRs/CLs & Clean
   Worktrees)**:
   - Clean worktrees (`git worktree remove`), merged local feature branches
