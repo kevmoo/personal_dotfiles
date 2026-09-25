@@ -87,8 +87,9 @@ also enforced by each agent's permission settings — these rules state intent.
   I can redirect you early. Don't narrate routine tool calls (grep, file reads)
   that the UI already shows.
 - **Clickable Links (Files & URLs)**: Format files (`file://`), web URLs
-  (`https://`), CLs, and PRs as clickable Markdown links. Never wrap HTTP/HTTPS
-  URLs in code backticks (which disables autolinking).
+  (`https://`), CLs, and PRs as clickable Markdown links (including inside
+  `ask_question` prompts). Never wrap HTTP/HTTPS URLs in code backticks (which
+  disables autolinking).
   - To avoid ambiguity or confusion (e.g., distinguishing between different
     `BUILD` files or common names), include enough preceding path components in
     the link text (e.g., [src/main.dart](file:///absolute/path/to/src/main.dart)
@@ -313,9 +314,10 @@ Local Web App & UI Verification ("Show Me First"):
   - **Server**: Exclusively use `dart_oss` MCP tools (`ServerName: "dart_oss"`).
   - **`dart install` Mandate**: Never use or recommend `dart pub global` or
     `dart pub global activate`. Exclusively use `dart install` (e.g.
-    `dart install --source path <dir>`). If a package breaks or fails with
-    `dart install`, DO NOT fall back to `dart pub global`; raise the issue and
-    error output directly to the user and ask for guidance.
+    `dart install --source path <dir>`; use `upkeep update dart_install` after
+    landing CLI PRs). If a package breaks or fails with `dart install`, DO NOT
+    fall back to `dart pub global`; raise the issue and error output directly to
+    the user and ask for guidance.
   - **Operational Precedence & Anti-Habit Invariants**:
     - **Symbol Lookup & Signatures**: ALWAYS call `lsp` (`hover`,
       `resolveWorkspaceSymbol`, `definition`, `signatureHelp`) before running
