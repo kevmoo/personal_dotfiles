@@ -16,7 +16,13 @@
       "Bash(gh issue list:*)",
       "Bash(gh run view:*)",
       "Bash(gh run list:*)",
-      "Bash(relay-gh:*)"
+      "Bash(relay-gh:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh api:*)",
+      "Bash(relay-whoami:*)",
+      "Bash(~/.local/bin/relay-whoami:*)"
     ],
     "ask": [
       "Bash(git commit:*)",

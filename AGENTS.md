@@ -27,6 +27,15 @@ Hard boundaries first; working style after.
     maintainer-approved or explicitly asked.
   - All GitHub writes (issues, PRs, comments, releases)—single-action scope
     only.
+  - **Relay Thread-Scoped Consent (`kevmoo/agent-relay` only)**: Entering or
+    opening a relay thread gates **once** via `ask_question`. That single
+    approval covers, for that thread only: posting comments,
+    `ACK`/`HANDOFF`/`DONE` turn updates, and committing `drops/` artifacts on a
+    feature branch. Re-prompt only on `State: BLOCKED`, for a new thread, or for
+    any action outside `kevmoo/agent-relay`. Merges, releases, trunk pushes, and
+    writes to any other repository remain gated per-action. This is the
+    review-queue consent model applied to every relay thread rather than review
+    queues alone.
 - **Two-Tier Landing Approval**:
   - **Tier 1 (Zero-Diff / Autonomous Retry)**: CI reruns, formatters, clean
     fast-forward rebases, transient lockouts.
