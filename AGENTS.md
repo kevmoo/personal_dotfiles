@@ -74,19 +74,33 @@ Hard boundaries first; working style after.
   - **Google3 / Piper (`mdformat`)**: Wrap tables exceeding 80 columns in
     `<!-- mdformat off -->` ... `<!-- mdformat on -->`.
 - **Non-Interactive CLI & Heredocs**: Always pass `--yes`, `PAGER=cat`,
-  `GIT_EDITOR=true`, `EDITOR=true`, and timeouts (`timeout 45s`,
-  `dart test --timeout 30s`). Prefer `git status -s --untracked=no` and
+  `GIT_EDITOR=true`, `EDITOR=true`, and escalated timeouts (`timeout -k 5s 45s`
+  so processes trapping `SIGTERM` receive `SIGKILL` after 5s;
+  `dart test --timeout 30s`), while avoiding short OS `timeout` wrappers on
+  mutating VCS commands (`git push`, `jj ship`, `g4 submit`) that leave repo
+  lockfiles behind. Prefer `git status -s --untracked=no` and
   `git diff --name-status`. Always pass multi-line or backtick-containing text
   (`git commit -F -`, `gh pr create --body-file -`, `agentapi send-message`) via
   single-quoted heredocs (`<< 'EOF'`), never inside double-quoted `"..."` bash
   strings.
-- **Zero-Token Waiting & Kill-Before-Pivot (`WaitMsBeforeAsync`)**: When a
+- **Zero-Token Waiting, Kill-Before-Pivot & 3-Tier Process Termination**: When a
   background task (`<task-id>`) is still running:
-  1. **Wait**: End your turn with **zero** tool calls (runtime resumes
-     automatically on completion; never run `sleep` loops).
-  2. **Pivot**: Call `manage_task(Action: "kill", TaskId: "<task-id>")` (or
-     `TaskStop`) in the very next step before/alongside pivoting to another
+  1. **Wait**: End your turn with **zero** tool calls (pass
+     `NotificationTimeoutSeconds: 300` on `run_command`; runtime resumes
+     automatically on completion—never run `sleep` loops or
+     `manage_task(Action: "status")` polls).
+  2. **Pivot (`manage_task(kill)`)**: Call
+     `manage_task(Action: "kill", TaskId: "<task-id>")` (or `TaskStop`, which
+     tears down the isolated `Setpgid` process group) before pivoting to another
      tool. Never rely on `| head -n N` to bound recursive `grep`/`find`.
+  3. **Daemons & Scoped OS Kill**: Start long-running servers via
+     `run_command(IsDaemon: true)` (never `nohup ... & disown` inside a
+     foreground `run_command`, which either blocks `stdout` pipes or gets killed
+     when the step's process group exits). For OS-level cleanup, verify port
+     ownership via `lsof -ti :<PORT> | xargs -r -I{} readlink -f /proc/{}/cwd`
+     before `kill <PID>`, or use a worktree-scoped bracketed pattern
+     (`pkill -f "[/]full/worktree/path/..."`)—never run unscoped
+     `pkill`/`killall`.
 
 ## Engineering Discipline
 
@@ -114,7 +128,8 @@ Hard boundaries first; working style after.
 
 ## Epistemic Grounding & Fact Discipline (Reporting, Planning & Memory)
 
-- **Three-Bucket Epistemic Separation (Never Conflate in Prose or Tables; Use Natural Tense/Structure, Not Literal `[...]` Tags in Docs)**:
+- **Three-Bucket Epistemic Separation (Never Conflate in Prose or Tables; Use
+  Natural Tense/Structure, Not Literal `[...]` Tags in Docs)**:
   1. **Shipped / Verified Fact** _(past/present tense: `shipped`, `landed`,
      `measured`)_: Requires a verified primary artifact (`*submitted*` CL,
      `MERGED` PR, published doc, or empirical benchmark).
@@ -122,9 +137,10 @@ Hard boundaries first; working style after.
      `staging`, `targeting Q4`)_: Requires an open tracking handle (`#XXXX` in
      personal notes, or `b/...`, `*pending*` CL, or open PR in shared docs).
   3. **Speculation / Proposal / Hypothesis** _(conditional tense: `proposed`,
-     `projected`, `option to`)_: Isolate in a separate `Proposals & Open
-     Questions` section or `<topic>_projections_and_proposals.md` brain
-     artifact—never state projections or proposals as shipped facts.
+     `projected`, `option to`)_: Isolate in a separate
+     `Proposals & Open Questions` section or
+     `<topic>_projections_and_proposals.md` brain artifact—never state
+     projections or proposals as shipped facts.
 - **Verb-to-Artifact Binding & Authorship Attribution**:
   - Never use accomplishment verbs (`shipped`, `built`, `authored`, `resolved`,
     `drove`, `spearheaded`) without verifying: (a) terminal state (`*submitted*`
