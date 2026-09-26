@@ -1,0 +1,430 @@
+#!/usr/bin/env python3
+"""Cross-agent PreToolUse / BeforeTool hook for process-termination safety.
+
+Supports Claude Code (`Bash`), Gemini CLI (`run_shell_command`), and IDE agent
+harnesses (`run_command`, `manage_task`) across Linux and macOS:
+1. Blocks unscoped `pkill` / `killall` (preventing multi-session collateral
+   damage and `bash -c` self-suicide when `pkill -f` lacks a bracketed
+   character class `[x]` and a `/` path scope).
+2. Throttles repetitive `manage_task(Action="status"|"list")` polling within 30s
+   while always permitting `kill` and `send_input` immediately.
+"""
+
+import json
+import os
+import re
+import shlex
+import sys
+import tempfile
+import time
+
+sys.dont_write_bytecode = True
+
+POLL_INTERVAL_SECONDS = 30.0
+STATE_TTL_SECONDS = 3600.0
+
+_HEREDOC_RE = re.compile(
+    r"(<<-?\s*(?:['\"]([^'\"\n]+)['\"]|([A-Za-z0-9_.-]+))[^\n]*)\n.*?\n\t*(?:\2|\3)(?=\n|$)",
+    re.DOTALL,
+)
+_WRAPPERS = {
+    "sudo",
+    "env",
+    "nohup",
+    "command",
+    "builtin",
+    "exec",
+    "time",
+    "setsid",
+    "timeout",
+    "gtimeout",
+    "nice",
+    "ionice",
+    "xargs",
+}
+_WRAPPER_FLAG_WITH_ARG = {
+    "sudo": {"-u", "-g", "-C", "-D", "-h", "-p", "-r", "-t", "-T", "-U"},
+    "env": {"-u", "-C", "-S"},
+    "timeout": {"-k", "-s"},
+    "gtimeout": {"-k", "-s"},
+    "nice": {"-n"},
+    "ionice": {"-c", "-n", "-p", "-P", "-u"},
+    "xargs": {"-I", "-L", "-n", "-P", "-s", "-d", "-a", "-E"},
+}
+_PKILL_FLAG_WITH_ARG = {
+    "-F",
+    "-G",
+    "-g",
+    "-j",
+    "-M",
+    "-N",
+    "-O",
+    "-q",
+    "-r",
+    "-s",
+    "-t",
+    "-U",
+    "-u",
+    "--cgroup",
+    "--ns",
+    "--nslist",
+    "--older",
+    "--pidfile",
+    "--euid",
+    "--uid",
+    "--gid",
+    "--group",
+    "--pgid",
+    "--queue",
+    "--runstates",
+    "--sid",
+    "--terminal",
+    "--signal",
+}
+
+
+def _strip_heredocs(cmd: str) -> str:
+  def _repl(m: re.Match[str]) -> str:
+    header = m.group(1)
+    return re.sub(
+        r"<<-?\s*(?:['\"][^'\"\n]+['\"]|[A-Za-z0-9_.-]+)", "", header, count=1
+    )
+
+  return _HEREDOC_RE.sub(_repl, cmd)
+
+
+def _split_shell_segments(cmd: str) -> list[list[str]]:
+  normalized = cmd.replace("$(", " ( ")
+  lex = shlex.shlex(normalized, posix=True, punctuation_chars=";&|(){}")
+  lex.whitespace = " \t\r"
+  lex.commenters = "#"
+  segments: list[list[str]] = []
+  cur: list[str] = []
+  try:
+    for tok in lex:
+      if tok == "\n" or set(tok) <= set(";&|(){}"):
+        if cur:
+          segments.append(cur)
+          cur = []
+      else:
+        cur.append(tok)
+  except ValueError:
+    for seg in re.split(r"(?:^|[;&|(){}]+|\|\||&&|\n|\$\()\s*", cmd):
+      if seg.strip():
+        segments.append([t.strip("'\"") for t in seg.strip().split()])
+  if cur:
+    segments.append(cur)
+  return segments
+
+
+def _unwrap_tokens(tokens: list[str]) -> list[str]:
+  idx = 0
+  while idx < len(tokens):
+    tok = tokens[idx]
+    if "=" in tok and not tok.startswith("-"):
+      idx += 1
+      continue
+    base = os.path.basename(tok)
+    if base not in _WRAPPERS:
+      break
+    idx += 1
+    arg_flags = _WRAPPER_FLAG_WITH_ARG.get(base, set())
+    while idx < len(tokens) and tokens[idx].startswith("-"):
+      f = tokens[idx]
+      idx += 1
+      if f == "--":
+        break
+      if f in arg_flags and idx < len(tokens):
+        idx += 1
+    if base in ("timeout", "gtimeout") and idx < len(tokens):
+      idx += 1
+  return tokens[idx:]
+
+
+def _check_run_command(args: dict) -> tuple[bool, str]:
+  cmd = (
+      args.get("CommandLine")
+      or args.get("commandLine")
+      or args.get("command")
+      or ""
+  )
+  if not isinstance(cmd, str) or (
+      "pkill" not in cmd and "killall" not in cmd
+  ):
+    return True, ""
+
+  cleaned = _strip_heredocs(cmd)
+  for raw_tokens in _split_shell_segments(cleaned):
+    tokens = _unwrap_tokens(raw_tokens)
+    if not tokens:
+      continue
+
+    exe = os.path.basename(tokens[0])
+    rest = tokens[1:]
+
+    if exe in ("bash", "sh", "zsh", "dash", "ksh"):
+      for i, t in enumerate(rest):
+        if (
+            t == "-c"
+            or (t.startswith("-") and not t.startswith("--") and "c" in t[1:])
+        ) and i + 1 < len(rest):
+          ok, reason = _check_run_command({"CommandLine": rest[i + 1]})
+          if not ok:
+            return False, reason
+          break
+      continue
+
+    if exe == "killall":
+      return (
+          False,
+          (
+              "🛑 Blocked unscoped 'killall' on shared multi-session host.\n"
+              "Use one of the 3 safe termination tiers instead:\n"
+              "1. Harness task: manage_task(Action='kill', TaskId='<task-id>')"
+              " (or TaskStop)\n"
+              "2. Port owner PID (after CWD check): lsof -ti :<PORT>, verify"
+              " lsof -a -d cwd -p <PID>, then kill <PID>\n"
+              "3. Worktree-scoped bracketed pattern: pkill -f"
+              " '[/]full/worktree/path/...'"
+          ),
+      )
+
+    if exe == "pkill":
+      has_parent_flag = False
+      has_full_flag = False
+      pat_tokens: list[str] = []
+      i = 0
+      in_flags = True
+      while i < len(rest):
+        t = rest[i]
+        if in_flags and t == "--":
+          in_flags = False
+          i += 1
+          continue
+        if in_flags and t.startswith("-") and len(t) > 1:
+          if t == "--full":
+            has_full_flag = True
+            i += 1
+            continue
+          if t.startswith("--parent"):
+            has_parent_flag = True
+            if t == "--parent" and i + 1 < len(rest):
+              i += 2
+            else:
+              i += 1
+            continue
+          if t in _PKILL_FLAG_WITH_ARG:
+            i += 2
+            continue
+          if any(t.startswith(f"{flag}=") for flag in _PKILL_FLAG_WITH_ARG):
+            i += 1
+            continue
+          if not t.startswith("--"):
+            short_chars = t[1:]
+            if "f" in short_chars:
+              has_full_flag = True
+            if "P" in short_chars:
+              has_parent_flag = True
+              if short_chars.endswith("P"):
+                i += 2
+                continue
+            if any(
+                short_chars.endswith(fc[1:])
+                for fc in _PKILL_FLAG_WITH_ARG
+                if len(fc) == 2
+            ):
+              i += 2
+              continue
+          i += 1
+          continue
+        in_flags = False
+        if re.match(r"^[0-9]*[<>]", t):
+          if t[0] in "<>" and pat_tokens and pat_tokens[-1].isdigit():
+            pat_tokens.pop()
+          if t.endswith(("<", ">")) and i + 1 < len(rest):
+            i += 2
+          else:
+            i += 1
+          continue
+        pat_tokens.append(t)
+        i += 1
+
+      if has_parent_flag:
+        continue
+      if not has_full_flag:
+        return (
+            False,
+            (
+                "🛑 Blocked unscoped 'pkill' (without -f and a worktree path)."
+                " Process-name 'pkill' kills processes across all concurrent"
+                " agent sessions and worktrees on this host.\nUse:\n1."
+                " manage_task(Action='kill', TaskId='<task-id>') (or"
+                " TaskStop)\n2. Exact PID: kill <PID> (after verifying"
+                " lsof -a -d cwd -p <PID>)\n3. Worktree-scoped bracketed"
+                " pattern: pkill -f '[/]full/worktree/path/...'"
+            ),
+        )
+      pattern_str = " ".join(pat_tokens)
+      stripped_brackets = re.sub(r"\[[^\]]*\]", "", pattern_str)
+      if (
+          not re.search(r"\[[^\]]+\]", pattern_str)
+          or "/" not in pattern_str
+          or not re.search(r"/[A-Za-z0-9_.-]{2,}", stripped_brackets)
+      ):
+        return (
+            False,
+            (
+                "🛑 Blocked unsafe 'pkill -f' pattern. In a shell tool"
+                " (`bash -c`), an unbracketed `pkill -f <pattern>` matches its"
+                " own `bash -c` argv (self-SIGKILL, exit 137), and a pattern"
+                " without a `/` worktree path kills processes in sibling"
+                " worktrees.\nRequired format: include both a workspace path"
+                " (`/`) and a bracketed character class (`[...]`), e.g.:\n"
+                "  pkill -f '[/]full/worktree/path/...'\n"
+                "  pkill -f '[m]y_workspace_binary /full/path'"
+            ),
+        )
+  return True, ""
+
+
+def _state_path(conv_id: str) -> str:
+  safe_id = re.sub(r"[^a-zA-Z0-9_.-]", "_", conv_id or "global")
+  cache_dir = os.path.join(
+      tempfile.gettempdir(), f"agent_process_guard_{os.getuid()}"
+  )
+  os.makedirs(cache_dir, exist_ok=True)
+  return os.path.join(cache_dir, f"throttle_{safe_id}.json")
+
+
+def _check_manage_task(args: dict, conv_id: str) -> tuple[bool, str]:
+  action = str(args.get("Action") or args.get("action") or "").strip().lower()
+  if action in ("kill", "send_input"):
+    return True, ""
+  if action not in ("status", "list"):
+    return True, ""
+
+  raw_tid = str(
+      args.get("TaskId") or args.get("task_id") or args.get("taskId") or "list"
+  ).strip()
+  key = raw_tid.split("/")[-1] if action == "status" else "__list__"
+
+  now = time.time()
+  path = _state_path(conv_id)
+  state = {}
+  if os.path.exists(path):
+    try:
+      with open(path, "r", encoding="utf-8") as f:
+        state = json.load(f)
+    except (OSError, ValueError):
+      state = {}
+
+  last_ts = float(state.get(key, 0.0))
+  elapsed = now - last_ts
+  if last_ts > 0 and elapsed < POLL_INTERVAL_SECONDS:
+    return (
+        False,
+        (
+            f"🚫 Task polling throttled: `manage_task(Action='{action}')` for"
+            f" '{key}' was already checked {elapsed:.1f}s ago (minimum interval"
+            f" {POLL_INTERVAL_SECONDS:.0f}s).\nThe runtime automatically wakes"
+            " your turn when background tasks complete. End your turn with"
+            " zero tool calls to wait, or call"
+            " `manage_task(Action='kill', TaskId='...')` to terminate the task."
+        ),
+    )
+
+  state = {
+      k: v
+      for k, v in state.items()
+      if isinstance(v, (int, float)) and now - v < STATE_TTL_SECONDS
+  }
+  state[key] = now
+  try:
+    with open(path, "w", encoding="utf-8") as f:
+      json.dump(state, f)
+  except OSError:
+    pass
+  return True, ""
+
+
+def _emit_response(
+    harness: str, allowed: bool, reason: str = ""
+) -> None:
+  if harness == "claude":
+    if allowed:
+      # In Claude Code, `{}` declines to block without bypassing `permissions.ask`.
+      print(json.dumps({}))
+    else:
+      print(
+          json.dumps({
+              "hookSpecificOutput": {
+                  "hookEventName": "PreToolUse",
+                  "permissionDecision": "deny",
+                  "permissionDecisionReason": reason,
+              }
+          })
+      )
+  elif harness == "gemini_cli":
+    if allowed:
+      print(json.dumps({"decision": "allow"}))
+    else:
+      print(
+          json.dumps({
+              "decision": "deny",
+              "reason": reason,
+              "systemMessage": reason,
+          })
+      )
+  else:
+    if allowed:
+      print(json.dumps({"decision": "allow"}))
+    else:
+      print(json.dumps({"decision": "deny", "reason": reason}))
+
+
+def main() -> None:
+  raw = ""
+  try:
+    raw = sys.stdin.read()
+    if not raw or not raw.strip():
+      print(json.dumps({"decision": "allow"}))
+      return
+    payload = json.loads(raw)
+    pre_tool = payload.get("preToolHookArgs") or {}
+    tool_call = pre_tool.get("toolCall") or payload.get("toolCall") or {}
+    tool_name = str(tool_call.get("name") or payload.get("tool_name") or "")
+    args = tool_call.get("args") or payload.get("tool_input") or {}
+    conv_id = str(
+        payload.get("conversationId") or payload.get("session_id") or ""
+    )
+    event_name = str(payload.get("hook_event_name") or "")
+
+    if "preToolHookArgs" in payload or "toolCall" in payload or tool_name in (
+        "run_command",
+        "manage_task",
+    ):
+      harness = "default"
+    elif tool_name == "Bash" or event_name == "PreToolUse":
+      harness = "claude"
+    elif tool_name == "run_shell_command" or event_name == "BeforeTool":
+      harness = "gemini_cli"
+    else:
+      harness = "default"
+
+    if tool_name in ("run_command", "run_shell_command", "Bash"):
+      allowed, reason = _check_run_command(args)
+    elif tool_name == "manage_task":
+      allowed, reason = _check_manage_task(args, conv_id)
+    else:
+      allowed, reason = True, ""
+
+    _emit_response(harness, allowed, reason)
+  except Exception:  # pylint: disable=broad-exception-caught
+    if '"Bash"' in raw or '"PreToolUse"' in raw:
+      print(json.dumps({}))
+    else:
+      print(json.dumps({"decision": "allow"}))
+
+
+if __name__ == "__main__":
+  main()
