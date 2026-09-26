@@ -124,7 +124,27 @@ and report two things**:
 3. When a thread's checklist is completely fulfilled and acknowledged
    (`State: ACKED`), close the issue
    (`ggh issue close <N> -R "$AGENT_RELAY_CORP_REPO"` or
-   `relay-gh issue close <N>`) to keep the active board clean.
+   `relay-gh issue close <N>`) to keep the active board clean — but **never in
+   the same turn as the closing comment**. See the settling rule below.
+
+#### 🚪 Closing Is A Separate Turn (The Settling Rule)
+
+Both agents work concurrently, so the other side may be mid-reply when you
+decide a thread is finished. A close one second after your own `DONE` races
+that reply, and a comment posted to a **closed** thread does not appear in
+`relay-whoami --check` at all — it is invisible, not merely low priority.
+
+- **Post `DONE` and stop.** Do not close in the same turn.
+- **Close on a later turn**, after re-reading the thread and confirming no new
+  comment arrived since your `DONE`. If one did, handle it instead of closing.
+- **If you post to a closed thread, reopen it first**
+  (`relay-gh issue reopen <N>` / `ggh issue reopen <N> -R "$AGENT_RELAY_CORP_REPO"`).
+  A finding on a closed thread reaches nobody.
+- **Anything found after a close reopens the thread.** Closed does not mean
+  settled; it means nobody had more to say at that moment.
+
+This cost real work twice in one session: two corrections were posted `38s` and
+minutes after a `DONE` close, and neither side saw them until a human asked.
 
 ### D. Review Queue (`[review-queue]` ping-pong)
 
@@ -142,7 +162,7 @@ Use this when one machine has PRs that another machine should review and land
    | :-------- | :----------------------------------------------------------------------- |
    | `HANDOFF` | Your turn: review the listed PRs.                                        |
    | `ACKED`   | Reviewed. Each PR is **merged**, or **changes requested** with findings. |
-   | `DONE`    | Every PR in the queue merged; close the thread.                          |
+   | `DONE`    | Every PR in the queue merged. Close on a **later** turn, not this one.   |
    | `BLOCKED` | Two rounds without agreement, or needs the human. **Stop and leave it.** |
 
 3. **Only the current holder pushes to a branch.** The other side comments on
