@@ -95,7 +95,9 @@ Hard boundaries first; working style after.
   no unrelated refactors, and clean up only orphaned imports/variables caused by
   your change.
 - **Verify Empirically**: Turn tasks into checkable test goals and verify before
-  declaring success.
+  declaring success. Always call `view_file` in the active session before
+  `replace_file_content` (even on pinned `<user_rules>` files like
+  `preferences.md`).
 - **Benchmark Reporting ("Before vs. After First")**:
   1. Capture baseline on unmodified code _before_ editing.
   2. Lead with the isolated **Before vs. After delta on the modified target**
@@ -112,18 +114,17 @@ Hard boundaries first; working style after.
 
 ## Epistemic Grounding & Fact Discipline (Reporting, Planning & Memory)
 
-- **Three-Bucket Epistemic Separation (Never Conflate in Prose or Tables)**:
-  1. **`[SHIPPED / VERIFIED FACT]`** _(past/present tense: `shipped`, `landed`,
+- **Three-Bucket Epistemic Separation (Never Conflate in Prose or Tables; Use Natural Tense/Structure, Not Literal `[...]` Tags in Docs)**:
+  1. **Shipped / Verified Fact** _(past/present tense: `shipped`, `landed`,
      `measured`)_: Requires a verified primary artifact (`*submitted*` CL,
      `MERGED` PR, published doc, or empirical benchmark).
-  2. **`[COMMITTED PLAN / IN-FLIGHT]`** _(progressive/future tense: `in review`,
-     `staging`, `targeting Q4`)_: Requires an open tracking handle (`#XXXX`,
-     `b/...`, `*pending*` CL, or open PR).
-  3. **`[SPECULATION / PROPOSAL / HYPOTHESIS]`** _(conditional tense:
-     `proposed`, `option to`, `unverified estimate`)_: Isolate in a separate
-     `Proposals & Open Questions` section or
-     `<topic>_projections_and_proposals.md` brain artifact—never interleave with
-     shipped facts or committed roadmaps in Piper/GRAD docs.
+  2. **Committed Plan / In-Flight** _(progressive/future tense: `in review`,
+     `staging`, `targeting Q4`)_: Requires an open tracking handle (`#XXXX` in
+     personal notes, or `b/...`, `*pending*` CL, or open PR in shared docs).
+  3. **Speculation / Proposal / Hypothesis** _(conditional tense: `proposed`,
+     `projected`, `option to`)_: Isolate in a separate `Proposals & Open
+     Questions` section or `<topic>_projections_and_proposals.md` brain
+     artifact—never state projections or proposals as shipped facts.
 - **Verb-to-Artifact Binding & Authorship Attribution**:
   - Never use accomplishment verbs (`shipped`, `built`, `authored`, `resolved`,
     `drove`, `spearheaded`) without verifying: (a) terminal state (`*submitted*`
