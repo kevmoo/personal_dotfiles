@@ -13,6 +13,7 @@ brew "oxipng"       # Multithreaded PNG optimizer
 brew "typos-cli"    # Fast spell checker for source code
 brew "python@3.12"  # Modern Python for gcloud and scripts
 brew "ripgrep"      # Fast grep!
+brew "oha"          # HTTP load generator, inspired by rakyll/hey with tui animation
 brew "mise"          # Universal tool manager (replaces volta)
 brew "starship"     # Customizable prompt for any shell
 brew "zsh-autosuggestions"
