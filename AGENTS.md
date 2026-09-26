@@ -74,11 +74,11 @@ Hard boundaries first; working style after.
   - **Google3 / Piper (`mdformat`)**: Wrap tables exceeding 80 columns in
     `<!-- mdformat off -->` ... `<!-- mdformat on -->`.
 - **Non-Interactive CLI & Heredocs**: Always pass `--yes`, `PAGER=cat`,
-  `GIT_EDITOR=true`, `EDITOR=true`, and escalated timeouts (`timeout -k 5s 45s`
-  so processes trapping `SIGTERM` receive `SIGKILL` after 5s;
-  `dart test --timeout 30s`), while avoiding short OS `timeout` wrappers on
-  mutating VCS commands (`git push`, `jj ship`, `g4 submit`) that leave repo
-  lockfiles behind. Prefer `git status -s --untracked=no` and
+  `GIT_EDITOR=true`, `EDITOR=true`, and escalated timeouts (`timeout -k 5s 45s`,
+  or `gtimeout` on macOS, so processes trapping `SIGTERM` receive `SIGKILL`
+  after 5s; `dart test --timeout 30s`), while avoiding short OS `timeout`
+  wrappers on mutating VCS commands (`git push`, `jj ship`, `g4 submit`) that
+  leave repo lockfiles behind. Prefer `git status -s --untracked=no` and
   `git diff --name-status`. Always pass multi-line or backtick-containing text
   (`git commit -F -`, `gh pr create --body-file -`, `agentapi send-message`) via
   single-quoted heredocs (`<< 'EOF'`), never inside double-quoted `"..."` bash
@@ -94,13 +94,13 @@ Hard boundaries first; working style after.
      tears down the isolated `Setpgid` process group) before pivoting to another
      tool. Never rely on `| head -n N` to bound recursive `grep`/`find`.
   3. **Daemons & Scoped OS Kill**: Start long-running servers via
-     `run_command(IsDaemon: true)` (never `nohup ... & disown` inside a
-     foreground `run_command`, which either blocks `stdout` pipes or gets killed
-     when the step's process group exits). For OS-level cleanup, verify port
-     ownership via `lsof -ti :<PORT> | xargs -r -I{} readlink -f /proc/{}/cwd`
-     before `kill <PID>`, or use a worktree-scoped bracketed pattern
-     (`pkill -f "[/]full/worktree/path/..."`)—never run unscoped
-     `pkill`/`killall`.
+     `run_command(IsDaemon: true)` (or `Bash(run_in_background: true)`; never
+     `nohup ... & disown` inside a foreground command, which either blocks
+     `stdout` pipes or gets killed when the step's process group exits). For
+     OS-level cleanup, verify the port owner's PID (`lsof -ti :<PORT>`) and CWD
+     (`lsof -a -d cwd -p <PID>`) before `kill <PID>`, or use a worktree-scoped
+     bracketed pattern (`pkill -f "[/]full/worktree/path/..."`)—never run
+     unscoped `pkill`/`killall`.
 
 ## Engineering Discipline
 

@@ -36,6 +36,7 @@
 !.local/bin/
 .local/bin/*
 !.local/bin/_kscripts_shim
+!.local/bin/agent-process-guard
 !.local/bin/brewall
 !.local/bin/brew-check
 !.local/bin/dart-clean
@@ -59,7 +60,14 @@
 !.local/bin/repo-align
 !.local/bin/tighten
 !.local/bin/upkeep
-!.gemini/**
+!.claude/
+.claude/*
+!.claude/CLAUDE.md
+!.claude/settings.json
+!.gemini/
+.gemini/*
+!.gemini/GEMINI.md
+!.gemini/notes_for_the_other_agent.md
 !.zshrc.d/**
 !README.md
 !AGENTS.md
