@@ -105,7 +105,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sem-cli/SKILL.md",
-      "skillFolderHash": "55b229e00db5b851e522b26c4fb42a2b689b8741",
+      "skillFolderHash": "86aa375c9da09a2edf528979263961613382e81d",
       "installedAt": "2026-09-07T00:11:12.877Z",
       "updatedAt": "2026-09-07T00:11:12.877Z"
     },
@@ -159,7 +159,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/pr-triage/SKILL.md",
-      "skillFolderHash": "16c1bd00fcff5c8163b58dd05b73770a889d0d26",
+      "skillFolderHash": "819acb3de2a550ef005201f3fd7a4054d89bbf4b",
       "installedAt": "2026-09-23T23:36:39.383Z",
       "updatedAt": "2026-09-23T23:36:39.383Z"
     }
