@@ -171,9 +171,14 @@ Hard boundaries first; working style after.
   1. Whenever modifying _any_ file (`lib/`, `bin/`, `test/`, `tool/`) in a
      package at a released version (`0.15.7`), **unconditionally** bump to
      `-wip` (`0.15.8-wip`) and add `## 0.15.8-wip` in `CHANGELOG.md`.
-  2. Add changelog bullets only for user-visible feature/API/behavior changes;
+  2. **New Feature / Public API -> Minor `-wip` (`X.(Y+1).0-wip`)**: Whenever a
+     change adds a new public feature or API, bump to the next **minor** `-wip`
+     version (`3.1.2` or `3.1.3-wip` -> `3.2.0-wip`) in both `pubspec.yaml` and
+     `CHANGELOG.md` (promoting any unreleased patch `-wip` heading).
+  3. Add changelog bullets only for user-visible feature/API/behavior changes;
      leave `## <ver>-wip` empty (header only) for `test/`/`tool/`/internal-only
-     edits.
+     edits. Copy the repo's BSD license header into any newly created `.dart`
+     file.
 
 ## Workspace, Tooling & Cross-Machine Relay
 
