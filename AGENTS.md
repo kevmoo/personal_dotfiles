@@ -108,10 +108,26 @@ Hard boundaries first; working style after.
   and ask if unclear. Write the minimum code needed—no speculative abstractions,
   no unrelated refactors, and clean up only orphaned imports/variables caused by
   your change.
-- **Verify Empirically**: Turn tasks into checkable test goals and verify before
-  declaring success. Always call `view_file` in the active session before
+- **Verify Empirically & Dogfood Read-Only Paths**: Turn tasks into checkable
+  test goals and always call `view_file` in the active session before
   `replace_file_content` (even on pinned `<user_rules>` files like
-  `preferences.md`).
+  `preferences.md`). Unit tests and static analysis (`dart test`, `blaze test`,
+  `dart analyze`) are necessary but not sufficient when a patch can be exercised
+  against real state via immutable / side-effect-free checks:
+  1. **Auto-Run Trivial Read-Only Checks (`~0 Risk` & `<= 15s`)**: Whenever a
+     side-effect-free check can verify a patch in the real environment (e.g.,
+     running a patched CLI/script with `--help`, `--dry-run`, `status`, `list`,
+     `view`, `readonly`, or `scan`; executing a `SELECT` / DuckDB query; or
+     invoking a modified `~/.local/bin/` shim on a real input _after_
+     formatters/`jj fix`), **execute it automatically** before declaring the
+     patch ready and cite the command + output in chat.
+  2. **Offer Non-Trivial Read-Only Verification (`~0 Risk` & `> 15s` or Live
+     Sweep)**: When a deeper side-effect-free verification exists but takes
+     longer or scans broader live state (e.g., multi-repo read-only sweep,
+     `evalin run --dry-run` / single-case smoke run, browser matrix probe, or
+     full portfolio audit), **explicitly offer to run it** (in chat or as an
+     `ask_question` option) before committing/shipping rather than skipping
+     straight to landing.
 - **Benchmark Reporting ("Before vs. After First")**:
   1. Capture baseline on unmodified code _before_ editing.
   2. Lead with the isolated **Before vs. After delta on the modified target**
