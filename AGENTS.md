@@ -5,11 +5,13 @@ Hard boundaries first; working style after.
 
 ## Version Control & Outward Boundaries
 
-- **Local Staging & Worktrees (Autonomous)**: Branching, staging, committing
-  (`git commit`), formatters, and pushing to feature branches
-  (`git push [remote] <feature-branch>`). In mixed doc/code repos
-  (`private_life`), use `new-worktree` (`_[repo]-[branch]`) to keep `main`
-  clean.
+- **Local Staging, Worktrees & `dash-okf` Tripwire (Autonomous)**: Branching,
+  staging, committing (`git commit`), formatters, pushing to feature branches
+  (`git push [remote] <feature-branch>`), and running
+  `~/fog/dash-okf/scripts/okf_tripwire.sh` (which logs to `friction.jsonl`,
+  upserts deduplicated `[OKF DRIFT]` issues on `depot.code.corp.goog/*/dash-okf`,
+  and stages `#okf-delta` bullets). In mixed doc/code repos (`private_life`),
+  use `new-worktree` (`_[repo]-[branch]`) to keep `main` clean.
 - **Strict Prohibition — Never Push Code Directly to Trunk (`main` / `master` /
   `trunk`)**:
   - For any code/script/config/test change, always use a feature branch + PR
@@ -187,11 +189,20 @@ Hard boundaries first; working style after.
   1. Whenever modifying _any_ file (`lib/`, `bin/`, `test/`, `tool/`) in a
      package at a released version (`0.15.7`), **unconditionally** bump to
      `-wip` (`0.15.8-wip`) and add `## 0.15.8-wip` in `CHANGELOG.md`.
-  2. **New Feature / Public API -> Minor `-wip` (`X.(Y+1).0-wip`)**: Whenever a
-     change adds a new public feature or API, bump to the next **minor** `-wip`
-     version (`3.1.2` or `3.1.3-wip` -> `3.2.0-wip`) in both `pubspec.yaml` and
+  2. **New Feature / Public API -> Minor `-wip` (`X.(Y+1).0-wip` for `X >= 1`,
+     `0.Y.(Z+1)-wip` for `0.Y.Z`)**: Whenever a change adds a new non-breaking
+     public feature or API, bump to the next **minor** `-wip` version (`3.1.2`
+     or `3.1.3-wip` -> `3.2.0-wip`; for `0.Y.Z` pre-v1 packages where `^0.Y.Z`
+     caps at `<0.(Y+1).0`, use `0.Y.(Z+1)-wip`) in both `pubspec.yaml` and
      `CHANGELOG.md` (promoting any unreleased patch `-wip` heading).
-  3. Add changelog bullets only for user-visible feature/API/behavior changes;
+  3. **Breaking Change / Removed Public API -> Major `-wip` (`(X+1).0.0-wip` for
+     `X >= 1`, `0.(Y+1).0-wip` for `0.Y.Z`)**: Whenever a change removes or
+     incompatibly alters a public API (`api.txt` removal/signature change), CLI
+     flag, or config key, bump to the next **major** `-wip` version (`6.3.0` or
+     `6.3.1-wip` -> `7.0.0-wip`; for `0.Y.Z` pre-v1 packages, `0.3.1` ->
+     `0.4.0-wip`) in both `pubspec.yaml` and `CHANGELOG.md` (promoting any
+     unreleased patch/minor `-wip` heading).
+  4. Add changelog bullets only for user-visible feature/API/behavior changes;
      leave `## <ver>-wip` empty (header only) for `test/`/`tool/`/internal-only
      edits. Copy the repo's BSD license header into any newly created `.dart`
      file.
