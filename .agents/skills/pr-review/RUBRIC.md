@@ -39,8 +39,12 @@ Trace dependencies beyond the diff hunks:
 
 - Did an interface, signature, or exported type change without updating all call
   sites?
-- Do package exports (`index.dart`, `__init__.py`, `mod.rs`) properly re-export
-  new APIs?
+- Do package exports (`lib/<pkg>.dart`, `index.dart`, `__init__.py`, `mod.rs`)
+  avoid leaking internal helper types (`export 'src/...' show ...;`)?
+- When a refactor extracts helpers across files in a Dart package, require
+  public API surface verification (`dart run api_summary@^1.1.0 --check` if
+  `api.txt` is tracked, or before/after `api_summary` diff) to guarantee zero
+  unintended public API leaks.
 - Do mock implementations in test fixtures still mirror the updated production
   contract?
 
@@ -70,22 +74,16 @@ Inspect abstraction boundaries and invariants:
 
 - Are domain invariants enforced in public constructors or factory methods?
 - Does a wrapper type leak its underlying implementation primitives to callers?
+- **Load-Bearing Library Boundary Rule (Dart)**: Does a file split widen
+  `_private` class members to `@internal` just to extract a separate `lib/src/`
+  library? Require `part` / `part of` (`Tier 2`) whenever types share privileged
+  library-scoped access (`sealed`, `final`, `interface`, `base`, private
+  constructors `._()`, or `_private` members), reserving standalone `lib/src/`
+  libraries (`Tier 1`) for cuts with zero visibility widening.
 - Are state transitions atomic, or can the object be left in an inconsistent
   intermediate state upon failure?
 
-### 6. Testing Skeptic
-
-Scrutinize test quality, not just line coverage:
-
-- Are tests asserting actual behavior, or are they assertion-free "smoke tests"
-  that only verify non-crashing execution?
-- Do tests exercise negative paths, timeout behavior, and invalid inputs, or
-  only the happy path?
-- Are mocks over-specified (testing the mock instead of real behavior)?
-- Does every bug fix include a deterministic regression test reproducing the
-  original issue?
-
-### 7. Error Handling
+### 6. Error Handling
 
 Inspect exception and error paths:
 
@@ -93,6 +91,41 @@ Inspect exception and error paths:
 - Do functions return ambiguous `null` or `-1` instead of throwing typed,
   informative error classes?
 - Is error context preserved when wrapping/re-throwing exceptions?
+
+### 7. Testing (Seam Discipline, Behavioral Assertions & Real Test Doubles)
+
+Scrutinize test quality, seam discipline, and assertion substance (`FU2`):
+
+- **Test Seam Discipline (`lib/<pkg>.dart` vs. `lib/src/` Deep Modules)**:
+  - Require package-level and integration tests to import the public
+    `package:<pkg>/<pkg>.dart` entrypoint, keeping `lib/<pkg>.dart` exports
+    strictly scoped to public consumers.
+  - Allow—and encourage—subsystem unit tests to import internal **deep modules**
+    (`package:<pkg>/src/<subsystem>.dart`, such as unexported parsers, state
+    machines, data models, or algorithms with simple interfaces and rich
+    internal logic), while requiring thin single-caller helpers to be tested
+    through their owning module's entrypoint.
+- **Behavioral & Boundary Assertions**: Require tests to assert observable
+  outputs, state transitions, and boundary conditions of code that consumes
+  constants and models against concrete expected values (rather than echoing
+  constant literals, DTO getters, or production formulas).
+- **Direct Execution & Rendering Verification**: Require runtime behavior,
+  control flow, and UI/CLI output to be verified by executing functions or
+  rendering components directly, reserving raw file-text reads
+  (`readAsStringSync()`) for `README.md` `--help` drift checks, `BUILD` /
+  `pubspec.yaml` metadata sync, and code-generator fixtures.
+- **Real Implementations & First-Party Fakes ("Tests That Can Fail")**: Require
+  real implementations (`package:test_descriptor` `d.sandbox`/`d.dir`,
+  `Directory.systemTemp`, loopback `HttpServer`, in-memory stores), first-party
+  fakes (`package:http/testing.dart` `MockClient`), or real `@TestOn('browser')`
+  runs for DOM and JS/Wasm interop so tests exercise real failure modes.
+- **Public API Surface Verification**: When refactors extract helpers across
+  files, require `dart run api_summary@^1.1.0` diff or `api.txt` verification so
+  extracted helpers do not leak into the public package entrypoint.
+- Do tests exercise negative paths, timeout behavior, and invalid inputs, or
+  only the happy path?
+- Does every bug fix include a deterministic regression test reproducing the
+  original issue?
 
 ### 8. Reuse
 
@@ -109,8 +142,10 @@ Check for wheel reinvention:
 The subtractive lens (eliminate over-engineering):
 
 - Is this more complex than the problem requires?
-- Does the change add premature abstractions, single-caller interfaces, or
-  speculative configuration knobs that nothing uses?
+- Does the change add premature abstractions, single-caller interfaces, stateful
+  single-use `_Populator` / `_Runner` helper classes that mutate caller
+  maps/sets in-place (prefer pure file-private functions), or speculative
+  configuration knobs that nothing uses?
 - Can nested conditional branches be flattened with early-return guard clauses
   or switch expressions?
 

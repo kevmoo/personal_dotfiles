@@ -24,7 +24,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
-      "skillFolderHash": "388c9822641805ca2dcd5038e68a1d5282437ee5",
+      "skillFolderHash": "ea30ee454ba264543dbe40737973b1a5afb9f0e6",
       "installedAt": "2026-06-25T22:48:36.815Z",
       "updatedAt": "2026-06-25T22:48:36.815Z"
     },
@@ -69,7 +69,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "a303fd88583928cbda07f8cd372d18cfb0541954",
+      "skillFolderHash": "1d32fd48644f0250a7e9cccf2a8a035dd25e4fa7",
       "installedAt": "2026-07-12T03:02:22.429Z",
       "updatedAt": "2026-07-12T03:02:22.429Z"
     },
@@ -96,7 +96,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/dart-cleanup/SKILL.md",
-      "skillFolderHash": "83be79e6aa7722219f07c5db7cdf193cd25d6aa8",
+      "skillFolderHash": "b5de8d2852beb6180fc4d667cbb8dd9c380aeda9",
       "installedAt": "2026-08-08T05:46:03.701Z",
       "updatedAt": "2026-08-08T05:46:03.701Z"
     },
@@ -114,7 +114,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/duckdb/SKILL.md",
-      "skillFolderHash": "03ba0823ae5b909f2bfcb379fa8810661045d03a",
+      "skillFolderHash": "196164b692f47d88223787ff915b15dadee259fc",
       "installedAt": "2026-09-19T23:34:39.724Z",
       "updatedAt": "2026-09-19T23:34:39.724Z"
     },
@@ -141,7 +141,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/pr-review/SKILL.md",
-      "skillFolderHash": "b7557d8912650f7772ed0a5362004fcfbd8e0423",
+      "skillFolderHash": "752e535e972b3953bc680bf3d00863730ec88abf",
       "installedAt": "2026-09-23T23:36:37.331Z",
       "updatedAt": "2026-09-23T23:36:37.331Z"
     },
@@ -150,7 +150,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/gh-post/SKILL.md",
-      "skillFolderHash": "b8d203c185cf22eea94b980c412b326950c658d0",
+      "skillFolderHash": "ac0394acdc439f6fa6a2b569e55193816bb133b4",
       "installedAt": "2026-09-23T23:36:39.381Z",
       "updatedAt": "2026-09-23T23:36:39.381Z"
     },
@@ -159,7 +159,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/pr-triage/SKILL.md",
-      "skillFolderHash": "819acb3de2a550ef005201f3fd7a4054d89bbf4b",
+      "skillFolderHash": "67dbf42b2d95893abb70ff5088fbc799b1a4d307",
       "installedAt": "2026-09-23T23:36:39.383Z",
       "updatedAt": "2026-09-23T23:36:39.383Z"
     }
