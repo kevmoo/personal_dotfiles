@@ -185,27 +185,9 @@ Hard boundaries first; working style after.
 - **Pre-PR CI Parity (`pr-check`)**: Run `pr-check` (`kscripts pr-check`) before
   `gh pr create` in `~/github/kevmoo/*`. Use `gh pr create -f` on single-commit
   branches (imperative subject `<=70 chars`, bulleted body, `Fixes #123`).
-- **Published Package `-wip` Bumps (`pubspec.yaml` & `CHANGELOG.md`)**:
-  1. Whenever modifying _any_ file (`lib/`, `bin/`, `test/`, `tool/`) in a
-     package at a released version (`0.15.7`), **unconditionally** bump to
-     `-wip` (`0.15.8-wip`) and add `## 0.15.8-wip` in `CHANGELOG.md`.
-  2. **New Feature / Public API -> Minor `-wip` (`X.(Y+1).0-wip` for `X >= 1`,
-     `0.Y.(Z+1)-wip` for `0.Y.Z`)**: Whenever a change adds a new non-breaking
-     public feature or API, bump to the next **minor** `-wip` version (`3.1.2`
-     or `3.1.3-wip` -> `3.2.0-wip`; for `0.Y.Z` pre-v1 packages where `^0.Y.Z`
-     caps at `<0.(Y+1).0`, use `0.Y.(Z+1)-wip`) in both `pubspec.yaml` and
-     `CHANGELOG.md` (promoting any unreleased patch `-wip` heading).
-  3. **Breaking Change / Removed Public API -> Major `-wip` (`(X+1).0.0-wip` for
-     `X >= 1`, `0.(Y+1).0-wip` for `0.Y.Z`)**: Whenever a change removes or
-     incompatibly alters a public API (`api.txt` removal/signature change), CLI
-     flag, or config key, bump to the next **major** `-wip` version (`6.3.0` or
-     `6.3.1-wip` -> `7.0.0-wip`; for `0.Y.Z` pre-v1 packages, `0.3.1` ->
-     `0.4.0-wip`) in both `pubspec.yaml` and `CHANGELOG.md` (promoting any
-     unreleased patch/minor `-wip` heading).
-  4. Add changelog bullets only for user-visible feature/API/behavior changes;
-     leave `## <ver>-wip` empty (header only) for `test/`/`tool/`/internal-only
-     edits. Copy the repo's BSD license header into any newly created `.dart`
-     file.
+- **Dart & Package Standards**: When authoring Dart code, modifying
+  `pubspec.yaml`, `CHANGELOG.md` or `README.md`, or bumping SemVer versions,
+  ALWAYS review `~/.agents/CODING_STANDARDS.md` first.
 
 ## Workspace, Tooling & Cross-Machine Relay
 
