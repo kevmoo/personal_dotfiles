@@ -66,10 +66,35 @@
     force tightly privileged types into a single giant file just to avoid
     `part`, and never widen `PublicClass._member` to `@internal` just to split
     libraries.
-- **Test Seam Discipline**: Default unit/integration tests to importing
-  `package:<pkg>/<pkg>.dart` (the public entrypoint seam). Allow direct
-  `package:<pkg>/src/...` imports only for complex pure algorithms (e.g., parser
-  state machines) that are explicitly marked `@visibleForTesting`.
+
+## Testing & Verification
+
+- **Test Seam Discipline (Package Integration vs. `lib/src/` Unit Tests)**:
+  - **Package-Level & Integration Tests**: Import `package:<pkg>/<pkg>.dart`
+    (the public entrypoint seam) and keep `lib/<pkg>.dart` exports strictly
+    scoped to public consumers.
+  - **Subsystem Unit Tests (`lib/src/`)**: Import internal **deep modules**
+    (`package:<pkg>/src/<subsystem>.dart`)—such as unexported parsers, state
+    machines, data models, or algorithms with simple interfaces and rich
+    internal behavior—to unit-test edge cases directly; test thin single-caller
+    helpers through their owning module's entrypoint.
+- **Behavioral & Boundary Assertions**: Assert observable outputs, state
+  transitions, and boundary conditions of the code that _consumes_ constants and
+  models (e.g., passing 280 vs. 281 characters into a validator) against
+  concrete expected values.
+- **Direct Execution & Rendering Verification**: Verify runtime behavior,
+  control flow, and UI/CLI output by invoking functions, running CLI commands,
+  or rendering components directly. Use raw file-text reads
+  (`readAsStringSync()`) specifically for static documentation drift
+  (`README.md` `--help` blocks), build/package metadata sync (`BUILD`,
+  `pubspec.yaml`), and code-generator input/output fixtures.
+- **Real Implementations & First-Party Fakes ("Tests That Can Fail")**: Exercise
+  real dependencies and first-party fakes so tests fail when production
+  contracts break—use `package:test_descriptor` (`d.sandbox`, `d.dir`, `d.file`)
+  or `Directory.systemTemp.createTempSync()` for filesystem I/O, in-memory
+  databases or loopback `HttpServer` instances for services,
+  `package:http/testing.dart` (`MockClient`) for HTTP, hand-written fakes/stubs
+  for custom interfaces, and `@TestOn('browser')` for DOM and JS/Wasm interop.
 
 ## Dart & CLI Design Defaults
 
