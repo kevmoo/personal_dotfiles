@@ -70,35 +70,31 @@
 ## Testing & Verification
 
 - **Test Seam Discipline (Package Integration vs. `lib/src/` Unit Tests)**:
-  - **Package-Level / Integration Tests**: Import `package:<pkg>/<pkg>.dart`
-    (the public entrypoint seam). Never export an internal `lib/src/` symbol in
-    `lib/<pkg>.dart` solely to satisfy a test.
-  - **Subsystem Unit Tests (`lib/src/`)**: Importing an internal **deep module**
-    (`package:<pkg>/src/<subsystem>.dart`)—such as an unexported parser, data
-    model, or algorithm with a simple interface and rich internal behavior—to
-    unit-test its edge cases directly is encouraged. Never import `lib/src/` to
-    test shallow single-caller helpers, `@visibleForTesting` private state, or
-    internal call choreography that will break on routine refactoring.
-- **No Tautological or Constant-Echo Tests**: Never write tests that merely
-  re-assert a constant or enum value (`expect(maxLength, 280)`), echo literal
-  DTO constructor getters, or copy-paste the production formula into `expect()`.
-  Test the behavior or boundary that _consumes_ the constant (e.g., passing 280
-  vs. 281 characters to the validator).
-- **No Source-File String / Regex Proxy Tests**: Never read executable source or
-  UI files (`lib/**.dart`, `bin/**.dart`, `.html`, `.ts`) as raw strings
-  (`readAsStringSync()`, regexes, `indexOf`) to assert runtime behavior, control
-  flow, or UI rendering order instead of executing the function or rendering the
-  component. _(Allowed exceptions: golden/codegen input-output fixtures,
-  `README.md` `--help` drift checks, and static `BUILD` / `pubspec.yaml`
-  metadata sync tests)._
-- **Test Double Hierarchy ("Tests That Can Fail")**: Prefer **Real
-  implementations** (`Directory.systemTemp.createTempSync()`, in-memory
-  databases, loopback `HttpServer`) -> **First-party Fakes**
-  (`package:http/testing.dart` `MockClient`) -> **Stubs** -> **Mocks** (last
-  resort). Never use `package:mockito` `@GenerateNiceMocks` on unowned types
-  (`http.Client`, `Process`, browser/DOM APIs), and never stub out platform or
-  JS/Wasm interop boundaries on the VM when the code requires a real
-  `@TestOn('browser')` test.
+  - **Package-Level & Integration Tests**: Import `package:<pkg>/<pkg>.dart`
+    (the public entrypoint seam) and keep `lib/<pkg>.dart` exports strictly
+    scoped to public consumers.
+  - **Subsystem Unit Tests (`lib/src/`)**: Import internal **deep modules**
+    (`package:<pkg>/src/<subsystem>.dart`)—such as unexported parsers, state
+    machines, data models, or algorithms with simple interfaces and rich
+    internal behavior—to unit-test edge cases directly; test thin single-caller
+    helpers through their owning module's entrypoint.
+- **Behavioral & Boundary Assertions**: Assert observable outputs, state
+  transitions, and boundary conditions of the code that _consumes_ constants and
+  models (e.g., passing 280 vs. 281 characters into a validator) against
+  concrete expected values.
+- **Direct Execution & Rendering Verification**: Verify runtime behavior,
+  control flow, and UI/CLI output by invoking functions, running CLI commands,
+  or rendering components directly. Use raw file-text reads
+  (`readAsStringSync()`) specifically for static documentation drift
+  (`README.md` `--help` blocks), build/package metadata sync (`BUILD`,
+  `pubspec.yaml`), and code-generator input/output fixtures.
+- **Real Implementations & First-Party Fakes ("Tests That Can Fail")**: Exercise
+  real dependencies and first-party fakes so tests fail when production
+  contracts break—use `package:test_descriptor` (`d.sandbox`, `d.dir`, `d.file`)
+  or `Directory.systemTemp.createTempSync()` for filesystem I/O, in-memory
+  databases or loopback `HttpServer` instances for services,
+  `package:http/testing.dart` (`MockClient`) for HTTP, hand-written fakes/stubs
+  for custom interfaces, and `@TestOn('browser')` for DOM and JS/Wasm interop.
 
 ## Dart & CLI Design Defaults
 
