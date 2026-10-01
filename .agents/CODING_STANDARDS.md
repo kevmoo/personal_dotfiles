@@ -20,3 +20,5 @@
 - **Dart Getters**: Prefer `@override String get name => '...';` over `@override final String name = '...';`.
 - **Dependency Bounds**: Widen upper bounds (`'>=0.5.0 <0.7.0'`) rather than bumping `^min`.
 - **Package `README.md` Hygiene**: Omit top-level `# <package>` H1 headers (redundant with `pub.dev`/GitHub header rendering) and never insert `---` horizontal rules; start directly with the introductory description followed by `##` sections.
+
+- **Dart & `sem` CLI (`~/github/...`)**: Use `dart_oss` MCP (`lsp` before `grep_search`; `analyze_files` with `applyFixes: true` / `dart fix --apply`; `read_package_uris`/`rip_grep_packages` for deps; `dtd`/`hot_reload` for live apps). Exclusively use `dart install` (`dart install --source path <dir>` or `upkeep update dart_install`)—never `dart pub global`. Use `sem entities <file> --only class --only method` before reading files `>300 lines`, and `sem entities <dir> --text "<str>"` for AST-scoped string search. In `>10k-file` monorepos (`dart-sdk`), restrict `sem` to `sem find|callers|refs|grep` or path-scoped `sem entities <subpath>`.

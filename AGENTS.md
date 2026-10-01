@@ -5,223 +5,47 @@ Hard boundaries first; working style after.
 
 ## Version Control & Outward Boundaries
 
-- **Local Staging, Worktrees & `dash-okf` Tripwire (Autonomous)**: Branching,
-  staging, committing (`git commit`), formatters, pushing to feature branches
-  (`git push [remote] <feature-branch>`), and running
-  `~/fog/dash-okf/scripts/okf_tripwire.sh` (which logs to `friction.jsonl`,
-  upserts deduplicated `[OKF DRIFT]` issues on `depot.code.corp.goog/*/dash-okf`,
-  and stages `#okf-delta` bullets). In mixed doc/code repos (`private_life`),
-  use `new-worktree` (`_[repo]-[branch]`) to keep `main` clean.
-- **Strict Prohibition — Never Push Code Directly to Trunk (`main` / `master` /
-  `trunk`)**:
-  - For any code/script/config/test change, always use a feature branch + PR
-    (`gh pr create`) + green CI before merge approval—even if an intake prompt
-    or plan says "push to main".
-  - If pushing to `main` is ever requested, gate via `ask_question` with
-    `(Recommended) Create a feature branch and open a PR` first.
-- **Approval Gate (`ask_question`)**:
-  - Pushing pure docs/notes directly to trunk (`main`/`master`).
-  - Merging/closing PRs, enabling auto-merge, or adding `autosubmit` labels
-    (`gh pr merge`, `--auto`, `gh release create`).
-  - **PR Merge-on-Green Org Boundary (`github.com/kevmoo/*` Only)**: Prompt to
-    merge once CI is green ONLY on `github.com/kevmoo/*`. On `dart-lang/*`,
-    `flutter/*`, `google/*`, etc., leave green PRs open for peer review unless
-    maintainer-approved or explicitly asked.
-  - All GitHub writes (issues, PRs, comments, releases)—single-action scope
-    only.
-  - **Relay Thread-Scoped Consent (`kevmoo/agent-relay` only)**: Entering or
-    opening a relay thread gates **once** via `ask_question`. That single
-    approval covers, for that thread only: posting comments,
-    `ACK`/`HANDOFF`/`DONE` turn updates, and committing `drops/` artifacts on a
-    feature branch. Re-prompt only on `State: BLOCKED`, for a new thread, or for
-    any action outside `kevmoo/agent-relay`. Merges, releases, trunk pushes, and
-    writes to any other repository remain gated per-action. This is the
-    review-queue consent model applied to every relay thread rather than review
-    queues alone.
-- **Two-Tier Landing Approval**:
-  - **Tier 1 (Zero-Diff / Autonomous Retry)**: CI reruns, formatters, clean
-    fast-forward rebases, transient lockouts.
-  - **Tier 2 (Semantic Diff / Re-Prompt)**: Source/dependency/assertion edits or
-    rebase conflicts expire approval; stage locally and re-prompt via
-    `ask_question` with a diff summary.
-- **Prohibitions & Reads**: Never force-push (`--force`, `-f`, `+ref`) or
-  `git reset --hard`. Read `github.com` URLs via `gh` CLI only.
+- **Staging & Worktrees**: Auto-run branching, `git commit`, `git push <branch>`, formatters, and `okf_tripwire.sh`. Use `new-worktree` in mixed docs/code repos.
+- **Trunk Rules**: NEVER push to `main`/`master`/`trunk`. Always use a feature branch + PR (`gh pr create`). If asked to push to main, gate via `ask_question` with `(Recommended) Create a feature branch and open a PR` first.
+- **Approval Gates (`ask_question`)**:
+  - Gated per-action: Pushing docs to trunk, merging/closing PRs (`gh pr merge`), enabling auto-merge, releases.
+  - **PR Merge-on-Green Boundary (`github.com/kevmoo/*` Only)**: Prompt to merge on green ONLY in `kevmoo/*`. Otherwise, leave PRs open for review.
+  - **Relay Thread Consent (`kevmoo/agent-relay` only)**: Entering a relay thread gates *once* via `ask_question`. This single approval covers posting comments, `ACK`/`HANDOFF` turn updates, and committing `drops/` to a branch for that thread only. Re-prompt on `State: BLOCKED`, new threads, or actions outside `kevmoo/agent-relay`.
+- **Two-Tier Landing Approval**: Tier 1 (0-diff/autonomous retry): CI reruns, formatters, clean rebases. Tier 2 (semantic diff/re-prompt): Edit/rebase conflicts expire approval; prompt via `ask_question` with diff.
+- **Prohibitions**: Never force-push (`-f`, `+ref`) or `git reset --hard`. Read GitHub URLs via `gh` CLI only.
 
 ## Interaction & Formatting
 
-- **Structured Questions (`ask_question` / `AskUserQuestion`)**: Use whenever
-  the reply would be a 1-word confirmation/choice ("yes", "continue", "option
-  A").
-  - **No Filler Options**: Offer `(Recommended) Yes, ...` + `No, cancel/pause`.
-  - **No Modal Traps on Open Steering**: Present open backlogs/TODOs/`pm-status`
-    menus as plain markdown bullets in chat.
-  - **No Goldfish Loops**: Honor declined bounds (e.g., _"Upload and wait"_ over
-    _"Upload and submit"_); finish the bounded step and yield.
-- **State Intent, Not Play-by-Play**: State your hypothesis/plan in one short
-  sentence before multi-step investigations; don't narrate routine tool calls.
-- **Terse, Direct Chat Output**: Default to compact bullets and sentence
-  fragments over filler ("Sure!"). Always emit user-facing questions and status
-  updates in visible chat (never buried inside collapsed thought blocks).
-- **Clickable Links (`file://`, `https://`, CLs, PRs)**: Always format as
-  clickable Markdown links (including inside `ask_question` prompts); never wrap
-  URLs in backticks. Include enough path prefix to disambiguate
-  (`[src/main.dart](file:///...)`), and keep styling markers (`**`, `` ` ``)
-  **inside** `[...]` brackets (`[**bold**](url)`).
-- **Markdown Tables & GitHub vs. Google3**: Keep each table row on a single
-  physical line.
-  - **GitHub (`~/github`, Prettier `mdf`)**: Separate GitHub alert headers
-    (`> [!NOTE]`) from body text with an empty `>` line
-    (`> [!TYPE]\n>\n> Text`). Never insert `<!-- mdformat off/on -->` or `[TOC]`
-    in `~/github` or CLI `--markdown` outputs.
-  - **Google3 / Piper (`mdformat`)**: Wrap tables exceeding 80 columns in
-    `<!-- mdformat off -->` ... `<!-- mdformat on -->`.
-- **Non-Interactive CLI & Heredocs**: Always pass `--yes`, `PAGER=cat`,
-  `GIT_EDITOR=true`, `EDITOR=true`, and escalated timeouts (`timeout -k 5s 45s`,
-  or `gtimeout` on macOS, so processes trapping `SIGTERM` receive `SIGKILL`
-  after 5s; `dart test --timeout 30s`), while avoiding short OS `timeout`
-  wrappers on mutating VCS commands (`git push`, `jj ship`, `g4 submit`) that
-  leave repo lockfiles behind. Prefer `git status -s --untracked=no` and
-  `git diff --name-status`. Always pass multi-line or backtick-containing text
-  (`git commit -F -`, `gh pr create --body-file -`, `agentapi send-message`) via
-  single-quoted heredocs (`<< 'EOF'`), never inside double-quoted `"..."` bash
-  strings.
-- **Zero-Token Waiting, Kill-Before-Pivot & 3-Tier Process Termination**: When a
-  background task (`<task-id>`) is still running:
-  1. **Wait**: End your turn with **zero** tool calls (pass
-     `NotificationTimeoutSeconds: 300` on `run_command`; runtime resumes
-     automatically on completion—never run `sleep` loops or
-     `manage_task(Action: "status")` polls).
-  2. **Pivot (`manage_task(kill)`)**: Call
-     `manage_task(Action: "kill", TaskId: "<task-id>")` (or `TaskStop`, which
-     tears down the isolated `Setpgid` process group) before pivoting to another
-     tool. Never rely on `| head -n N` to bound recursive `grep`/`find`.
-  3. **Daemons & Scoped OS Kill**: Start long-running servers via
-     `run_command(IsDaemon: true)` (or `Bash(run_in_background: true)`; never
-     `nohup ... & disown` inside a foreground command, which either blocks
-     `stdout` pipes or gets killed when the step's process group exits). For
-     OS-level cleanup, verify the port owner's PID (`lsof -ti :<PORT>`) and CWD
-     (`lsof -a -d cwd -p <PID>`) before `kill <PID>`, or use a worktree-scoped
-     bracketed pattern (`pkill -f "[/]full/worktree/path/..."`)—never run
-     unscoped `pkill`/`killall`.
+- **Structured Questions**: Use `ask_question` for 1-word choices. Offer `(Recommended) Yes, ...` + `No, cancel/pause`. No filler options. No modal traps (present open backlogs as plain bullets). No goldfish loops (finish bounded steps and yield).
+- **Output**: State intent in 1 sentence before multi-step work. Output compact bullets/fragments over filler. Clickable links: `[src/main.dart](file:///...)`, keep markers `**`/``` inside brackets.
+- **Tables**: One row per physical line. GitHub: separate alerts `> [!NOTE]` from body. Piper: Wrap tables >80 cols in `<!-- mdformat off/on -->`.
+- **CLI & Heredocs**: Pass `--yes`, `PAGER=cat`, `GIT_EDITOR=true`, and escalated timeouts (`timeout -k 5s 45s`, `gtimeout`). Prefer `git status -s --untracked=no` / `git diff --name-status`. Pass multi-line text (`git commit -F -`, `gh pr create --body-file -`, `agentapi send-message`) via single-quoted heredocs `<< 'EOF'`.
+- **Waiting & Kill-Before-Pivot (3-Tier)**:
+  1. **Wait**: Zero tool calls to wait (pass `NotificationTimeoutSeconds: 300` on `run_command`); no `sleep` or `status` polls.
+  2. **Pivot**: Call `manage_task(kill)` before pivoting tools. Never rely on `| head -n N`.
+  3. **Daemons/Kill**: Start long-running servers via `IsDaemon: true`. For OS-level cleanup, verify PID (`lsof -ti :<PORT>`) and CWD (`lsof -a -d cwd -p <PID>`) before `kill <PID>`, or use worktree-scoped `pkill -f "[/]path/..."` (never unscoped `pkill`).
 
 ## Engineering Discipline
 
-- **Think & Simplify**: State assumptions and simpler alternatives upfront; stop
-  and ask if unclear. Write the minimum code needed—no speculative abstractions,
-  no unrelated refactors, and clean up only orphaned imports/variables caused by
-  your change.
-- **Verify Empirically & Dogfood Read-Only Paths**: Turn tasks into checkable
-  test goals and always call `view_file` in the active session before
-  `replace_file_content` (even on pinned `<user_rules>` files like
-  `preferences.md`). Unit tests and static analysis (`dart test`, `blaze test`,
-  `dart analyze`) are necessary but not sufficient when a patch can be exercised
-  against real state via immutable / side-effect-free checks:
-  1. **Auto-Run Trivial Read-Only Checks (`~0 Risk` & `<= 15s`)**: Whenever a
-     side-effect-free check can verify a patch in the real environment (e.g.,
-     running a patched CLI/script with `--help`, `--dry-run`, `status`, `list`,
-     `view`, `readonly`, or `scan`; executing a `SELECT` / DuckDB query; or
-     invoking a modified `~/.local/bin/` shim on a real input _after_
-     formatters/`jj fix`), **execute it automatically** before declaring the
-     patch ready and cite the command + output in chat.
-  2. **Offer Non-Trivial Read-Only Verification (`~0 Risk` & `> 15s` or Live
-     Sweep)**: When a deeper side-effect-free verification exists but takes
-     longer or scans broader live state (e.g., multi-repo read-only sweep,
-     `evalin run --dry-run` / single-case smoke run, browser matrix probe, or
-     full portfolio audit), **explicitly offer to run it** (in chat or as an
-     `ask_question` option) before committing/shipping rather than skipping
-     straight to landing.
-- **Benchmark Reporting ("Before vs. After First")**:
-  1. Capture baseline on unmodified code _before_ editing.
-  2. Lead with the isolated **Before vs. After delta on the modified target**
-     (`Pre-Change`, `Post-Change`, `Absolute Delta`, `Delta (%)`,
-     `Speedup Multiplier`).
-  3. Present competitor/cross-tier baselines strictly as secondary tables
-     _after_ the isolated target delta.
-  4. Highlight any workload/runtime regressions (e.g. Wasm) upfront.
-- **Local Web App & UI Verification ("Show Me First")**: Keep the dev server
-  running (`IsDaemon: true`), verify with `curl -s`, pin a `<App Name>.url.json`
-  artifact (`http://<hostname>:<PORT>/...`), output the clickable URL +
-  screenshot in chat, and **never** prompt to commit/ship (`ask_question`) until
-  the user has inspected the live UI.
+- **Think & Simplify**: State assumptions upfront. Minimum code needed—no speculative abstractions. Clean orphaned imports only.
+- **Empirical Dogfooding**: Always `view_file` local state before `replace_file_content`. 1) **Auto-Run Trivial Checks (`~0 Risk` & `<= 15s`)**: Execute side-effect-free checks (`--help`, `--dry-run`, `status`, `SELECT`) after `jj fix` and cite output. 2) **Offer Deep Checks (`> 15s` or live sweeps)**: Offer read-only sweeps via `ask_question` before landing.
+- **Benchmarks (Before vs. After)**: Capture baseline first. Lead with isolated target delta (`Pre-Change`, `Post-Change`, `Absolute Delta`, `Delta (%)`, `Speedup Multiplier`), then competitor tables. Highlight regressions upfront.
+- **Web App UI Verification ("Show Me First")**: Keep dev server running (`IsDaemon: true`), ping `curl -s`, pin `<App>.url.json`, output URL + screenshot in chat. Never prompt to commit until user inspects UI.
 
-## Epistemic Grounding & Fact Discipline (Reporting, Planning & Memory)
+## Epistemic Grounding
 
-- **Three-Bucket Epistemic Separation (Never Conflate in Prose or Tables; Use
-  Natural Tense/Structure, Not Literal `[...]` Tags in Docs)**:
-  1. **Shipped / Verified Fact** _(past/present tense: `shipped`, `landed`,
-     `measured`)_: Requires a verified primary artifact (`*submitted*` CL,
-     `MERGED` PR, published doc, or empirical benchmark).
-  2. **Committed Plan / In-Flight** _(progressive/future tense: `in review`,
-     `staging`, `targeting Q4`)_: Requires an open tracking handle (`#XXXX` in
-     personal notes, or `b/...`, `*pending*` CL, or open PR in shared docs).
-  3. **Speculation / Proposal / Hypothesis** _(conditional tense: `proposed`,
-     `projected`, `option to`)_: Isolate in a separate
-     `Proposals & Open Questions` section or
-     `<topic>_projections_and_proposals.md` brain artifact—never state
-     projections or proposals as shipped facts.
-- **Verb-to-Artifact Binding & Authorship Attribution**:
-  - Never use accomplishment verbs (`shipped`, `built`, `authored`, `resolved`,
-    `drove`, `spearheaded`) without verifying: (a) terminal state (`*submitted*`
-    / `MERGED`, never `*pending*` or unshared same-day drafts) and (b)
-    **author/reviewer provenance**.
-  - Explicitly distinguish: **`[YOUR_WORK]`** (authored/driven by `kevmoo`),
-    **`[TEAM_CONTRIB]`** (reviewed, guided, or unblocked by `kevmoo`), and
-    **`[ECOSYSTEM_REF]`** (teammate/external PRs/CLs tracked for awareness).
-    Never claim `[ECOSYSTEM_REF]` items as user deliverables.
-- **PM-OS & Charter Docs Are Aspirational Until Proven Shipped**:
-  - Treat `README.md`, `PRD.md`, `SCORECARD.md`, `pm-orient` briefings, and open
-    Dolt tasks as **target state / plans**, never as completed work, unless
-    backed by a `CLOSED` task + `*submitted*`/`MERGED` artifact. Exclude
-    `experimental/users/kevmoo/` PM-OS bookkeeping commits from engineering
-    impact reports unless asked about PM-OS tooling.
-- **Memory Provenance Gate (`~/memory/default/projects/*.md`)**:
-  - Prefix every PR, CL, or doc saved in project memory with `[YOUR_WORK]`,
-    `[TEAM_CONTRIB]`, or `[ECOSYSTEM_REF]` plus its state (`MERGED`, `OPEN`,
-    `DRAFT`). Never store unlabeled external PRs or speculative brainstorms as
-    facts.
+- **3-Bucket Separation (Never Conflate)**: 1) **Shipped Fact** (`shipped`, `landed`): Requires submitted artifact/benchmark. 2) **Plan/In-Flight** (`staging`, `targeting`): Requires open tracking handle (`#XXXX`, `b/`, pending CL/PR). 3) **Speculation/Proposal** (`proposed`): Isolate in a separate brain artifact/section.
+- **Verb/Author Binding**: Never use accomplishment verbs (`shipped`, `built`) without verifying terminal state (`*submitted*`/`MERGED`) and provenance. Distinguish: `[YOUR_WORK]` (authored), `[TEAM_CONTRIB]` (reviewed/guided), and `[ECOSYSTEM_REF]` (teammate/external, never claim as user deliverable).
+- **Aspirational Docs**: Treat `README.md`, `PRD.md`, `pm-orient` and open tasks as target state, not completed work, unless backed by `CLOSED` task + `*submitted*` artifact. Exclude PM-OS bookkeeping commits from impact reports.
+- **Memory Provenance**: Prefix `~/memory/default/projects/*.md` saved PRs/CLs/docs with `[YOUR_WORK]`, `[TEAM_CONTRIB]`, or `[ECOSYSTEM_REF]` + state (`MERGED`, `OPEN`). No speculative brainstorms as facts.
 
-## GitHub PRs & Package Versioning
+## GitHub PRs & Workspace
 
-- **Pre-PR CI Parity (`pr-check`)**: Run `pr-check` (`kscripts pr-check`) before
-  `gh pr create` in `~/github/kevmoo/*`. Use `gh pr create -f` on single-commit
-  branches (imperative subject `<=70 chars`, bulleted body, `Fixes #123`).
-- **Dart & Package Standards**: When authoring Dart code, modifying
-  `pubspec.yaml`, `CHANGELOG.md` or `README.md`, or bumping SemVer versions,
-  ALWAYS review `~/.agents/CODING_STANDARDS.md` first.
-
-## Workspace, Tooling & Cross-Machine Relay
-
-- **Agent Skills (`~/.agents/skills`)**: Edit skills only in their source repos:
-  `personal-dotfiles`/`upkeep`/`relay` in `~/.agents/skills/<name>/` (tracked
-  via `dot`); personal/OSS skills in
-  `~/github/kevmoo/kevmoo_skills/skills/<name>/`; corp skills via
-  `~/.dotfiles-corp`.
-- **External Repos (`~/github`)**: Clone `github.com/kevmoo/*` under
-  `~/github/kevmoo/<repo>`; clone all other orgs flat at `~/github/<repo>`
-  (`~/github/flutter`, `~/github/google-cloud-dart`, `~/github/dart-sdk`—check
-  `~/github/dart-sdk/.agents/`). On sandbox `.dart_tool` rename errors
-  (`errno = 2`), use `dart pub get --no-precompile`, `dart test -c source`, and
-  `dart <script.dart>`.
-- **Dotfiles**: `~/.dotfiles` (`dot`, see
-  `~/.agents/skills/personal-dotfiles/SKILL.md`) and `~/.dotfiles-corp`
-  (`dotcorp`).
-- **Dart & `sem` CLI (`~/github/...`)**:
-  - Use `dart_oss` MCP (`lsp` before `grep_search`; `analyze_files` with
-    `applyFixes: true` / `dart fix --apply`;
-    `read_package_uris`/`rip_grep_packages` for deps; `dtd`/`hot_reload` for
-    live apps).
-  - Exclusively use `dart install` (`dart install --source path <dir>` or
-    `upkeep update dart_install`)—never `dart pub global`.
-  - Use `sem entities <file> --only class --only method` before reading files
-    `>300 lines`, and `sem entities <dir> --text "<str>"` for AST-scoped string
-    search. In `>10k-file` monorepos (`dart-sdk`), restrict `sem` to
-    `sem find|callers|refs|grep` or path-scoped `sem entities <subpath>`.
-- **Cross-Machine Agent Relay (`Enterprise Rodete` ☁️🐧⚡ · `Darwin Pro` 🍎🏎️✨
-  · `Bluefin-DX` 🐧🛠️🐳)**:
-  - **Corp-Private (`$AGENT_RELAY_CORP_REPO` via `ggh` at
-    `$AGENT_RELAY_CORP_DIR`)**: Required for any internal paths, shortlinks
-    (`cl/`, `b/`, `go/`, `cs/`), or corp context.
-  - **Public-Safe (`kevmoo/agent-relay` via `gh` at
-    `~/github/kevmoo/agent-relay`)**: Strictly zero-corp-secret OSS/dotfiles
-    work (`Bluefin-DX` 🐧). Prefer Issue Threads (`--body-file -`) and
-    `drops/<YYYY-MM-DD>-<slug>/`.
+- **Pre-PR CI Parity (`pr-check`)**: Run `pr-check` (`kscripts pr-check`) before `gh pr create` in `~/github/kevmoo/*`. Use `gh pr create -f` on single-commit branches.
+- **Dart & Package Standards**: ALWAYS review `~/.agents/CODING_STANDARDS.md` before authoring Dart code, modifying `pubspec.yaml`, `CHANGELOG.md` or `README.md`, or bumping SemVer.
+- **Agent Skills (`~/.agents/skills`)**: Edit skills in source repos: `personal-dotfiles`/`upkeep`/`relay` via `dot`; personal/OSS in `~/github/kevmoo/kevmoo_skills/...`; corp via `~/.dotfiles-corp`.
+- **External Repos (`~/github`)**: Clone `github.com/kevmoo/*` under `~/github/kevmoo/<repo>`; others flat at `~/github/<repo>`. On sandbox `.dart_tool` rename errors (`errno = 2`), use `dart pub get --no-precompile`, `dart test -c source`, and `dart <script.dart>`.
+- **Dotfiles**: `~/.dotfiles` (`dot`) and `~/.dotfiles-corp` (`dotcorp`).
+- **Cross-Machine Agent Relay**: 
+  - **Corp-Private** (`$AGENT_RELAY_CORP_REPO` via `ggh` at `$AGENT_RELAY_CORP_DIR`): Required for corp paths/shortlinks (`cl/`, `b/`, `go/`).
+  - **Public-Safe** (`kevmoo/agent-relay` via `gh` at `~/github/kevmoo/agent-relay`): Zero-corp-secret OSS/dotfiles (`Bluefin-DX` 🐧). Prefer Issue Threads (`--body-file -`) and `drops/<slug>/`.
