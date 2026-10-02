@@ -119,6 +119,10 @@
 !.agents/skills/repo-align/**
 !.agents/skills/sem-cli/
 !.agents/skills/sem-cli/**
+!.agents/skills/sharpen-later/
+!.agents/skills/sharpen-later/**
+!.agents/skills/sharpen-saw/
+!.agents/skills/sharpen-saw/**
 !.agents/skills/sidequest/
 !.agents/skills/sidequest/**
 !.agents/skills/upkeep/

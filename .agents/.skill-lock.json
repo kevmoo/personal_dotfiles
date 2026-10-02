@@ -162,6 +162,24 @@
       "skillFolderHash": "67dbf42b2d95893abb70ff5088fbc799b1a4d307",
       "installedAt": "2026-09-23T23:36:39.383Z",
       "updatedAt": "2026-09-23T23:36:39.383Z"
+    },
+    "sharpen-later": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/sharpen-later/SKILL.md",
+      "skillFolderHash": "bfc52cda677cbad7f0166d2014e3fab1603e006d",
+      "installedAt": "2026-10-02T00:52:09.268Z",
+      "updatedAt": "2026-10-02T00:52:09.268Z"
+    },
+    "sharpen-saw": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/sharpen-saw/SKILL.md",
+      "skillFolderHash": "107c361c0e75ba9c8d2e15ff7b6c1f8e57671668",
+      "installedAt": "2026-10-02T00:52:09.271Z",
+      "updatedAt": "2026-10-02T00:52:09.271Z"
     }
   },
   "dismissed": {
