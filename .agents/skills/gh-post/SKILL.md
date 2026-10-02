@@ -6,8 +6,8 @@ description: >-
   title prefixes, and templates, drafting into an artifact, and gating on user
   approval before submission. Use when triggered via /gh-post or when asked to
   file, draft, format, or submit a GitHub issue, bug report, feature request, or
-  pull request. Don't use for triaging existing PR comments (use pr-triage),
-  reviewing a PR diff (use pr-review), or Google3 Piper CLs (use cl-finalize).
+  pull request. Don't use for triaging existing PR comments (use pr-triage) or
+  reviewing a PR diff (use pr-review).
 ---
 
 # GitHub Post (`/gh-post`)
@@ -94,8 +94,8 @@ before touching the GitHub CLI, explicitly namespaced by repository:
 - **For Issues**: `draft_github_<owner>_<repo>_issue.md`
 - **For Pull Requests**: `draft_github_<owner>_<repo>_pr.md`
 
-Always provide `ArtifactMetadata` with `RequestFeedback: true` so the user can
-review the rendered draft directly in the UI. Consult
+Always provide `ArtifactMetadata` with `RequestFeedback: false` and
+`UserFacing: true` (gating execution via Step 4's `ask_question`). Consult
 [`references/templates.md`](references/templates.md) for the complete Bug
 Report, Feature Proposal, Pull Request templates, title pattern tables, and
 GitHub YAML Issue Form field mappings.
@@ -112,13 +112,33 @@ seconds to triage. Strictly enforce:
 - **No Conversational Fluff or Pleasantries**: Omit opening pleasantries
   (_"While investigating the codebase..."_) and closing pleasantries (_"Let me
   know what you think!"_, _"I would be happy to submit a PR..."_).
+- **Single-Audience / One-Owner Split (`100% Relevance`)**: Never bundle bugs or
+  action items spanning multiple distinct subsystems, packages, or teams into a
+  single cross-cutting issue where only a small fraction is relevant to any
+  given maintainer. Split distinct owners/subsystems into separate issues.
 - **No Speculative Architecture Essays**:
   - In bug reports: State the observed defect, provide exact error logs/repro
     steps, and limit proposed fixes to 1–2 factual sentences (or omit entirely).
+  - **Progressive Disclosure (`Tight Human Summary + <details>`) & AI
+    Encapsulation**: Whenever an issue includes multiple root causes,
+    import/bundle chains, benchmark tables, or AI-gathered code traces /
+    inventories, keep the visible top-level gist `<= 8–12` lines (1-sentence
+    trigger + 2–3 actionable bullets with exact commit/line permalinks + bolded
+    `**from X to Y (Zx smaller/faster)**` impact bullets). Encapsulate the deep
+    technical breakdown, code traces, and full tables inside a
+    `<details><summary><b>Detailed Breakdown, Repro Steps & Measurements (AI-assisted)</b></summary>`
+    block (always leave a blank line immediately after `</summary>` and before
+    `</details>` so GitHub Flavored Markdown renders inner tables and code
+    blocks).
   - In PRs: Explain strictly the rationale ("why") and the isolated diff ("what
     changed").
 - **No Inline Multiline Shell Escapes**: Never pass multiline Markdown inline
   via `--body "line 1\nline 2"`. Always use `--body-file`.
+- **Manual Web Form Mode**: If the user asks for a link to the repo's issue form
+  to paste manually, strip `**Target Repository**:` / `**Proposed Title**:` from
+  `draft_github_<owner>_<repo>_issue.md` so the file is 100% copy-pasteable body
+  text, and provide a pre-filled
+  `https://github.com/<owner>/<repo>/issues/new?title=...` URL artifact.
 
 #### Explicit 3D Paranoia Header for PR Draft Previews (`OQ3`)
 
@@ -160,13 +180,22 @@ one trigger holds:
 single-file refactor, test/doc update), **omit** `### Flow / Surface Delta`
 entirely.
 
-### Step 4: Mandatory Approval Gate (Hard Stop)
+### Step 4: Two-Layer Pre-Chew Gate & Concise Change Explanation (Hard Stop)
 
-Before running `gh issue create` or `gh pr create`, halt execution and prompt
-the user for explicit confirmation using `ask_question`:
+Separate **Layer A (Internal Pre-Chew Brief for the human author)** from **Layer
+B (Outbound GitHub Payload)**:
 
-- Option 1: `(Recommended) Yes, create <issue|PR> via gh <issue|pr> create`
-- Option 2: `No, keep as draft only`
+1. **Layer A (Internal Pre-Flight Brief)**: Before running `gh issue create` or
+   `gh pr create`, emit a concise internal explanation (`<= 50` lines in chat or
+   above the draft separator) covering (1) title & audience/routing rationale,
+   (2) major code changes or verified root causes by file, and (3) test coverage
+   executed. Never leak Layer A's internal forensic trace into the published
+   GitHub body unless encapsulated inside a `<details>` appendix.
+2. **Layer B (Outbound Payload Approval)**: Halt execution and prompt the user
+   via `ask_question` so they can pre-chew/adjust the human gist or approve
+   submission:
+   - Option 1: `(Recommended) Yes, create <issue|PR> via gh <issue|pr> create`
+   - Option 2: `No, keep as draft only (let me edit/pre-chew the framing)`
 
 ### Step 5: Execution & Verification
 
