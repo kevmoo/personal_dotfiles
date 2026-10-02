@@ -40,11 +40,16 @@
     `dart run api_summary@^1.1.0 -o /tmp/api_before.txt` before refactoring and
     `diff -u /tmp/api_before.txt /tmp/api_after.txt` after, requiring zero diff
     unless a public API change was requested.
-- **Internal Decomposition (`lib/src/`)**: When decomposing functions to satisfy
-  `cognitive_complexity <= 15`, forbid stateful `_Populator` / `_Runner` helper
-  classes that mutate caller maps/sets in-place; require **file-private pure
-  functions (`_computeX(input) -> output`)** inside the same library or narrow
-  internal modules with zero out-parameters.
+- **Internal Decomposition & Shallow-Helper Guardrail (`lib/src/`)**: When
+  decomposing functions to satisfy `cognitive_complexity <= 15`, forbid stateful
+  `_Populator` / `_Runner` helper classes that mutate caller maps/sets in-place;
+  require **file-private pure functions (`_computeX(input) -> output`)** inside
+  the same library or narrow internal modules with zero out-parameters. Stop
+  decomposing once a function reaches the **Target Zone (`8–15`, not `0`)**, cap
+  extracted helpers at `<= 4` parameters (`<= 3` preferred,
+  `sliceScoreAtRoot >= 3`), and run
+  `dart run cognitive_complexity:shallow@^0.2.5 lib/` to detect and re-inline
+  single-caller `SAFE_INLINE` helpers (`CallerCCAfter <= 15`).
 - **Load-Bearing Library Boundary Rule (`part` / `part of` vs. Separate
   Libraries)**:
   - **Core Principle**: Prefer the boundary the language compiler enforces

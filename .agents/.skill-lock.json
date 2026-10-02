@@ -96,7 +96,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/dart-cleanup/SKILL.md",
-      "skillFolderHash": "b5de8d2852beb6180fc4d667cbb8dd9c380aeda9",
+      "skillFolderHash": "5a69aafb34fca9104da3a3ded3b4470127dd8718",
       "installedAt": "2026-08-08T05:46:03.701Z",
       "updatedAt": "2026-08-08T05:46:03.701Z"
     },
@@ -141,7 +141,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/pr-review/SKILL.md",
-      "skillFolderHash": "752e535e972b3953bc680bf3d00863730ec88abf",
+      "skillFolderHash": "edab7d4b0caed91696f5ca293b29d05f0acd3a7b",
       "installedAt": "2026-09-23T23:36:37.331Z",
       "updatedAt": "2026-09-23T23:36:37.331Z"
     },
