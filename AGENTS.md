@@ -128,9 +128,19 @@ Hard boundaries first; working style after.
 
 ## GitHub PRs & Workspace
 
-- **Pre-PR CI Parity (`pr-check`)**: Run `pr-check` (`kscripts pr-check`) before
-  `gh pr create` in `~/github/kevmoo/*`. Use `gh pr create -f` on single-commit
-  branches (imperative subject `<=70 chars`, bulleted body, `Fixes #123`).
+- **Pre-PR CI Parity (`pr-check`) & Push Hygiene**: Run `pr-check`
+  (`kscripts pr-check`) before `gh pr create` in `~/github/kevmoo/*`. Use
+  `gh pr create -f` on single-commit branches (imperative subject `<=70 chars`,
+  bulleted body, `Fixes #123`). Before `gh pr create` or CL landing, present a
+  concise change explanation (`<= 50` lines inline or in the draft/report
+  artifact) covering title/description, major code changes, and test coverage.
+  Whenever committing or pushing with `--no-verify` (e.g., monorepo merge
+  commits or `flutter/flutter`), explicitly run `dart format` on the PR's
+  touched `.dart` files before `git push`. After pushing new commits where
+  `dismiss_stale_reviews` auto-dismisses an existing `APPROVED` review (e.g.,
+  `flutter/flutter`), check
+  `gh pr view --json reviewDecision,latestReviews,reviewRequests` and offer to
+  re-request the dismissed reviewer (`kscripts pr-triage re-request <login>`).
 - **Dart & Package Standards**: ALWAYS review `~/.agents/CODING_STANDARDS.md`
   before authoring Dart code, modifying `pubspec.yaml`, `CHANGELOG.md`, or
   `README.md`, or bumping SemVer versions.
