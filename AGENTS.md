@@ -128,9 +128,32 @@ Hard boundaries first; working style after.
 
 ## GitHub PRs & Workspace
 
-- **Pre-PR CI Parity (`pr-check`)**: Run `pr-check` (`kscripts pr-check`) before
-  `gh pr create` in `~/github/kevmoo/*`. Use `gh pr create -f` on single-commit
-  branches (imperative subject `<=70 chars`, bulleted body, `Fixes #123`).
+- **Pre-PR CI Parity (`pr-check`) & Push Hygiene**: Run `pr-check`
+  (`kscripts pr-check`) before `gh pr create` in `~/github/kevmoo/*`. Use
+  `gh pr create -f` on single-commit branches (imperative subject `<=70 chars`,
+  bulleted body, `Fixes #123`). Before `gh pr create` or CL landing, present a
+  concise internal pre-flight change explanation for `kevmoo` (`<= 50` lines
+  inline or in the draft/report artifact) covering title/description, major code
+  changes, and test coverage. Whenever committing or pushing with `--no-verify`
+  (e.g., monorepo merge commits or `flutter/flutter`), explicitly run
+  `dart format` on the PR's touched `.dart` files before `git push`. After
+  pushing new commits where `dismiss_stale_reviews` auto-dismisses an existing
+  `APPROVED` review (e.g., `flutter/flutter`), check
+  `gh pr view --json reviewDecision,latestReviews,reviewRequests` and offer to
+  re-request the dismissed reviewer (`kscripts pr-triage re-request <login>`).
+- **Outbound Human Artifacts ("Pre-Chew & Encapsulate AI")**: Never copy-paste
+  internal agent forensic proof (call-stack narration, query dumps, multi-team
+  inventories) directly into external posts for humans (GitHub issues/PRs, code
+  reviews, chat, email). Always separate **Layer A (Internal Proof for
+  `kevmoo`)** from **Layer B (Outbound Human Payload)**:
+  - **Inline PR Review & Triage Comments**: Cap at `<= 50 words` (2–3 sentences:
+    concrete symptom/defect + suggested fix). Never narrate the PR author's own
+    call stack back to them.
+  - **Issues & Bug Reports**: Enforce **1 Audience / 1 Owner per issue** (split
+    multi-subsystem findings into separate issues so 100% is relevant to the
+    reader). Lead with a `<= 8`-line human-voiced gist (`what` + `actionable
+ask` + `@owner`), and encapsulate supporting AI traces/tables in
+    `<details><summary><b>Detailed code trace & affected targets (AI-assisted)</b></summary>...</details>`.
 - **Dart & Package Standards**: ALWAYS review `~/.agents/CODING_STANDARDS.md`
   before authoring Dart code, modifying `pubspec.yaml`, `CHANGELOG.md`, or
   `README.md`, or bumping SemVer versions.
