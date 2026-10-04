@@ -169,5 +169,101 @@ void main() {
         'git --git-dir=${dotfilesCorpDir.path} --work-tree=${tempHome.path} push',
       );
     });
+
+    test('check and update invoke dotcorp-upkeep-hook when present', () async {
+      dotfilesCorpDir.createSync(recursive: true);
+      final hookFile = File('${tempHome.path}/.local/bin/dotcorp-upkeep-hook')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('#!/bin/bash\n');
+
+      var hookCheckExit = 10;
+      var hookCheckStdout = 'OUTDATED: 1 upstream file changed\n';
+      final invoked = <String>[];
+
+      final upkeeper = DotfilesCorpUpkeeper(
+        isCloudtopOverride: true,
+        homeDirOverride: () => tempHome.path,
+        processRunner: (executable, args) async {
+          invoked.add('$executable ${args.join(' ')}');
+          if (executable == hookFile.path) {
+            if (args.contains('check')) {
+              return ProcessResult(0, hookCheckExit, hookCheckStdout, '');
+            }
+            if (args.contains('update')) {
+              return ProcessResult(0, 0, 'APPLIED\n', '');
+            }
+          }
+          if (args.contains('status')) {
+            return ProcessResult(0, 0, '', ''); // Clean
+          }
+          if (args.contains('rev-parse')) {
+            return ProcessResult(0, 0, 'origin/main\n', '');
+          }
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      // 1. Exit 10 -> UpkeepState.outdated
+      final outdatedStatus = await upkeeper.check();
+      check(outdatedStatus.state).equals(UpkeepState.outdated);
+      check(outdatedStatus.summary).contains('hook outdated');
+      check(outdatedStatus.details)
+          .isNotNull()
+          .contains('OUTDATED: 1 upstream file changed');
+
+      // 2. Exit 20 -> UpkeepState.error
+      hookCheckExit = 20;
+      hookCheckStdout = 'ANCHOR_CONFLICT: SKILL.md missing anchor\n';
+      final errorStatus = await upkeeper.check();
+      check(errorStatus.state).equals(UpkeepState.error);
+      check(errorStatus.summary).contains('hook check failed');
+      check(errorStatus.errorMessage)
+          .isNotNull()
+          .contains('ANCHOR_CONFLICT: SKILL.md missing anchor');
+
+      // 3. Exit 0 -> UpkeepState.upToDate
+      hookCheckExit = 0;
+      hookCheckStdout = 'OK\n';
+      final okStatus = await upkeeper.check();
+      check(okStatus.state).equals(UpkeepState.upToDate);
+
+      // 4. Update runs hook update
+      final updateRes = await upkeeper.update();
+      check(updateRes.success).isTrue();
+      check(invoked).contains('${hookFile.path} update');
+    });
+
+    test(
+      'update runs dotcorp-upkeep-hook even when git repo is dirty',
+      () async {
+        dotfilesCorpDir.createSync(recursive: true);
+        final hookFile = File('${tempHome.path}/.local/bin/dotcorp-upkeep-hook')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('#!/bin/bash\n');
+        final invoked = <String>[];
+
+        final upkeeper = DotfilesCorpUpkeeper(
+          isCloudtopOverride: true,
+          homeDirOverride: () => tempHome.path,
+          processRunner: (executable, args) async {
+            invoked.add('$executable ${args.join(' ')}');
+            if (args.contains('status')) {
+              return ProcessResult(
+                0,
+                0,
+                ' M .config/dotfiles-corp/deep_review_overlay/overlay_spec.json\n',
+                '',
+              );
+            }
+            return ProcessResult(0, 0, 'APPLIED\n', '');
+          },
+        );
+
+        final result = await upkeeper.update();
+        check(result.success).isTrue();
+        check(result.message).contains('hook updated');
+        check(invoked).contains('${hookFile.path} update');
+      },
+    );
   });
 }
