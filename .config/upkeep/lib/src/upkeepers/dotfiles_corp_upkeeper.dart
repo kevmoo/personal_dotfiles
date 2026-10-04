@@ -32,11 +32,67 @@ class DotfilesCorpUpkeeper implements Upkeeper {
 
   String _gitDir() => p.join(_homeDir(), '.dotfiles-corp');
 
+  String _hookPath(String home) =>
+      p.join(home, '.local', 'bin', 'dotcorp-upkeep-hook');
+
   Future<ProcessResult> _run(String executable, List<String> arguments) {
     if (processRunner != null) {
       return processRunner!(executable, arguments);
     }
     return Process.run(executable, arguments);
+  }
+
+  Future<
+    ({
+      bool isOutdated,
+      bool isError,
+      List<String> details,
+      String? errorMessage,
+    })
+  >
+  _checkHook(String home) async {
+    final hook = _hookPath(home);
+    if (!File(hook).existsSync()) {
+      return (
+        isOutdated: false,
+        isError: false,
+        details: const <String>[],
+        errorMessage: null,
+      );
+    }
+    final proc = await _run(hook, ['check']);
+    final output = '${proc.stdout}\n${proc.stderr}'.trim();
+    final lines = output.isEmpty
+        ? const <String>[]
+        : output
+              .split('\n')
+              .map((l) => l.trim())
+              .where((l) => l.isNotEmpty)
+              .toList();
+    if (proc.exitCode == 0) {
+      return (
+        isOutdated: false,
+        isError: false,
+        details: lines,
+        errorMessage: null,
+      );
+    }
+    if (proc.exitCode == 10) {
+      return (
+        isOutdated: true,
+        isError: false,
+        details: lines,
+        errorMessage: null,
+      );
+    }
+    return (
+      isOutdated: false,
+      isError: true,
+      details: lines,
+      errorMessage: output.isEmpty
+          ? 'Hook exited with code ${proc.exitCode}'
+          : output,
+    );
   }
 
   @override
@@ -71,6 +127,15 @@ class DotfilesCorpUpkeeper implements Upkeeper {
     details: details,
   );
 
+  UpkeepResult _result(bool success, String message, {String? errorMessage}) =>
+      UpkeepResult(
+        upkeeperId: id,
+        displayName: displayName,
+        success: success,
+        message: message,
+        errorMessage: errorMessage,
+      );
+
   Future<ProcessResult> _corpGit(
     String gitDir,
     String home,
@@ -92,7 +157,6 @@ class DotfilesCorpUpkeeper implements Upkeeper {
         );
       }
 
-      // 1. Check for local modifications (dirty status)
       final statusProc = await _corpGit(gitDir, home, [
         'status',
         '--porcelain',
@@ -105,71 +169,61 @@ class DotfilesCorpUpkeeper implements Upkeeper {
         );
       }
 
-      final dirtyFiles = _parseDirtyFiles(statusProc.stdout.toString());
+      final statusOut = statusProc.stdout.toString().trim();
+      final dirtyFiles = statusOut.isEmpty
+          ? const <String>[]
+          : statusOut.split('\n').map((l) => l.trim()).toList();
       final isDirty = dirtyFiles.isNotEmpty;
 
-      // 2. Fetch remote changes
-      final fetchProc = await _corpGit(gitDir, home, ['fetch']);
-      if (fetchProc.exitCode != 0) {
-        return switch (isDirty) {
-          true => _status(
-            UpkeepState.outdated,
-            'Local private dotfiles have uncommitted changes (Fetch failed)',
-            errorMessage: fetchProc.stderr.toString(),
-            details: dirtyFiles,
-          ),
-          false => _status(
-            UpkeepState.error,
-            'Error fetching remote updates for private dotfiles',
-            errorMessage: fetchProc.stderr.toString(),
-          ),
-        };
+      final hookStatus = await _checkHook(home);
+      if (hookStatus.isError) {
+        return _status(
+          UpkeepState.error,
+          'Private dotfiles hook check failed',
+          errorMessage: hookStatus.errorMessage,
+          details: hookStatus.details,
+        );
       }
 
-      // Check if there is an upstream branch configured
+      final fetchProc = await _corpGit(gitDir, home, ['fetch']);
+      if (fetchProc.exitCode != 0) {
+        return _fetchFailedStatus(
+          isDirty,
+          dirtyFiles,
+          fetchProc.stderr.toString(),
+        );
+      }
+
       final upstreamProc = await _corpGit(gitDir, home, [
         'rev-parse',
         '--abbrev-ref',
         '@{u}',
       ]);
-      if (upstreamProc.exitCode != 0) {
-        return switch (isDirty) {
-          true => _status(
-            UpkeepState.outdated,
-            'Local private dotfiles have uncommitted changes (No upstream branch)',
-            details: dirtyFiles,
-          ),
-          false => _status(
-            UpkeepState.upToDate,
-            'Private dotfiles up to date (no upstream branch tracked)',
-          ),
-        };
-      }
+      final hasUpstream = upstreamProc.exitCode == 0;
+      final behindCount = hasUpstream
+          ? _countOutput(
+              await _corpGit(gitDir, home, [
+                'rev-list',
+                '--count',
+                'HEAD..@{u}',
+              ]),
+            )
+          : 0;
+      final aheadCount = hasUpstream
+          ? _countOutput(
+              await _corpGit(gitDir, home, [
+                'rev-list',
+                '--count',
+                '@{u}..HEAD',
+              ]),
+            )
+          : 0;
 
-      // 3 & 4. Behind/ahead counts against upstream
-      final behindCount = _countOutput(
-        await _corpGit(gitDir, home, ['rev-list', '--count', 'HEAD..@{u}']),
-      );
-      final aheadCount = _countOutput(
-        await _corpGit(gitDir, home, ['rev-list', '--count', '@{u}..HEAD']),
-      );
-
-      final (:details, :summaryParts) = _syncDrift(
-        isDirty: isDirty,
+      return _resolveCheckStatus(
+        hasUpstream: hasUpstream,
         dirtyFiles: dirtyFiles,
-        behindCount: behindCount,
-        aheadCount: aheadCount,
-      );
-      if (summaryParts.isEmpty) {
-        return _status(
-          UpkeepState.upToDate,
-          'Private dotfiles repository is up to date',
-        );
-      }
-      return _status(
-        UpkeepState.outdated,
-        'Private dotfiles out of sync: ${summaryParts.join(', ')}',
-        details: details,
+        counts: (behind: behindCount, ahead: aheadCount),
+        hook: (isOutdated: hookStatus.isOutdated, details: hookStatus.details),
       );
     } catch (e) {
       return _status(
@@ -180,146 +234,172 @@ class DotfilesCorpUpkeeper implements Upkeeper {
     }
   }
 
+  UpkeepStatus _fetchFailedStatus(
+    bool isDirty,
+    List<String> dirtyFiles,
+    String stderrStr,
+  ) => isDirty
+      ? _status(
+          UpkeepState.outdated,
+          'Local private dotfiles have uncommitted changes (Fetch failed)',
+          errorMessage: stderrStr,
+          details: dirtyFiles,
+        )
+      : _status(
+          UpkeepState.error,
+          'Error fetching remote updates for private dotfiles',
+          errorMessage: stderrStr,
+        );
+
+  UpkeepStatus _resolveCheckStatus({
+    required bool hasUpstream,
+    required List<String> dirtyFiles,
+    required ({int behind, int ahead}) counts,
+    required ({bool isOutdated, List<String> details}) hook,
+  }) {
+    final isDirty = dirtyFiles.isNotEmpty;
+    if (!hasUpstream && isDirty && !hook.isOutdated) {
+      return _status(
+        UpkeepState.outdated,
+        'Local private dotfiles have uncommitted changes (No upstream branch)',
+        details: dirtyFiles,
+      );
+    }
+    final details = <String>[
+      if (isDirty) ...[
+        'Local modifications:',
+        ...dirtyFiles.map((f) => '  $f'),
+      ],
+      if (counts.behind > 0)
+        '${counts.behind} new commit(s) available on remote',
+      if (counts.ahead > 0) '${counts.ahead} local commit(s) unpushed',
+      if (hook.isOutdated) ...hook.details,
+    ];
+    final summaryParts = <String>[
+      if (isDirty) 'dirty',
+      if (counts.behind > 0) '${counts.behind} behind',
+      if (counts.ahead > 0) '${counts.ahead} ahead',
+      if (hook.isOutdated) 'hook outdated',
+    ];
+    if (summaryParts.isEmpty) {
+      final msg = hasUpstream
+          ? 'Private dotfiles repository is up to date'
+          : 'Private dotfiles up to date (no upstream branch tracked)';
+      return _status(UpkeepState.upToDate, msg);
+    }
+    final suffix = hasUpstream ? '' : ' (No upstream branch)';
+    return _status(
+      UpkeepState.outdated,
+      'Private dotfiles out of sync: ${summaryParts.join(', ')}$suffix',
+      details: details,
+    );
+  }
+
   @override
   Future<UpkeepResult> update({bool verbose = false}) async {
     try {
       final home = _homeDir();
       final gitDir = _gitDir();
+      final hook = _hookPath(home);
+      final hasHook = File(hook).existsSync();
 
       if (!Directory(gitDir).existsSync()) {
-        return UpkeepResult(
-          upkeeperId: id,
-          displayName: displayName,
-          success: false,
-          message: 'Private dotfiles directory not found at $gitDir',
+        return _result(
+          false,
+          'Private dotfiles directory not found at $gitDir',
         );
       }
 
-      // Check if dirty before modifying anything
-      final statusProc = await _run('git', [
-        '--git-dir=$gitDir',
-        '--work-tree=$home',
+      final statusProc = await _corpGit(gitDir, home, [
         'status',
         '--porcelain',
       ]);
-
       if (statusProc.exitCode != 0) {
-        return UpkeepResult(
-          upkeeperId: id,
-          displayName: displayName,
-          success: false,
-          message: 'Error checking git status before update',
+        return _result(
+          false,
+          'Error checking git status before update',
           errorMessage: statusProc.stderr.toString(),
         );
       }
 
       if (statusProc.stdout.toString().trim().isNotEmpty) {
-        return UpkeepResult(
-          upkeeperId: id,
-          displayName: displayName,
-          success: false,
-          message: 'Cannot update: local private dotfiles have uncommitted changes. Please commit or stash them first.',
+        return hasHook
+            ? await _runHookUpdate(
+                hook,
+                successMsg: 'Private dotfiles hook updated (git pull/push skipped due to uncommitted changes)',
+              )
+            : _result(
+                false,
+                'Cannot update: local private dotfiles have uncommitted changes. Please commit or stash them first.',
+              );
+      }
+
+      final syncFailure = await _pullAndPushIfUpstream(gitDir, home);
+      if (syncFailure != null) return syncFailure;
+
+      if (hasHook) {
+        return await _runHookUpdate(
+          hook,
+          successMsg: 'Private dotfiles updated successfully',
         );
       }
-
-      // Check upstream
-      final upstreamProc = await _run('git', [
-        '--git-dir=$gitDir',
-        '--work-tree=$home',
-        'rev-parse',
-        '--abbrev-ref',
-        '@{u}',
-      ]);
-
-      final hasUpstream = upstreamProc.exitCode == 0;
-
-      if (hasUpstream) {
-        // Pull rebase
-        final pullProc = await _run('git', [
-          '--git-dir=$gitDir',
-          '--work-tree=$home',
-          'pull',
-          '--rebase',
-        ]);
-
-        if (pullProc.exitCode != 0) {
-          return UpkeepResult(
-            upkeeperId: id,
-            displayName: displayName,
-            success: false,
-            message: 'git pull --rebase failed on private dotfiles',
-            errorMessage: pullProc.stderr.toString(),
-          );
-        }
-
-        // Push
-        final pushProc = await _run('git', [
-          '--git-dir=$gitDir',
-          '--work-tree=$home',
-          'push',
-        ]);
-
-        if (pushProc.exitCode != 0) {
-          return UpkeepResult(
-            upkeeperId: id,
-            displayName: displayName,
-            success: false,
-            message: 'git push failed on private dotfiles',
-            errorMessage: pushProc.stderr.toString(),
-          );
-        }
-      }
-
-      return UpkeepResult(
-        upkeeperId: id,
-        displayName: displayName,
-        success: true,
-        message: 'Private dotfiles updated successfully',
-      );
+      return _result(true, 'Private dotfiles updated successfully');
     } catch (e) {
-      return UpkeepResult(
-        upkeeperId: id,
-        displayName: displayName,
-        success: false,
-        message: 'Private dotfiles update failed',
+      return _result(
+        false,
+        'Private dotfiles update failed',
         errorMessage: e.toString(),
       );
     }
   }
-}
 
-/// Trimmed non-empty lines of `git status --porcelain` output.
-List<String> _parseDirtyFiles(String statusStdout) {
-  final output = statusStdout.trim();
-  if (output.isEmpty) return const [];
-  return output.split('\n').map((line) => line.trim()).toList();
+  Future<UpkeepResult?> _pullAndPushIfUpstream(
+    String gitDir,
+    String home,
+  ) async {
+    final upstreamProc = await _corpGit(gitDir, home, [
+      'rev-parse',
+      '--abbrev-ref',
+      '@{u}',
+    ]);
+    if (upstreamProc.exitCode != 0) return null;
+
+    final pullProc = await _corpGit(gitDir, home, ['pull', '--rebase']);
+    if (pullProc.exitCode != 0) {
+      return _result(
+        false,
+        'git pull --rebase failed on private dotfiles',
+        errorMessage: pullProc.stderr.toString(),
+      );
+    }
+
+    final pushProc = await _corpGit(gitDir, home, ['push']);
+    if (pushProc.exitCode != 0) {
+      return _result(
+        false,
+        'git push failed on private dotfiles',
+        errorMessage: pushProc.stderr.toString(),
+      );
+    }
+    return null;
+  }
+
+  Future<UpkeepResult> _runHookUpdate(
+    String hook, {
+    required String successMsg,
+  }) async {
+    final hookProc = await _run(hook, ['update']);
+    if (hookProc.exitCode != 0) {
+      return _result(
+        false,
+        'Private dotfiles hook update failed',
+        errorMessage: '${hookProc.stdout}\n${hookProc.stderr}'.trim(),
+      );
+    }
+    return _result(true, successMsg);
+  }
 }
 
 /// Integer stdout of a `rev-list --count` invocation; 0 when unparseable.
 int _countOutput(ProcessResult result) =>
     int.tryParse(result.stdout.toString().trim()) ?? 0;
-
-/// Human-readable description of how the repo diverges from upstream.
-({List<String> details, List<String> summaryParts}) _syncDrift({
-  required bool isDirty,
-  required List<String> dirtyFiles,
-  required int behindCount,
-  required int aheadCount,
-}) {
-  final details = <String>[];
-  final summaryParts = <String>[];
-  if (isDirty) {
-    details.add('Local modifications:');
-    details.addAll(dirtyFiles.map((f) => '  $f'));
-    summaryParts.add('dirty');
-  }
-  if (behindCount > 0) {
-    details.add('$behindCount new commit(s) available on remote');
-    summaryParts.add('$behindCount behind');
-  }
-  if (aheadCount > 0) {
-    details.add('$aheadCount local commit(s) unpushed');
-    summaryParts.add('$aheadCount ahead');
-  }
-  return (details: details, summaryParts: summaryParts);
-}
