@@ -260,8 +260,12 @@ class SkillsUpkeeper implements Upkeeper {
   bool needsReconciliation(String home) {
     final agentsSkillsDir = Directory(p.join(home, '.agents', 'skills'));
     if (!agentsSkillsDir.existsSync()) return false;
-    return _claudeNeedsReconciliation(home, agentsSkillsDir) ||
-        _geminiNeedsReconciliation(home, agentsSkillsDir);
+    final claudeSkillsDir = Directory(p.join(home, '.claude', 'skills'));
+    final claudeNeeds =
+        claudeSkillsDir.existsSync() &&
+        (_hasMissingLinks(agentsSkillsDir, claudeSkillsDir) ||
+            _hasDanglingLinks(claudeSkillsDir, skipPrefix: 'core.gc-'));
+    return claudeNeeds || _geminiNeedsReconciliation(home, agentsSkillsDir);
   }
 
   /// Creates missing skill links and prunes dangling ones for every
@@ -315,15 +319,6 @@ class SkillsUpkeeper implements Upkeeper {
       );
     }
   }
-}
-
-/// Whether the `.claude/skills` target is missing links or holds dangling
-/// non-GC-managed ones.
-bool _claudeNeedsReconciliation(String home, Directory agentsSkillsDir) {
-  final claudeSkillsDir = Directory(p.join(home, '.claude', 'skills'));
-  if (!claudeSkillsDir.existsSync()) return false;
-  return _hasMissingLinks(agentsSkillsDir, claudeSkillsDir) ||
-      _hasDanglingLinks(claudeSkillsDir, skipPrefix: 'core.gc-');
 }
 
 /// Whether any `.gemini` target (user-plugin skills, antigravity IDE) is

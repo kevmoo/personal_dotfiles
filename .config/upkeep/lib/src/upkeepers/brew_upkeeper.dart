@@ -71,6 +71,30 @@ class BrewUpkeeper implements Upkeeper {
     return false;
   }
 
+  ({List<String> direct, List<String> dependency}) _partitionOutdatedItems(
+    List<dynamic> items,
+    Set<String> expected, {
+    required String kind,
+  }) {
+    final direct = <String>[];
+    final dependency = <String>[];
+    for (final raw in items.whereType<Map<String, dynamic>>()) {
+      final name = (raw['name'] as String?) ?? 'unknown';
+      final installedList = raw['installed_versions'] as List?;
+      final current =
+          installedList?.firstOrNull ?? raw['installed_version'] ?? 'curr';
+      final latest = raw['current_version'] ?? 'latest';
+      if (_isDirectlyInBrewfile(name, expected)) {
+        direct.add('Outdated Brewfile $kind: $name ($current -> $latest)');
+      } else {
+        dependency.add(
+          'Outdated dependency $kind: $name ($current -> $latest)',
+        );
+      }
+    }
+    return (direct: direct, dependency: dependency);
+  }
+
   @override
   Future<UpkeepStatus> check() async {
     try {
@@ -87,69 +111,40 @@ class BrewUpkeeper implements Upkeeper {
         ..._parseBrewfileEntries(osBrewfile, 'cask'),
       };
 
-      // Check outdated via brew outdated --json
       final outdatedResult = await Process.run('brew', ['outdated', '--json']);
       final directOutdatedDetails = <String>[];
       final dependencyOutdatedDetails = <String>[];
-      int directOutdatedCount = 0;
-      int dependencyOutdatedCount = 0;
 
-      if (outdatedResult.exitCode == 0 &&
-          outdatedResult.stdout.toString().trim().isNotEmpty) {
+      final rawOut = outdatedResult.stdout.toString().trim();
+      if (outdatedResult.exitCode == 0 && rawOut.isNotEmpty) {
         try {
-          final dynamic parsed = jsonDecode(outdatedResult.stdout.toString());
+          final dynamic parsed = jsonDecode(rawOut);
           if (parsed is Map<String, dynamic>) {
-            final formulae = parsed['formulae'] as List? ?? [];
-            final casks = parsed['casks'] as List? ?? [];
-
-            for (final f in formulae) {
-              final name = f['name'] ?? 'unknown';
-              final current =
-                  (f['installed_versions'] as List?)?.first ?? 'curr';
-              final latest = f['current_version'] ?? 'latest';
-
-              if (_isDirectlyInBrewfile(name, expectedFormulae)) {
-                directOutdatedCount++;
-                directOutdatedDetails.add(
-                  'Outdated Brewfile formula: $name ($current -> $latest)',
-                );
-              } else {
-                dependencyOutdatedCount++;
-                dependencyOutdatedDetails.add(
-                  'Outdated dependency formula: $name ($current -> $latest)',
-                );
-              }
-            }
-
-            for (final c in casks) {
-              final name = c['name'] ?? 'unknown';
-              final current = c['installed_version'] ?? 'curr';
-              final latest = c['current_version'] ?? 'latest';
-
-              if (_isDirectlyInBrewfile(name, expectedCasks)) {
-                directOutdatedCount++;
-                directOutdatedDetails.add(
-                  'Outdated Brewfile cask: $name ($current -> $latest)',
-                );
-              } else {
-                dependencyOutdatedCount++;
-                dependencyOutdatedDetails.add(
-                  'Outdated dependency cask: $name ($current -> $latest)',
-                );
-              }
-            }
+            final formulae = _partitionOutdatedItems(
+              parsed['formulae'] as List? ?? const [],
+              expectedFormulae,
+              kind: 'formula',
+            );
+            final casks = _partitionOutdatedItems(
+              parsed['casks'] as List? ?? const [],
+              expectedCasks,
+              kind: 'cask',
+            );
+            directOutdatedDetails
+              ..addAll(formulae.direct)
+              ..addAll(casks.direct);
+            dependencyOutdatedDetails
+              ..addAll(formulae.dependency)
+              ..addAll(casks.dependency);
           }
         } catch (_) {}
       }
 
-      final List<String> details = [
+      final details = <String>[
         ...directOutdatedDetails,
         ...dependencyOutdatedDetails,
       ];
-
-      final totalOutdated = directOutdatedCount + dependencyOutdatedCount;
-
-      if (totalOutdated == 0) {
+      if (details.isEmpty) {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
@@ -158,13 +153,12 @@ class BrewUpkeeper implements Upkeeper {
         );
       }
 
-      final summaryParts = <String>[];
-      if (directOutdatedCount > 0) {
-        summaryParts.add('$directOutdatedCount Brewfile outdated');
-      }
-      if (dependencyOutdatedCount > 0) {
-        summaryParts.add('$dependencyOutdatedCount dependencies outdated');
-      }
+      final summaryParts = <String>[
+        if (directOutdatedDetails.isNotEmpty)
+          '${directOutdatedDetails.length} Brewfile outdated',
+        if (dependencyOutdatedDetails.isNotEmpty)
+          '${dependencyOutdatedDetails.length} dependencies outdated',
+      ];
 
       return UpkeepStatus(
         upkeeperId: id,

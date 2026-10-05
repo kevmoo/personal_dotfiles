@@ -34,12 +34,7 @@ void main() {
       Directory(p.join(flutterDir.path, '.git')).createSync(recursive: true);
       final upkeeper = FlutterRepoUpkeeper(
         overrideFlutterDir: flutterDir,
-        processRunner: (executable, args) async {
-          if (args.contains('rev-parse')) {
-            return ProcessResult(0, 0, 'HEAD\n', '');
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeFlutterProcessRunner(branch: 'HEAD'),
       );
 
       final status = await upkeeper.check();
@@ -59,18 +54,10 @@ void main() {
 
         final upkeeper = FlutterRepoUpkeeper(
           overrideFlutterDir: flutterDir,
-          processRunner: (executable, args) async {
-            if (args.contains('rev-parse')) {
-              return ProcessResult(0, 0, 'master\n', '');
-            }
-            if (args.contains('rev-list')) {
-              return ProcessResult(0, 0, '5\n', '');
-            }
-            if (args.contains('log')) {
-              return ProcessResult(0, 0, '$fourDaysAgoSecs\n', '');
-            }
-            return ProcessResult(0, 0, '', '');
-          },
+          processRunner: _fakeFlutterProcessRunner(
+            commitsBehind: 5,
+            headEpochSecs: fourDaysAgoSecs,
+          ),
         );
 
         final status = await upkeeper.check();
@@ -92,18 +79,10 @@ void main() {
 
         final upkeeper = FlutterRepoUpkeeper(
           overrideFlutterDir: flutterDir,
-          processRunner: (executable, args) async {
-            if (args.contains('rev-parse')) {
-              return ProcessResult(0, 0, 'master\n', '');
-            }
-            if (args.contains('rev-list')) {
-              return ProcessResult(0, 0, '0\n', '');
-            }
-            if (args.contains('log')) {
-              return ProcessResult(0, 0, '$twoHoursAgoSecs\n', '');
-            }
-            return ProcessResult(0, 0, '', '');
-          },
+          processRunner: _fakeFlutterProcessRunner(
+            commitsBehind: 0,
+            headEpochSecs: twoHoursAgoSecs,
+          ),
         );
 
         final status = await upkeeper.check();
@@ -117,12 +96,9 @@ void main() {
       Directory(p.join(flutterDir.path, '.git')).createSync(recursive: true);
       final upkeeper = FlutterRepoUpkeeper(
         overrideFlutterDir: flutterDir,
-        processRunner: (executable, args) async {
-          if (args.contains('status')) {
-            return ProcessResult(0, 0, ' M lib/main.dart\n', '');
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeFlutterProcessRunner(
+          statusStdout: ' M lib/main.dart\n',
+        ),
       );
 
       final result = await upkeeper.update();
@@ -135,16 +111,7 @@ void main() {
       final commands = <String>[];
       final upkeeper = FlutterRepoUpkeeper(
         overrideFlutterDir: flutterDir,
-        processRunner: (executable, args) async {
-          commands.add('$executable ${args.join(' ')}');
-          if (args.contains('status')) {
-            return ProcessResult(0, 0, '', '');
-          }
-          if (args.contains('rev-parse')) {
-            return ProcessResult(0, 0, 'master\n', '');
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeFlutterProcessRunner(commands: commands),
       );
 
       final result = await upkeeper.update();
@@ -162,25 +129,12 @@ void main() {
 
     test('update reports failure when flutter doctor fails', () async {
       Directory(p.join(flutterDir.path, '.git')).createSync(recursive: true);
-      final expectedDoctorBin = p.join(
-        flutterDir.path,
-        'bin',
-        Platform.isWindows ? 'flutter.bat' : 'flutter',
-      );
       final upkeeper = FlutterRepoUpkeeper(
         overrideFlutterDir: flutterDir,
-        processRunner: (executable, args) async {
-          if (args.contains('status')) {
-            return ProcessResult(0, 0, '', '');
-          }
-          if (args.contains('rev-parse')) {
-            return ProcessResult(0, 0, 'master\n', '');
-          }
-          if (executable == expectedDoctorBin && args.contains('doctor')) {
-            return ProcessResult(0, 1, '', 'doctor tool failure');
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeFlutterProcessRunner(
+          doctorExit: 1,
+          doctorStderr: 'doctor tool failure',
+        ),
       );
 
       final result = await upkeeper.update();
@@ -189,4 +143,30 @@ void main() {
       check(result.errorMessage).equals('doctor tool failure');
     });
   });
+}
+
+FlutterRepoProcessRunner _fakeFlutterProcessRunner({
+  List<String>? commands,
+  String branch = 'master',
+  int commitsBehind = 0,
+  int headEpochSecs = 0,
+  String statusStdout = '',
+  int doctorExit = 0,
+  String doctorStderr = '',
+}) {
+  return (executable, args) async {
+    commands?.add('$executable ${args.join(' ')}');
+    if (args.contains('status')) return ProcessResult(0, 0, statusStdout, '');
+    if (args.contains('rev-parse')) return ProcessResult(0, 0, '$branch\n', '');
+    if (args.contains('rev-list')) {
+      return ProcessResult(0, 0, '$commitsBehind\n', '');
+    }
+    if (args.contains('log')) {
+      return ProcessResult(0, 0, '$headEpochSecs\n', '');
+    }
+    if (args.contains('doctor')) {
+      return ProcessResult(0, doctorExit, '', doctorStderr);
+    }
+    return ProcessResult(0, 0, '', '');
+  };
 }

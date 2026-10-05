@@ -46,18 +46,10 @@ void main() {
       final upkeeper = DotfilesCorpUpkeeper(
         isCloudtopOverride: true,
         homeDirOverride: () => tempHome.path,
-        processRunner: (executable, args) async {
-          if (args.contains('status')) {
-            return ProcessResult(0, 0, ' M some_file.txt\n', '');
-          }
-          if (args.contains('fetch')) {
-            return ProcessResult(0, 0, '', '');
-          }
-          if (args.contains('rev-parse')) {
-            return ProcessResult(1, 1, '', ''); // No upstream
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeProcessRunner(
+          statusStdout: ' M some_file.txt\n',
+          revParseExit: 1,
+        ),
       );
 
       final status = await upkeeper.check();
@@ -71,15 +63,10 @@ void main() {
       final upkeeper = DotfilesCorpUpkeeper(
         isCloudtopOverride: true,
         homeDirOverride: () => tempHome.path,
-        processRunner: (executable, args) async {
-          if (args.contains('status')) {
-            return ProcessResult(0, 0, '', ''); // Clean
-          }
-          if (args.contains('fetch')) {
-            return ProcessResult(1, 1, '', 'Fetch timeout');
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeProcessRunner(
+          fetchExit: 1,
+          fetchStderr: 'Fetch timeout',
+        ),
       );
 
       final status = await upkeeper.check();
@@ -93,26 +80,10 @@ void main() {
       final upkeeper = DotfilesCorpUpkeeper(
         isCloudtopOverride: true,
         homeDirOverride: () => tempHome.path,
-        processRunner: (executable, args) async {
-          if (args.contains('status')) {
-            return ProcessResult(0, 0, '', ''); // Clean
-          }
-          if (args.contains('fetch')) {
-            return ProcessResult(0, 0, '', '');
-          }
-          if (args.contains('rev-parse')) {
-            return ProcessResult(0, 0, 'origin/main\n', ''); // Has upstream
-          }
-          if (args.contains('rev-list')) {
-            if (args.contains('HEAD..@{u}')) {
-              return ProcessResult(0, 0, '2\n', ''); // 2 behind
-            }
-            if (args.contains('@{u}..HEAD')) {
-              return ProcessResult(0, 0, '1\n', ''); // 1 ahead
-            }
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeProcessRunner(
+          behindStdout: '2\n',
+          aheadStdout: '1\n',
+        ),
       );
 
       final status = await upkeeper.check();
@@ -129,12 +100,7 @@ void main() {
       final upkeeper = DotfilesCorpUpkeeper(
         isCloudtopOverride: true,
         homeDirOverride: () => tempHome.path,
-        processRunner: (executable, args) async {
-          if (args.contains('status')) {
-            return ProcessResult(0, 0, ' M some_file.txt\n', '');
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeProcessRunner(statusStdout: ' M some_file.txt\n'),
       );
 
       final result = await upkeeper.update();
@@ -148,16 +114,7 @@ void main() {
       final upkeeper = DotfilesCorpUpkeeper(
         isCloudtopOverride: true,
         homeDirOverride: () => tempHome.path,
-        processRunner: (executable, args) async {
-          commands.add('$executable ${args.join(' ')}');
-          if (args.contains('status')) {
-            return ProcessResult(0, 0, '', ''); // Clean
-          }
-          if (args.contains('rev-parse')) {
-            return ProcessResult(0, 0, 'origin/main\n', ''); // Has upstream
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeProcessRunner(commands: commands),
       );
 
       final result = await upkeeper.update();
@@ -183,24 +140,12 @@ void main() {
       final upkeeper = DotfilesCorpUpkeeper(
         isCloudtopOverride: true,
         homeDirOverride: () => tempHome.path,
-        processRunner: (executable, args) async {
-          invoked.add('$executable ${args.join(' ')}');
-          if (executable == hookFile.path) {
-            if (args.contains('check')) {
-              return ProcessResult(0, hookCheckExit, hookCheckStdout, '');
-            }
-            if (args.contains('update')) {
-              return ProcessResult(0, 0, 'APPLIED\n', '');
-            }
-          }
-          if (args.contains('status')) {
-            return ProcessResult(0, 0, '', ''); // Clean
-          }
-          if (args.contains('rev-parse')) {
-            return ProcessResult(0, 0, 'origin/main\n', '');
-          }
-          return ProcessResult(0, 0, '', '');
-        },
+        processRunner: _fakeProcessRunner(
+          commands: invoked,
+          hookPath: hookFile.path,
+          hookCheckExit: () => hookCheckExit,
+          hookCheckStdout: () => hookCheckStdout,
+        ),
       );
 
       // 1. Exit 10 -> UpkeepState.outdated
@@ -245,18 +190,10 @@ void main() {
         final upkeeper = DotfilesCorpUpkeeper(
           isCloudtopOverride: true,
           homeDirOverride: () => tempHome.path,
-          processRunner: (executable, args) async {
-            invoked.add('$executable ${args.join(' ')}');
-            if (args.contains('status')) {
-              return ProcessResult(
-                0,
-                0,
-                ' M .config/dotfiles-corp/deep_review_overlay/overlay_spec.json\n',
-                '',
-              );
-            }
-            return ProcessResult(0, 0, 'APPLIED\n', '');
-          },
+          processRunner: _fakeProcessRunner(
+            commands: invoked,
+            statusStdout: ' M .config/dotfiles-corp/deep_review_overlay/overlay_spec.json\n',
+          ),
         );
 
         final result = await upkeeper.update();
@@ -266,4 +203,46 @@ void main() {
       },
     );
   });
+}
+
+Future<ProcessResult> Function(String, List<String>) _fakeProcessRunner({
+  List<String>? commands,
+  String statusStdout = '',
+  int fetchExit = 0,
+  String fetchStderr = '',
+  int revParseExit = 0,
+  String behindStdout = '0\n',
+  String aheadStdout = '0\n',
+  String? hookPath,
+  int Function()? hookCheckExit,
+  String Function()? hookCheckStdout,
+}) {
+  return (executable, args) async {
+    commands?.add('$executable ${args.join(' ')}');
+    if (hookPath != null && executable == hookPath) {
+      if (args.contains('check')) {
+        return ProcessResult(
+          0,
+          hookCheckExit?.call() ?? 0,
+          hookCheckStdout?.call() ?? '',
+          '',
+        );
+      }
+      return ProcessResult(0, 0, 'APPLIED\n', '');
+    }
+    if (args.contains('status')) return ProcessResult(0, 0, statusStdout, '');
+    if (args.contains('fetch')) {
+      return ProcessResult(0, fetchExit, '', fetchStderr);
+    }
+    if (args.contains('rev-parse')) {
+      return ProcessResult(0, revParseExit, 'origin/main\n', '');
+    }
+    if (args.contains('HEAD..@{u}')) {
+      return ProcessResult(0, 0, behindStdout, '');
+    }
+    if (args.contains('@{u}..HEAD')) {
+      return ProcessResult(0, 0, aheadStdout, '');
+    }
+    return ProcessResult(0, 0, '', '');
+  };
 }

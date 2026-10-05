@@ -60,101 +60,80 @@ class BrewfileUpkeeper implements Upkeeper {
     return set;
   }
 
+  Future<Set<String>> _brewSet(List<String> args) async {
+    final res = await Process.run('brew', args);
+    if (res.exitCode != 0) return {};
+    return res.stdout
+        .toString()
+        .split('\n')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet();
+  }
+
+  Future<
+    ({
+      File sharedFile,
+      File osFile,
+      List<String> missingFormulae,
+      List<String> missingCasks,
+      List<String> unmanagedFormulae,
+      List<String> unmanagedCasks,
+    })
+  >
+  _auditBrewfiles() async {
+    final home = _homeDir();
+    final sharedPath = p.join(home, '.config', 'brew', 'Brewfile.shared');
+    final osPath = _getOsBrewfilePath();
+
+    final expectedFormulae = {
+      ..._parseBrewfileEntries(sharedPath, 'brew'),
+      ..._parseBrewfileEntries(osPath, 'brew'),
+    };
+    final expectedCasks = {
+      ..._parseBrewfileEntries(sharedPath, 'cask'),
+      ..._parseBrewfileEntries(osPath, 'cask'),
+    };
+
+    final installedLeaves = await _brewSet(['leaves']);
+    final allFormulae = await _brewSet(['list', '--formula']);
+    final installedCasks = await _brewSet(['list', '--cask']);
+
+    return (
+      sharedFile: File(sharedPath),
+      osFile: File(osPath),
+      missingFormulae: expectedFormulae
+          .where((f) => !_matchesExpected(f, allFormulae))
+          .toList(),
+      missingCasks: expectedCasks
+          .where((c) => !_matchesExpected(c, installedCasks))
+          .toList(),
+      unmanagedFormulae: installedLeaves
+          .where((f) => !_matchesExpected(f, expectedFormulae))
+          .toList(),
+      unmanagedCasks: installedCasks
+          .where((c) => !_matchesExpected(c, expectedCasks))
+          .toList(),
+    );
+  }
+
   @override
   Future<UpkeepStatus> check() async {
     try {
-      final home = _homeDir();
-      final sharedBrewfile = p.join(home, '.config', 'brew', 'Brewfile.shared');
-      final osBrewfile = _getOsBrewfilePath();
+      final audit = await _auditBrewfiles();
+      final details = <String>[
+        for (final f in audit.missingFormulae) 'Missing formula: $f',
+        for (final c in audit.missingCasks) 'Missing cask: $c',
+        for (final f in audit.unmanagedFormulae) 'Unmanaged formula: $f',
+        for (final c in audit.unmanagedCasks) 'Unmanaged cask: $c',
+      ];
 
-      final expectedFormulae = {
-        ..._parseBrewfileEntries(sharedBrewfile, 'brew'),
-        ..._parseBrewfileEntries(osBrewfile, 'brew'),
-      };
-      final expectedCasks = {
-        ..._parseBrewfileEntries(sharedBrewfile, 'cask'),
-        ..._parseBrewfileEntries(osBrewfile, 'cask'),
-      };
+      final totalMissing =
+          audit.missingFormulae.length + audit.missingCasks.length;
+      final totalUnmanaged =
+          audit.unmanagedFormulae.length + audit.unmanagedCasks.length;
 
-      // Check installed items for missing comparison
-      final leavesResult = await Process.run('brew', ['leaves']);
-      final installedLeaves = leavesResult.exitCode == 0
-          ? leavesResult.stdout
-                .toString()
-                .split('\n')
-                .map((e) => e.trim())
-                .where((e) => e.isNotEmpty)
-                .toSet()
-          : <String>{};
-
-      final allFormulaeResult = await Process.run('brew', [
-        'list',
-        '--formula',
-      ]);
-      final allFormulae = allFormulaeResult.exitCode == 0
-          ? allFormulaeResult.stdout
-                .toString()
-                .split('\n')
-                .map((e) => e.trim())
-                .where((e) => e.isNotEmpty)
-                .toSet()
-          : <String>{};
-
-      final caskListResult = await Process.run('brew', ['list', '--cask']);
-      final installedCasks = (caskListResult.exitCode == 0)
-          ? caskListResult.stdout
-                .toString()
-                .split('\n')
-                .map((e) => e.trim())
-                .where((e) => e.isNotEmpty)
-                .toSet()
-          : <String>{};
-
-      final missingFormulae = expectedFormulae.where((f) {
-        if (allFormulae.contains(f)) return false;
-        if (f.contains('/')) {
-          final shortName = f.split('/').last;
-          if (allFormulae.contains(shortName)) return false;
-        }
-        return true;
-      }).toList();
-
-      final missingCasks = expectedCasks.where((c) {
-        if (installedCasks.contains(c)) return false;
-        if (c.contains('/')) {
-          final shortName = c.split('/').last;
-          if (installedCasks.contains(shortName)) return false;
-        }
-        return true;
-      }).toList();
-
-      final unmanagedFormulae = installedLeaves
-          .where((f) => !_matchesExpected(f, expectedFormulae))
-          .toList();
-
-      final unmanagedCasks = installedCasks
-          .where((c) => !_matchesExpected(c, expectedCasks))
-          .toList();
-
-      final List<String> details = [];
-      for (final f in missingFormulae) {
-        details.add('Missing formula: $f');
-      }
-      for (final c in missingCasks) {
-        details.add('Missing cask: $c');
-      }
-      for (final f in unmanagedFormulae) {
-        details.add('Unmanaged formula: $f');
-      }
-      for (final c in unmanagedCasks) {
-        details.add('Unmanaged cask: $c');
-      }
-
-      final totalMissing = missingFormulae.length + missingCasks.length;
-      final totalUnmanaged = unmanagedFormulae.length + unmanagedCasks.length;
-      final totalDiscrepancies = totalMissing + totalUnmanaged;
-
-      if (totalDiscrepancies == 0) {
+      if (totalMissing + totalUnmanaged == 0) {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
@@ -163,13 +142,10 @@ class BrewfileUpkeeper implements Upkeeper {
         );
       }
 
-      final summaryParts = <String>[];
-      if (totalMissing > 0) {
-        summaryParts.add('$totalMissing missing from Brewfile');
-      }
-      if (totalUnmanaged > 0) {
-        summaryParts.add('$totalUnmanaged unmanaged in Brewfile');
-      }
+      final summaryParts = <String>[
+        if (totalMissing > 0) '$totalMissing missing from Brewfile',
+        if (totalUnmanaged > 0) '$totalUnmanaged unmanaged in Brewfile',
+      ];
 
       return UpkeepStatus(
         upkeeperId: id,
@@ -200,192 +176,127 @@ class BrewfileUpkeeper implements Upkeeper {
   }
 
   Future<void> triageInteractive() async {
-    final home = _homeDir();
-    final sharedPath = p.join(home, '.config', 'brew', 'Brewfile.shared');
-    final osPath = _getOsBrewfilePath();
-    final sharedFile = File(sharedPath);
-    final osFile = File(osPath);
-
-    final osLabel = Platform.isMacOS ? 'mac' : 'linux';
-    final osKey = Platform.isMacOS ? 'm' : 'l';
-
-    final expectedFormulae = {
-      ..._parseBrewfileEntries(sharedPath, 'brew'),
-      ..._parseBrewfileEntries(osPath, 'brew'),
-    };
-    final expectedCasks = {
-      ..._parseBrewfileEntries(sharedPath, 'cask'),
-      ..._parseBrewfileEntries(osPath, 'cask'),
-    };
-
-    final leavesResult = await Process.run('brew', ['leaves']);
-    final installedLeaves = leavesResult.exitCode == 0
-        ? leavesResult.stdout
-              .toString()
-              .split('\n')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .toSet()
-        : <String>{};
-
-    final caskListResult = await Process.run('brew', ['list', '--cask']);
-    final installedCasks = (caskListResult.exitCode == 0)
-        ? caskListResult.stdout
-              .toString()
-              .split('\n')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .toSet()
-        : <String>{};
-
-    final unmanagedFormulae = installedLeaves
-        .where((f) => !_matchesExpected(f, expectedFormulae))
-        .toList();
-    final unmanagedCasks = installedCasks
-        .where((c) => !_matchesExpected(c, expectedCasks))
-        .toList();
-
-    final allFormulaeResult = await Process.run('brew', ['list', '--formula']);
-    final allFormulae = allFormulaeResult.exitCode == 0
-        ? allFormulaeResult.stdout
-              .toString()
-              .split('\n')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .toSet()
-        : <String>{};
-
-    final missingFormulae = expectedFormulae.where((f) {
-      if (allFormulae.contains(f)) return false;
-      if (f.contains('/')) {
-        final shortName = f.split('/').last;
-        if (allFormulae.contains(shortName)) return false;
-      }
-      return true;
-    }).toList();
-
-    final missingCasks = expectedCasks.where((c) {
-      if (installedCasks.contains(c)) return false;
-      if (c.contains('/')) {
-        final shortName = c.split('/').last;
-        if (installedCasks.contains(shortName)) return false;
-      }
-      return true;
-    }).toList();
-
-    if (unmanagedFormulae.isEmpty &&
-        unmanagedCasks.isEmpty &&
-        missingFormulae.isEmpty &&
-        missingCasks.isEmpty) {
+    final audit = await _auditBrewfiles();
+    if (audit.unmanagedFormulae.isEmpty &&
+        audit.unmanagedCasks.isEmpty &&
+        audit.missingFormulae.isEmpty &&
+        audit.missingCasks.isEmpty) {
       print('✨ All Homebrew packages are fully synchronized with Brewfiles!');
       return;
     }
 
     print('\n🍏 Interactive Brewfile Triage\n');
 
-    if (unmanagedFormulae.isNotEmpty) {
-      print('📦 Managing unmanaged Formulae:');
-      for (final f in unmanagedFormulae) {
-        while (true) {
-          stdout.write(
-            "Add formula '$f' to Brewfile? [s]hared, [$osKey]$osLabel, or [n]o: ",
-          );
-          final choice = stdin.readLineSync()?.trim().toLowerCase() ?? '';
-          if (choice == 's') {
-            sharedFile.writeAsStringSync('brew "$f"\n', mode: FileMode.append);
-            print("Added '$f' to Brewfile.shared");
-            break;
-          } else if (choice == osKey) {
-            osFile.writeAsStringSync('brew "$f"\n', mode: FileMode.append);
-            print("Added '$f' to Brewfile.$osLabel");
-            break;
-          } else if (choice == 'n' || choice.isEmpty) {
-            print("Skipped '$f'");
-            break;
-          }
-        }
-      }
-      print('');
-    }
-
-    if (unmanagedCasks.isNotEmpty) {
-      print('🖥️ Managing unmanaged Casks:');
-      for (final c in unmanagedCasks) {
-        while (true) {
-          stdout.write(
-            "Add cask '$c' to Brewfile? [s]hared, [$osKey]$osLabel, or [n]o: ",
-          );
-          final choice = stdin.readLineSync()?.trim().toLowerCase() ?? '';
-          if (choice == 's') {
-            sharedFile.writeAsStringSync('cask "$c"\n', mode: FileMode.append);
-            print("Added '$c' to Brewfile.shared");
-            break;
-          } else if (choice == osKey) {
-            osFile.writeAsStringSync('cask "$c"\n', mode: FileMode.append);
-            print("Added '$c' to Brewfile.$osLabel");
-            break;
-          } else if (choice == 'n' || choice.isEmpty) {
-            print("Skipped '$c'");
-            break;
-          }
-        }
-      }
-      print('');
-    }
-
-    if (missingFormulae.isNotEmpty) {
-      print('⚠️ Managing missing Formulae (in Brewfile but not installed):');
-      for (final f in missingFormulae) {
-        while (true) {
-          stdout.write(
-            "Action for formula '$f'? [i]nstall, [r]emove from config, or [k]eep: ",
-          );
-          final choice = stdin.readLineSync()?.trim().toLowerCase() ?? '';
-          if (choice == 'i') {
-            print('Running: brew install $f');
-            await Process.run('brew', ['install', f]);
-            break;
-          } else if (choice == 'r') {
-            _removeFromBrewfile(sharedFile, 'brew "$f"');
-            _removeFromBrewfile(osFile, 'brew "$f"');
-            print("Removed '$f' from Brewfile");
-            break;
-          } else if (choice == 'k' || choice.isEmpty) {
-            print("Kept configuration for '$f'");
-            break;
-          }
-        }
-      }
-      print('');
-    }
-
-    if (missingCasks.isNotEmpty) {
-      print('⚠️ Managing missing Casks (in Brewfile but not installed):');
-      for (final c in missingCasks) {
-        while (true) {
-          stdout.write(
-            "Action for cask '$c'? [i]nstall, [r]emove from config, or [k]eep: ",
-          );
-          final choice = stdin.readLineSync()?.trim().toLowerCase() ?? '';
-          if (choice == 'i') {
-            print('Running: brew install --cask $c');
-            await Process.run('brew', ['install', '--cask', c]);
-            break;
-          } else if (choice == 'r') {
-            _removeFromBrewfile(sharedFile, 'cask "$c"');
-            _removeFromBrewfile(osFile, 'cask "$c"');
-            print("Removed '$c' from Brewfile");
-            break;
-          } else if (choice == 'k' || choice.isEmpty) {
-            print("Kept configuration for '$c'");
-            break;
-          }
-        }
-      }
-      print('');
-    }
+    _triageUnmanagedGroup(
+      audit.unmanagedFormulae,
+      header: '📦 Managing unmanaged Formulae:',
+      kind: 'formula',
+      directive: 'brew',
+      files: (shared: audit.sharedFile, os: audit.osFile),
+    );
+    _triageUnmanagedGroup(
+      audit.unmanagedCasks,
+      header: '🖥️ Managing unmanaged Casks:',
+      kind: 'cask',
+      directive: 'cask',
+      files: (shared: audit.sharedFile, os: audit.osFile),
+    );
+    await _triageMissingGroup(
+      audit.missingFormulae,
+      header: '⚠️ Managing missing Formulae (in Brewfile but not installed):',
+      kind: 'formula',
+      directive: 'brew',
+      files: (shared: audit.sharedFile, os: audit.osFile),
+    );
+    await _triageMissingGroup(
+      audit.missingCasks,
+      header: '⚠️ Managing missing Casks (in Brewfile but not installed):',
+      kind: 'cask',
+      directive: 'cask',
+      files: (shared: audit.sharedFile, os: audit.osFile),
+    );
 
     print('✨ Interactive Brewfile triage completed.');
+  }
+
+  void _triageUnmanagedGroup(
+    List<String> items, {
+    required String header,
+    required String kind,
+    required String directive,
+    required ({File shared, File os}) files,
+  }) {
+    if (items.isEmpty) return;
+    final (osLabel, osKey) = Platform.isMacOS ? ('mac', 'm') : ('linux', 'l');
+    print(header);
+    for (final item in items) {
+      var resolved = false;
+      while (!resolved) {
+        stdout.write(
+          "Add $kind '$item' to Brewfile? [s]hared, [$osKey]$osLabel, or [n]o: ",
+        );
+        final choice = stdin.readLineSync()?.trim().toLowerCase() ?? '';
+        switch (choice) {
+          case 's':
+            files.shared.writeAsStringSync(
+              '$directive "$item"\n',
+              mode: FileMode.append,
+            );
+            print("Added '$item' to Brewfile.shared");
+            resolved = true;
+          case _ when choice == osKey:
+            files.os.writeAsStringSync(
+              '$directive "$item"\n',
+              mode: FileMode.append,
+            );
+            print("Added '$item' to Brewfile.$osLabel");
+            resolved = true;
+          case 'n' || '':
+            print("Skipped '$item'");
+            resolved = true;
+        }
+      }
+    }
+    print('');
+  }
+
+  Future<void> _triageMissingGroup(
+    List<String> items, {
+    required String header,
+    required String kind,
+    required String directive,
+    required ({File shared, File os}) files,
+  }) async {
+    if (items.isEmpty) return;
+    final baseInstallArgs = directive == 'cask'
+        ? const ['install', '--cask']
+        : const ['install'];
+    print(header);
+    for (final item in items) {
+      var resolved = false;
+      while (!resolved) {
+        stdout.write(
+          "Action for $kind '$item'? [i]nstall, [r]emove from config, or [k]eep: ",
+        );
+        final choice = stdin.readLineSync()?.trim().toLowerCase() ?? '';
+        switch (choice) {
+          case 'i':
+            final installArgs = [...baseInstallArgs, item];
+            print('Running: brew ${installArgs.join(' ')}');
+            await Process.run('brew', installArgs);
+            resolved = true;
+          case 'r':
+            _removeFromBrewfile(files.shared, '$directive "$item"');
+            _removeFromBrewfile(files.os, '$directive "$item"');
+            print("Removed '$item' from Brewfile");
+            resolved = true;
+          case 'k' || '':
+            print("Kept configuration for '$item'");
+            resolved = true;
+        }
+      }
+    }
+    print('');
   }
 
   void _removeFromBrewfile(File file, String targetLine) {

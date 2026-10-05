@@ -29,9 +29,6 @@ class FlutterRepoUpkeeper implements Upkeeper {
   @override
   String get displayName => 'Flutter Repository (~/github/flutter)';
 
-  String _homeDir() =>
-      Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '';
-
   bool _isGitRepo(Directory? dir) =>
       dir != null && Directory(p.join(dir.path, '.git')).existsSync();
 
@@ -77,7 +74,11 @@ class FlutterRepoUpkeeper implements Upkeeper {
     final fromPath = await _resolveFromPath();
     if (fromPath != null) return fromPath;
 
-    final defaultDir = Directory(p.join(_homeDir(), 'github', 'flutter'));
+    final home =
+        Platform.environment['HOME'] ??
+        Platform.environment['USERPROFILE'] ??
+        '';
+    final defaultDir = Directory(p.join(home, 'github', 'flutter'));
     return _isGitRepo(defaultDir) ? defaultDir : null;
   }
 
