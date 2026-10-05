@@ -131,20 +131,36 @@ Future<Map<String, String>> _auditRepo(
   final remote =
       await _gitOrNull(dir.path, ['remote', 'get-url', 'origin']) ?? 'None';
   final branch = await _currentBranch(dir.path);
-  final dirtyCount = await _dirtyCount(dir.path);
+  final statusOut = await _gitStdout(dir.path, ['status', '--porcelain', '-u']);
+  final dirtyCount = statusOut.split('\n').where((l) => l.isNotEmpty).length;
   final defBranch = await _defaultBranch(dir.path);
   final (:ahead, :behind) = await _aheadBehind(dir.path, defBranch);
   final lastDate = await _lastHumanCommitDate(dir.path);
 
-  final statusStr = await _deriveStatus(
-    dir.path,
-    branch: branch,
-    defBranch: defBranch,
-    dirtyCount: dirtyCount,
-    ahead: ahead,
-    behind: behind,
-    sync: sync,
-  );
+  String statusStr;
+  if (dirtyCount > 0) {
+    statusStr = '🔴 Dirty ($dirtyCount uncommitted on $branch)';
+    if (behind > 0) statusStr += ', Behind by $behind';
+  } else if (branch != defBranch) {
+    statusStr = '🟡 Branch: $branch';
+    if (ahead > 0) statusStr += ' (Ahead by $ahead)';
+    if (behind > 0) statusStr += ' (Behind by $behind)';
+  } else if (ahead > 0) {
+    statusStr = '🟡 Ahead by $ahead on $branch';
+  } else if (behind > 0) {
+    final synced =
+        sync &&
+        (await Process.run('git', [
+              'pull',
+              '--ff-only',
+            ], workingDirectory: dir.path)).exitCode ==
+            0;
+    statusStr = synced
+        ? '🟢 Synced (+$behind commits to $branch)'
+        : '⏳ Behind by $behind on $branch';
+  } else {
+    statusStr = '🟢 Clean (Up-to-date on $branch)';
+  }
 
   return {
     'name': name,
@@ -176,12 +192,6 @@ Future<String?> _gitOrNull(String repoPath, List<String> args) async {
 Future<String> _gitStdout(String repoPath, List<String> args) async {
   final result = await Process.run('git', args, workingDirectory: repoPath);
   return result.stdout.toString().trim();
-}
-
-/// Number of uncommitted entries reported by `git status --porcelain -u`.
-Future<int> _dirtyCount(String repoPath) async {
-  final status = await _gitStdout(repoPath, ['status', '--porcelain', '-u']);
-  return status.split('\n').where((l) => l.isNotEmpty).length;
 }
 
 /// The remote default branch, falling back to `main` when unset.
@@ -228,46 +238,6 @@ Future<String> _lastHumanCommitDate(String repoPath) async {
     }
   }
   return 'N/A';
-}
-
-/// Derives the display status; when [sync] is set and the repo is cleanly
-/// behind its default branch, attempts a fast-forward pull first.
-Future<String> _deriveStatus(
-  String repoPath, {
-  required String branch,
-  required String defBranch,
-  required int dirtyCount,
-  required int ahead,
-  required int behind,
-  required bool sync,
-}) async {
-  if (dirtyCount > 0) {
-    var status = '🔴 Dirty ($dirtyCount uncommitted on $branch)';
-    if (behind > 0) status += ', Behind by $behind';
-    return status;
-  }
-  if (branch != defBranch) {
-    var status = '🟡 Branch: $branch';
-    if (ahead > 0) status += ' (Ahead by $ahead)';
-    if (behind > 0) status += ' (Behind by $behind)';
-    return status;
-  }
-  if (ahead > 0) return '🟡 Ahead by $ahead on $branch';
-  if (behind > 0) {
-    return sync && await _ffPull(repoPath)
-        ? '🟢 Synced (+$behind commits to $branch)'
-        : '⏳ Behind by $behind on $branch';
-  }
-  return '🟢 Clean (Up-to-date on $branch)';
-}
-
-/// Attempts `git pull --ff-only`; true on success.
-Future<bool> _ffPull(String repoPath) async {
-  final result = await Process.run('git', [
-    'pull',
-    '--ff-only',
-  ], workingDirectory: repoPath);
-  return result.exitCode == 0;
 }
 
 /// Sort key: dirty/behind first, then branches, then clean, then scratch;

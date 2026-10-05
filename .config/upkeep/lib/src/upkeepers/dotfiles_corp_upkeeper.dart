@@ -187,44 +187,23 @@ class DotfilesCorpUpkeeper implements Upkeeper {
 
       final fetchProc = await _corpGit(gitDir, home, ['fetch']);
       if (fetchProc.exitCode != 0) {
-        return _fetchFailedStatus(
-          isDirty,
-          dirtyFiles,
-          fetchProc.stderr.toString(),
-        );
+        final stderrStr = fetchProc.stderr.toString();
+        return isDirty
+            ? _status(
+                UpkeepState.outdated,
+                'Local private dotfiles have uncommitted changes (Fetch failed)',
+                errorMessage: stderrStr,
+                details: dirtyFiles,
+              )
+            : _status(
+                UpkeepState.error,
+                'Error fetching remote updates for private dotfiles',
+                errorMessage: stderrStr,
+              );
       }
 
-      final upstreamProc = await _corpGit(gitDir, home, [
-        'rev-parse',
-        '--abbrev-ref',
-        '@{u}',
-      ]);
-      final hasUpstream = upstreamProc.exitCode == 0;
-      final behindCount = hasUpstream
-          ? _countOutput(
-              await _corpGit(gitDir, home, [
-                'rev-list',
-                '--count',
-                'HEAD..@{u}',
-              ]),
-            )
-          : 0;
-      final aheadCount = hasUpstream
-          ? _countOutput(
-              await _corpGit(gitDir, home, [
-                'rev-list',
-                '--count',
-                '@{u}..HEAD',
-              ]),
-            )
-          : 0;
-
-      return _resolveCheckStatus(
-        hasUpstream: hasUpstream,
-        dirtyFiles: dirtyFiles,
-        counts: (behind: behindCount, ahead: aheadCount),
-        hook: (isOutdated: hookStatus.isOutdated, details: hookStatus.details),
-      );
+      final upstream = await _upstreamCounts(gitDir, home);
+      return _buildSyncStatus(dirtyFiles, hookStatus, upstream);
     } catch (e) {
       return _status(
         UpkeepState.error,
@@ -234,65 +213,75 @@ class DotfilesCorpUpkeeper implements Upkeeper {
     }
   }
 
-  UpkeepStatus _fetchFailedStatus(
-    bool isDirty,
+  UpkeepStatus _buildSyncStatus(
     List<String> dirtyFiles,
-    String stderrStr,
-  ) => isDirty
-      ? _status(
-          UpkeepState.outdated,
-          'Local private dotfiles have uncommitted changes (Fetch failed)',
-          errorMessage: stderrStr,
-          details: dirtyFiles,
-        )
-      : _status(
-          UpkeepState.error,
-          'Error fetching remote updates for private dotfiles',
-          errorMessage: stderrStr,
-        );
-
-  UpkeepStatus _resolveCheckStatus({
-    required bool hasUpstream,
-    required List<String> dirtyFiles,
-    required ({int behind, int ahead}) counts,
-    required ({bool isOutdated, List<String> details}) hook,
-  }) {
+    ({
+      bool isError,
+      bool isOutdated,
+      String? errorMessage,
+      List<String> details,
+    })
+    hookStatus,
+    ({bool hasUpstream, int behind, int ahead}) upstream,
+  ) {
     final isDirty = dirtyFiles.isNotEmpty;
-    if (!hasUpstream && isDirty && !hook.isOutdated) {
+    if (!upstream.hasUpstream && isDirty && !hookStatus.isOutdated) {
       return _status(
         UpkeepState.outdated,
         'Local private dotfiles have uncommitted changes (No upstream branch)',
         details: dirtyFiles,
       );
     }
+
     final details = <String>[
       if (isDirty) ...[
         'Local modifications:',
         ...dirtyFiles.map((f) => '  $f'),
       ],
-      if (counts.behind > 0)
-        '${counts.behind} new commit(s) available on remote',
-      if (counts.ahead > 0) '${counts.ahead} local commit(s) unpushed',
-      if (hook.isOutdated) ...hook.details,
+      if (upstream.behind > 0)
+        '${upstream.behind} new commit(s) available on remote',
+      if (upstream.ahead > 0) '${upstream.ahead} local commit(s) unpushed',
+      if (hookStatus.isOutdated) ...hookStatus.details,
     ];
     final summaryParts = <String>[
       if (isDirty) 'dirty',
-      if (counts.behind > 0) '${counts.behind} behind',
-      if (counts.ahead > 0) '${counts.ahead} ahead',
-      if (hook.isOutdated) 'hook outdated',
+      if (upstream.behind > 0) '${upstream.behind} behind',
+      if (upstream.ahead > 0) '${upstream.ahead} ahead',
+      if (hookStatus.isOutdated) 'hook outdated',
     ];
     if (summaryParts.isEmpty) {
-      final msg = hasUpstream
+      final msg = upstream.hasUpstream
           ? 'Private dotfiles repository is up to date'
           : 'Private dotfiles up to date (no upstream branch tracked)';
       return _status(UpkeepState.upToDate, msg);
     }
-    final suffix = hasUpstream ? '' : ' (No upstream branch)';
+    final suffix = upstream.hasUpstream ? '' : ' (No upstream branch)';
     return _status(
       UpkeepState.outdated,
       'Private dotfiles out of sync: ${summaryParts.join(', ')}$suffix',
       details: details,
     );
+  }
+
+  Future<({bool hasUpstream, int behind, int ahead})> _upstreamCounts(
+    String gitDir,
+    String home,
+  ) async {
+    final upstreamProc = await _corpGit(gitDir, home, [
+      'rev-parse',
+      '--abbrev-ref',
+      '@{u}',
+    ]);
+    if (upstreamProc.exitCode != 0) {
+      return (hasUpstream: false, behind: 0, ahead: 0);
+    }
+    final behind = _countOutput(
+      await _corpGit(gitDir, home, ['rev-list', '--count', 'HEAD..@{u}']),
+    );
+    final ahead = _countOutput(
+      await _corpGit(gitDir, home, ['rev-list', '--count', '@{u}..HEAD']),
+    );
+    return (hasUpstream: true, behind: behind, ahead: ahead);
   }
 
   @override

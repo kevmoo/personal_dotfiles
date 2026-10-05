@@ -92,159 +92,156 @@ class DartInstallUpkeeper implements Upkeeper {
     return null;
   }
 
+  static String? _readLockDescriptionField(
+    Directory dir,
+    String pkgName,
+    String field,
+  ) {
+    final lockFile = File(p.join(dir.path, 'pubspec.lock'));
+    if (!lockFile.existsSync()) return null;
+    try {
+      final yaml = loadYaml(lockFile.readAsStringSync());
+      if (yaml is! YamlMap) return null;
+      final packages = yaml['packages'];
+      if (packages is! YamlMap) return null;
+      final pkgEntry = packages[pkgName];
+      if (pkgEntry is! YamlMap) return null;
+      final desc = pkgEntry['description'];
+      return desc is YamlMap ? desc[field]?.toString() : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<_DartInstallApp?> _discoverHostedApp(
+    String pkgName,
+    Directory pkgDir,
+  ) async {
+    final hostedDir = Directory(p.join(pkgDir.path, 'hosted'));
+    if (!hostedDir.existsSync()) return null;
+
+    final versions = <Version>[];
+    for (final verEntity in hostedDir.listSync().whereType<Directory>()) {
+      try {
+        versions.add(Version.parse(p.basename(verEntity.path)));
+      } catch (_) {}
+    }
+    if (versions.isEmpty) return null;
+
+    versions.sort();
+    return _DartInstallApp(
+      name: pkgName,
+      type: 'hosted',
+      currentRef: versions.last.toString(),
+      latestRef: await _versionFetcher(pkgName),
+    );
+  }
+
+  Future<_DartInstallApp?> _discoverGitApp(
+    String pkgName,
+    Directory pkgDir,
+  ) async {
+    final gitDir = Directory(p.join(pkgDir.path, 'git'));
+    if (!gitDir.existsSync()) return null;
+
+    final shaDirs = gitDir.listSync().whereType<Directory>().toList();
+    if (shaDirs.isEmpty) return null;
+
+    shaDirs.sort(
+      (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+    );
+    final shaEntity = shaDirs.first;
+    final sha = p.basename(shaEntity.path);
+    final gitUrl = _readLockDescriptionField(shaEntity, pkgName, 'url');
+
+    String? remoteSha;
+    if (gitUrl != null) {
+      try {
+        final lsResult = await _processRunner('git', [
+          'ls-remote',
+          gitUrl,
+          'HEAD',
+        ]);
+        if (lsResult.exitCode == 0) {
+          final firstToken = lsResult.stdout
+              .toString()
+              .trim()
+              .split(RegExp(r'\s+'))
+              .firstOrNull;
+          if (firstToken != null && firstToken.isNotEmpty) {
+            remoteSha = firstToken;
+          }
+        }
+      } catch (_) {}
+    }
+
+    return _DartInstallApp(
+      name: pkgName,
+      type: 'git',
+      currentRef: sha,
+      latestRef: remoteSha,
+      sourceUrl: gitUrl,
+    );
+  }
+
+  Future<_DartInstallApp?> _discoverLocalApp(
+    String pkgName,
+    Directory pkgDir,
+  ) async {
+    final localDir = Directory(p.join(pkgDir.path, 'local'));
+    if (!localDir.existsSync()) return null;
+
+    final sourcePath = _readLockDescriptionField(localDir, pkgName, 'path');
+    var currentRef = 'installed';
+    String? latestRef;
+
+    if (sourcePath != null && Directory(sourcePath).existsSync()) {
+      try {
+        final bundleDir = Directory(p.join(localDir.path, 'bundle'));
+        final bundleMtime = bundleDir.existsSync()
+            ? bundleDir.statSync().modified.millisecondsSinceEpoch ~/ 1000
+            : 0;
+        final logRes = await _processRunner('git', [
+          '-C',
+          sourcePath,
+          'log',
+          '-1',
+          '--format=%ct %h',
+        ]);
+        if (logRes.exitCode == 0) {
+          final parts = logRes.stdout.toString().trim().split(' ');
+          final commitEpoch = int.tryParse(parts.firstOrNull ?? '') ?? 0;
+          final commitShort = parts.length > 1 ? parts[1] : 'HEAD';
+          if (commitEpoch > bundleMtime) {
+            currentRef = 'built earlier';
+            latestRef = 'newer commit $commitShort';
+          }
+        }
+      } catch (_) {}
+    }
+
+    return _DartInstallApp(
+      name: pkgName,
+      type: 'local',
+      currentRef: currentRef,
+      latestRef: latestRef,
+      sourceUrl: sourcePath,
+    );
+  }
+
   Future<List<_DartInstallApp>> _discoverInstalledApps() async {
     final appBundlesDir = Directory(p.join(_installDir.path, 'app-bundles'));
     if (!appBundlesDir.existsSync()) return [];
 
     final apps = <_DartInstallApp>[];
-
-    for (final entity in appBundlesDir.listSync()) {
-      if (entity is! Directory) continue;
+    for (final entity in appBundlesDir.listSync().whereType<Directory>()) {
       final pkgName = p.basename(entity.path);
-
-      // 1. Check hosted bundles: <pkgName>/hosted/<version>/
-      final hostedDir = Directory(p.join(entity.path, 'hosted'));
-      if (hostedDir.existsSync()) {
-        final versions = <Version>[];
-        for (final verEntity in hostedDir.listSync()) {
-          if (verEntity is! Directory) continue;
-          try {
-            final ver = Version.parse(p.basename(verEntity.path));
-            versions.add(ver);
-          } catch (_) {}
-        }
-
-        if (versions.isNotEmpty) {
-          versions.sort();
-          final highestInstalled = versions.last;
-          final latestVersionStr = await _versionFetcher(pkgName);
-
-          apps.add(
-            _DartInstallApp(
-              name: pkgName,
-              type: 'hosted',
-              currentRef: highestInstalled.toString(),
-              latestRef: latestVersionStr,
-            ),
-          );
-        }
-      }
-
-      // 2. Check git bundles: <pkgName>/git/<sha>/
-      final gitDir = Directory(p.join(entity.path, 'git'));
-      if (gitDir.existsSync()) {
-        final shaDirs = gitDir.listSync().whereType<Directory>().toList();
-        if (shaDirs.isNotEmpty) {
-          shaDirs.sort(
-            (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
-          );
-          final shaEntity = shaDirs.first;
-          final sha = p.basename(shaEntity.path);
-
-          String? gitUrl;
-          final pubspecLockFile = File(p.join(shaEntity.path, 'pubspec.lock'));
-          if (pubspecLockFile.existsSync()) {
-            try {
-              final lockYaml = loadYaml(pubspecLockFile.readAsStringSync());
-              if (lockYaml is YamlMap && lockYaml['packages'] is YamlMap) {
-                final pkgEntry = lockYaml['packages'][pkgName] as YamlMap?;
-                final desc = pkgEntry?['description'] as YamlMap?;
-                if (desc != null && desc['url'] != null) {
-                  gitUrl = desc['url'].toString();
-                }
-              }
-            } catch (_) {}
-          }
-
-          String? remoteSha;
-          if (gitUrl != null) {
-            try {
-              final lsResult = await _processRunner('git', [
-                'ls-remote',
-                gitUrl,
-                'HEAD',
-              ]);
-              if (lsResult.exitCode == 0) {
-                final out = lsResult.stdout.toString().trim();
-                final parts = out.split(RegExp(r'\s+'));
-                if (parts.isNotEmpty && parts.first.isNotEmpty) {
-                  remoteSha = parts.first;
-                }
-              }
-            } catch (_) {}
-          }
-
-          apps.add(
-            _DartInstallApp(
-              name: pkgName,
-              type: 'git',
-              currentRef: sha,
-              latestRef: remoteSha,
-              sourceUrl: gitUrl,
-            ),
-          );
-        }
-      }
-
-      // 3. Check local path bundles: <pkgName>/local/
-      final localDir = Directory(p.join(entity.path, 'local'));
-      if (localDir.existsSync()) {
-        String? sourcePath;
-        final pubspecLockFile = File(p.join(localDir.path, 'pubspec.lock'));
-        if (pubspecLockFile.existsSync()) {
-          try {
-            final lockYaml = loadYaml(pubspecLockFile.readAsStringSync());
-            if (lockYaml is YamlMap && lockYaml['packages'] is YamlMap) {
-              final pkgEntry = lockYaml['packages'][pkgName] as YamlMap?;
-              final desc = pkgEntry?['description'] as YamlMap?;
-              if (desc != null && desc['path'] != null) {
-                sourcePath = desc['path'].toString();
-              }
-            }
-          } catch (_) {}
-        }
-
-        String currentRef = 'installed';
-        String? latestRef;
-
-        if (sourcePath != null && Directory(sourcePath).existsSync()) {
-          try {
-            final bundleDir = Directory(p.join(localDir.path, 'bundle'));
-            final bundleMtime = bundleDir.existsSync()
-                ? bundleDir.statSync().modified.millisecondsSinceEpoch ~/ 1000
-                : 0;
-
-            final logRes = await _processRunner('git', [
-              '-C',
-              sourcePath,
-              'log',
-              '-1',
-              '--format=%ct %h',
-            ]);
-            if (logRes.exitCode == 0) {
-              final parts = logRes.stdout.toString().trim().split(' ');
-              if (parts.isNotEmpty) {
-                final commitEpoch = int.tryParse(parts[0]) ?? 0;
-                final commitShort = parts.length > 1 ? parts[1] : 'HEAD';
-                if (commitEpoch > bundleMtime) {
-                  currentRef = 'built earlier';
-                  latestRef = 'newer commit $commitShort';
-                }
-              }
-            }
-          } catch (_) {}
-        }
-
-        apps.add(
-          _DartInstallApp(
-            name: pkgName,
-            type: 'local',
-            currentRef: currentRef,
-            latestRef: latestRef,
-            sourceUrl: sourcePath,
-          ),
-        );
-      }
+      final hosted = await _discoverHostedApp(pkgName, entity);
+      if (hosted != null) apps.add(hosted);
+      final git = await _discoverGitApp(pkgName, entity);
+      if (git != null) apps.add(git);
+      final local = await _discoverLocalApp(pkgName, entity);
+      if (local != null) apps.add(local);
     }
 
     return apps;
@@ -335,36 +332,35 @@ class DartInstallUpkeeper implements Upkeeper {
       final errors = <String>[];
 
       for (final app in outdated) {
-        ProcessResult res;
-        if (app.type == 'hosted') {
-          res = await _processRunner('dart', ['install', app.name]);
-        } else if (app.type == 'git') {
-          final url = app.sourceUrl;
-          if (url == null) {
-            errors.add('${app.name}: missing remote Git URL in pubspec.lock');
-            continue;
-          }
-          res = await _processRunner('dart', [
-            'install',
-            '${app.name}@{git: {url: $url}}',
-          ]);
-        } else if (app.type == 'local') {
-          final path = app.sourceUrl;
-          if (path == null) {
-            errors.add(
-              '${app.name}: missing local source path in pubspec.lock',
-            );
-            continue;
-          }
-          res = await _processRunner('dart', [
-            'install',
-            '${app.name}@{path: $path}',
-          ]);
-        } else {
-          errors.add('${app.name}: unknown package source type ${app.type}');
+        final (:spec, :error) = switch ((app.type, app.sourceUrl)) {
+          ('hosted', _) => (spec: app.name, error: null),
+          ('git', final url?) => (
+            spec: '${app.name}@{git: {url: $url}}',
+            error: null,
+          ),
+          ('git', null) => (
+            spec: null,
+            error: '${app.name}: missing remote Git URL in pubspec.lock',
+          ),
+          ('local', final path?) => (
+            spec: '${app.name}@{path: $path}',
+            error: null,
+          ),
+          ('local', null) => (
+            spec: null,
+            error: '${app.name}: missing local source path in pubspec.lock',
+          ),
+          _ => (
+            spec: null,
+            error: '${app.name}: unknown package source type ${app.type}',
+          ),
+        };
+        if (spec == null) {
+          errors.add(error!);
           continue;
         }
 
+        final res = await _processRunner('dart', ['install', spec]);
         if (res.exitCode == 0) {
           upgraded.add(app.name);
         } else {
