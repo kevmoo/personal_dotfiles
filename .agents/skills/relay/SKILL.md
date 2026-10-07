@@ -2,7 +2,7 @@
 name: relay
 description: >-
   Cross-machine agent communication and handoff protocol ("Notes for the Other
-  Agent v2") connecting Enterprise Rodete (Cloudtop), Darwin Pro (gMac M4), and
+  Agent v2") connecting Cloudtop (corp Linux), Darwin Pro (gMac M4), and
   Bluefin-DX (Personal Linux) across the Corp-Private Relay
   ($AGENT_RELAY_CORP_REPO via ggh) and Public-Safe GitHub Relay
   (kevmoo/agent-relay via gh). Use when the user invokes /relay, asks to check
@@ -41,7 +41,7 @@ Before posting any issue, comment, or file, classify the payload:
 Run `~/.local/bin/relay-whoami` to auto-detect your machine's identity and
 generate the required Markdown header block.
 
-- ☁️🐧⚡ **`Enterprise Rodete`** (`Cloudtop` · `linux_x64`) — Borg-backed
+- ☁️🐧⚡ **`Cloudtop`** (corp Linux workstation · `linux_x64`) — Borg-backed
   orchestrator; blames local benchmark variance on "multi-tenant datacenter
   weather."
 - 🍎🏎️✨ **`Darwin Pro`** (`gMac M4` · `macos_arm64`) — Bare-metal Apple Silicon
@@ -77,7 +77,7 @@ and report two things**:
        or replies where the ball is in this machine's court, along with
        extracted `[ ]` checklist items.
      - `⏳ Outbound — Waiting on Other Agents`: relays or replies sent by this
-       machine where we are still waiting on `Darwin Pro`, `Enterprise Rodete`,
+       machine where we are still waiting on `Darwin Pro`, `Cloudtop`,
        or `Bluefin-DX` to respond or complete `[ ]` items.
 2. **Deep-Dive Any Active Inbound Thread**:
    - For any open thread in `📥 Action Required — Waiting on Us` (or any thread
@@ -95,12 +95,12 @@ and report two things**:
      Explicitly highlight any outbound threads we are still waiting on from
      other agents alongside any inbound threads awaiting our execution/reply.
 
-### B. Post a New Handoff or Reply (`/relay post` or `"tell Darwin/Rodete/Bluefin..."`)
+### B. Post a New Handoff or Reply (`/relay post` or `"tell Darwin/Cloudtop/Bluefin..."`)
 
 1. Generate the header via:
    ```bash
    ~/.local/bin/relay-whoami --header \
-     --to "🍎🏎️✨ Darwin Pro" \
+     --to "☁️🐧⚡ Cloudtop" \
      --thread "#<N> <Short Topic>" \
      --state HANDOFF \
      --model "<your model id>" \
@@ -189,7 +189,7 @@ Use this when one machine has PRs that another machine should review and land
   wakes on a post or push, tolerates API blips, re-arms every 30 min. Verify
   state directly before each re-arm — silence and "no change" are not the same
   thing.
-- **Jetski (`Enterprise Rodete`, `Darwin Pro`)**: after posting `HANDOFF`, or
+- **Jetski (`Cloudtop`, `Darwin Pro`)**: after posting `HANDOFF`, or
   `ACKED` while the queue is not `DONE`, arm a one-shot `schedule` timer
   (`DurationSeconds: 180`, `TimerCondition: "never"`,
   `Prompt: "Run relay-whoami --check and process any inbound turn on #<N>"`).

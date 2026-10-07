@@ -170,7 +170,7 @@ ask` + `@owner`), and encapsulate supporting AI traces/tables in
 - **Dotfiles**: `~/.dotfiles` (`dot`, see
   `~/.agents/skills/personal-dotfiles/SKILL.md`) and `~/.dotfiles-corp`
   (`dotcorp`).
-- **Cross-Machine Agent Relay (`Enterprise Rodete` ☁️🐧⚡ · `Darwin Pro` 🍎🏎️✨
+- **Cross-Machine Agent Relay (`Cloudtop` ☁️🐧⚡ · `Darwin Pro` 🍎🏎️✨
   · `Bluefin-DX` 🐧🛠️🐳)**:
   - **Corp-Private** (`$AGENT_RELAY_CORP_REPO` via `ggh` at
     `$AGENT_RELAY_CORP_DIR`): Required for internal paths/shortlinks (`cl/`,
