@@ -93,6 +93,8 @@
 !.agents/skills/gerrit-stacked-cls/**
 !.agents/skills/gh-post/
 !.agents/skills/gh-post/**
+!.agents/skills/graph-learn/
+!.agents/skills/graph-learn/**
 !.agents/skills/grilling/
 !.agents/skills/grilling/**
 !.agents/skills/gws-calendar/
@@ -125,6 +127,8 @@
 !.agents/skills/sharpen-saw/**
 !.agents/skills/sidequest/
 !.agents/skills/sidequest/**
+!.agents/skills/slice-and-dice/
+!.agents/skills/slice-and-dice/**
 !.agents/skills/upkeep/
 !.agents/skills/upkeep/**
 .agents/skills/**/.dart_tool/

@@ -15,7 +15,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/mattpocock/skills.git",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "skillFolderHash": "f0732035b8b1b60ae39454e4191caef32fa91903",
+      "skillFolderHash": "28aceb4c9567b985cb47f7db88cf23c9f33af8b8",
       "installedAt": "2026-06-25T18:29:07.130Z",
       "updatedAt": "2026-06-25T18:29:07.130Z"
     },
@@ -87,7 +87,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/new-worktree/SKILL.md",
-      "skillFolderHash": "3c468ebb11c9371d92c22ffa3a30510642bfae90",
+      "skillFolderHash": "62175227056b57483d386c0a11f2c7ae2898925c",
       "installedAt": "2026-08-03T20:47:42.350Z",
       "updatedAt": "2026-08-03T20:47:42.350Z"
     },
@@ -180,6 +180,24 @@
       "skillFolderHash": "5ec0246fd99003efec7defd5278036306e2007fa",
       "installedAt": "2026-10-02T00:52:09.271Z",
       "updatedAt": "2026-10-02T00:52:09.271Z"
+    },
+    "graph-learn": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/graph-learn/SKILL.md",
+      "skillFolderHash": "c6e7422a39a3c38660e0839a980caeac2c8d27e1",
+      "installedAt": "2026-10-07T23:06:46.917Z",
+      "updatedAt": "2026-10-07T23:06:46.917Z"
+    },
+    "slice-and-dice": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/slice-and-dice/SKILL.md",
+      "skillFolderHash": "e6f0fd0670aadae2e8dde8446ba787056ebddc25",
+      "installedAt": "2026-10-07T23:06:46.919Z",
+      "updatedAt": "2026-10-07T23:06:46.919Z"
     }
   },
   "dismissed": {
