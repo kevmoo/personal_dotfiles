@@ -26,6 +26,8 @@
 !.config/upkeep/**
 .config/upkeep/.dart_tool/
 .config/upkeep/coverage/
+.config/upkeep/local_bin_allowlist.corp
+.config/upkeep/local_bin_allowlist.local
 !.config/vscode-shared/
 !.config/vscode-shared/**
 !.config/zsh/
