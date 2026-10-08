@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+if [[ ! -t 0 || ! -t 1 || "${PAGER:-}" == "cat" || -n "${CLAUDECODE:-}" || -n "${GEMINI_CLI:-}" ]]; then
+  has_theme=0
+  for arg in "$@"; do
+    case "$arg" in
+      -dark-mode|--dark-mode|-light-mode|--light-mode)
+        has_theme=1
+        break
+        ;;
+    esac
+  done
+  if [[ $has_theme -eq 0 ]]; then
+    set -- -dark-mode "$@"
+  fi
+fi
+exec "$HOME/.local/share/mise/shims/duckdb" "$@"
