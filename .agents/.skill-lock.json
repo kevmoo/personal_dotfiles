@@ -186,7 +186,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/graph-learn/SKILL.md",
-      "skillFolderHash": "c6e7422a39a3c38660e0839a980caeac2c8d27e1",
+      "skillFolderHash": "f05f00c349fea4a17290d038dc45800d027c6c9e",
       "installedAt": "2026-10-07T23:06:46.917Z",
       "updatedAt": "2026-10-07T23:06:46.917Z"
     },
@@ -195,7 +195,7 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/slice-and-dice/SKILL.md",
-      "skillFolderHash": "e6f0fd0670aadae2e8dde8446ba787056ebddc25",
+      "skillFolderHash": "decc4af017248fe7902cba19b21ebda2c23141da",
       "installedAt": "2026-10-07T23:06:46.919Z",
       "updatedAt": "2026-10-07T23:06:46.919Z"
     }
