@@ -61,7 +61,7 @@
   decomposing once a function reaches the **Target Zone (`8–15`, not `0`)**, cap
   extracted helpers at `<= 4` parameters (`<= 3` preferred,
   `sliceScoreAtRoot >= 3`), and run
-  `dart run cognitive_complexity:shallow@^0.4.0 lib/` to detect and re-inline
+  `dart run cognitive_complexity:shallow@^1.0.0 lib/` to detect and re-inline
   single-caller `SAFE_INLINE` helpers (`CallerCCAfter <= 15`).
 - **Load-Bearing Library Boundary Rule (`part` / `part of` vs. Separate
   Libraries)**:
