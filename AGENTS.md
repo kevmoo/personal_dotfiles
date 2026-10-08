@@ -143,9 +143,13 @@ Hard boundaries first; working style after.
   citations against raw `gh pr diff` / `view_file` before posting.
   - **Inline PR Comments**: Cap at `<= 50 words` (symptom/defect + fix; never
     narrate the author's call stack).
-  - **Issues & Bug Reports**: **1 Audience / 1 Owner per issue**. Lead with a
-    `<= 8`-line human gist (`what` + `ask` + `@owner`), encapsulating AI traces
-    in
+  - **Issues & Bug Reports**: **1 Audience / 1 Component per issue**. Include
+    `# <Proposed Title>` at line 1 of draft artifacts (strip lines 1–2 on
+    `gh issue create --body-file`). Open line 1 of the body with the exact
+    defect/problem statement (unlabelled BLUF; no historical preamble), use
+    tight declarative bullets, **never** add unsolicited `cc @user` mentions (CC
+    on GitHub works via `@mention`, which the user handles manually), and on
+    GitHub encapsulate raw repro outputs/code traces in
     `<details><summary><b>Detailed code trace & affected targets (AI-assisted)</b></summary>...</details>`.
 - **Dart & Package Standards**: Review `~/.agents/CODING_STANDARDS.md` before
   editing Dart code, `pubspec.yaml`, `CHANGELOG.md`, `README.md`, or SemVer.
