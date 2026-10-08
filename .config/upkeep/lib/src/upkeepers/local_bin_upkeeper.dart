@@ -73,13 +73,14 @@ class LocalBinUpkeeper implements Upkeeper {
             FileSystemEntity.typeSync(entry.path, followLinks: true) ==
                 FileSystemEntityType.notFound) {
           brokenSymlinks.add(
-            '• $name -> ${Link(entry.path).targetSync()} (broken symlink)',
+            '$name -> ${Link(entry.path).targetSync()} (broken symlink)',
           );
+          continue;
         }
         if (!known.contains(name)) {
           final label = isLink
-              ? '• $name -> ${Link(entry.path).targetSync()}'
-              : '• $name';
+              ? '$name -> ${Link(entry.path).targetSync()}'
+              : name;
           untracked.add(label);
         }
       }
