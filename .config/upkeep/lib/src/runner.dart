@@ -19,6 +19,7 @@ class UpkeepRunner {
             DartInstallUpkeeper(),
             DotfilesUpkeeper(),
             DotfilesCorpUpkeeper(),
+            LocalBinUpkeeper(),
             GuacamoleUpkeeper(),
             SkillsUpkeeper(),
             DartPubGlobalUpkeeper(),

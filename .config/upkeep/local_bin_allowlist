@@ -1,0 +1,12 @@
+# Cross-machine ~/.local/bin allowlist (tracked in personal_dotfiles).
+# Entries listed here are installed by standalone bootstrap scripts or
+# package managers rather than committed directly into ~/.dotfiles.
+bat
+bd
+beads
+dolt
+mise
+sem
+sidequest
+uv
+uvx
