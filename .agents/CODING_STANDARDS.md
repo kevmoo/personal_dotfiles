@@ -1,6 +1,6 @@
 # Coding Standards
 
-## Published Package `-wip` Bumps (`pubspec.yaml` & `CHANGELOG.md`)
+## Published Package `-wip` Bumps & Releases (`pubspec.yaml` & `CHANGELOG.md`)
 
 1. Whenever modifying _any_ file (`lib/`, `bin/`, `test/`, `tool/`) in a package
    at a released version (`0.15.7`), **unconditionally** bump to `-wip`
@@ -22,6 +22,19 @@
    leave `## <ver>-wip` empty (header only) for `test/`/`tool/`/internal-only
    edits. Copy the repo's BSD license header into any newly created `.dart`
    file.
+5. **Publishing via GitHub Releases (`dart-lang/ecosystem` `publish.yaml`)**: In
+   repositories using `dart-lang/ecosystem/.github/workflows/publish.yaml`
+   (`package:firehose`), never push a bare Git tag (`git tag && git push`),
+   which triggers `pub.dev` publication without creating a GitHub Release.
+   Instead, after merging the release PR to `main` (and after gating via
+   `ask_question`), parse the URL-encoded `tag`, `title`
+   (`package:<pkg> v<ver>`), and `body` from the `releases/new?` link in the
+   PR's `## Package publishing` bot comment (falling back to the `## <ver>`
+   section of `CHANGELOG.md`) and run:
+   `gh release create <tag> --target <merge_sha> --title "package:<pkg> v<ver>" --notes-file - << 'EOF' ... EOF`
+   (omit `--target` when attaching a GitHub Release to an already-pushed tag).
+   `gh release create` atomically creates both the formatted GitHub Release and
+   the remote tag that triggers `publish.yaml`.
 
 ## Architecture: "Deep Externally, Pure Internally"
 
