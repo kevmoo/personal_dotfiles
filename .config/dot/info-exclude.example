@@ -42,6 +42,7 @@
 !.local/bin/dart-clean
 !.local/bin/dot-check-ignores
 !.local/bin/dot
+!.local/bin/duckdb
 !.local/bin/gerrit-view
 !.local/bin/gh
 !.local/bin/gh-clean

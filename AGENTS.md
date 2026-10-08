@@ -36,17 +36,17 @@ Hard boundaries first; working style after.
 
 ## Interaction & Formatting
 
-- **Structured Questions (`ask_question`)**: Use for 1-word
-  choices/confirmations. Offer `(Recommended) Yes, ...` + `No, cancel/pause` (no
-  filler options). No modal traps on open backlogs/TODOs/`pm-status` menus (use
-  plain bullets). No goldfish loops (honor declined bounds like _"Upload and
-  wait"_; finish the bounded step and yield).
-- **Output & Links**: State intent in 1 sentence before multi-step work; don't
-  narrate routine tool calls. Default to compact bullets/fragments over filler;
-  never bury user questions inside thought blocks. Format all `file://`,
-  `https://`, CLs, and PRs as clickable links (`[src/main.dart](file:///...)`,
-  even in `ask_question`); never wrap URLs in backticks, and keep `**`/`` ` ``
-  inside `[...]` brackets (`[**bold**](url)`).
+- **Structured Questions (`ask_question`) & Artifacts**: Use for 1-word
+  confirmations (`(Recommended) Yes, ...` + `No, cancel/pause`). Always emit a
+  `3–8` bullet visible context summary + clickable artifact links in the
+  **same** step as `ask_question` (prevents collapsed `"Worked for Xs"` modals).
+  Set `RequestFeedback: false` on report/audit artifacts (`*_report.md`,
+  `*_brainstorm.md`). No modal traps on open backlogs/menus; honor declined
+  bounds.
+- **Output & Links**: State intent in 1 sentence before multi-step work; skip
+  tool narration and filler. Format all `file://`, `https://`, CLs, and PRs as
+  clickable links (`[src/main.dart](file:///...)`, even in `ask_question`);
+  never wrap URLs in backticks, and keep `**`/`` ` `` inside `[...]` brackets.
 - **Tables & Platform Formatting**: One table row per physical line.
   - **GitHub (`~/github`, Prettier `mdf`)**: Separate alert headers
     (`> [!NOTE]`) from body text with an empty `>` line. Never insert
@@ -128,50 +128,40 @@ Hard boundaries first; working style after.
 
 ## GitHub PRs & Workspace
 
-- **Pre-PR CI Parity (`pr-check`) & Push Hygiene**: Run `pr-check`
-  (`kscripts pr-check`) before `gh pr create` in `~/github/kevmoo/*`. Use
-  `gh pr create -f` on single-commit branches (imperative subject `<=70 chars`,
-  bulleted body, `Fixes #123`). Before `gh pr create` or CL landing, present a
-  concise internal pre-flight change explanation for `kevmoo` (`<= 50` lines
-  inline or in the draft/report artifact) covering title/description, major code
-  changes, and test coverage. Whenever committing or pushing with `--no-verify`
-  (e.g., monorepo merge commits or `flutter/flutter`), explicitly run
-  `dart format` on the PR's touched `.dart` files before `git push`. After
-  pushing new commits where `dismiss_stale_reviews` auto-dismisses an existing
-  `APPROVED` review (e.g., `flutter/flutter`), check
-  `gh pr view --json reviewDecision,latestReviews,reviewRequests` and offer to
-  re-request the dismissed reviewer (`kscripts pr-triage re-request <login>`).
-- **Outbound Human Artifacts ("Pre-Chew & Encapsulate AI")**: Never copy-paste
-  internal agent forensic proof (call-stack narration, query dumps, multi-team
-  inventories) directly into external posts for humans (GitHub issues/PRs, code
-  reviews, chat, email). Always separate **Layer A (Internal Proof for
-  `kevmoo`)** from **Layer B (Outbound Human Payload)**:
-  - **Inline PR Review & Triage Comments**: Cap at `<= 50 words` (2–3 sentences:
-    concrete symptom/defect + suggested fix). Never narrate the PR author's own
-    call stack back to them.
-  - **Issues & Bug Reports**: Enforce **1 Audience / 1 Owner per issue** (split
-    multi-subsystem findings into separate issues so 100% is relevant to the
-    reader). Lead with a `<= 8`-line human-voiced gist (`what` + `actionable
-ask` + `@owner`), and encapsulate supporting AI traces/tables in
+- **Pre-PR CI Parity (`pr-check`) & Push Hygiene**: Run `kscripts pr-check`
+  before `gh pr create` in `~/github/kevmoo/*` (`gh pr create -f` on
+  single-commit branches: imperative subject `<=70 chars`, bulleted body,
+  `Fixes #123`). Present a `<= 50`-line pre-flight change summary (title,
+  changes, tests) before PR/CL creation. Run `dart format` on touched `.dart`
+  files before any `--no-verify` commit/push. When a push auto-dismisses an
+  `APPROVED` review, check
+  `gh pr view --json reviewDecision,latestReviews,reviewRequests` and offer
+  `kscripts pr-triage re-request <login>`.
+- **Outbound Human Artifacts ("Pre-Chew & Encapsulate AI")**: Separate **Layer A
+  (Internal Proof)** from **Layer B (Outbound Human Payload)**—never paste raw
+  agent traces/inventories into GitHub/Critique/chat/email. Verify subagent PR
+  citations against raw `gh pr diff` / `view_file` before posting.
+  - **Inline PR Comments**: Cap at `<= 50 words` (symptom/defect + fix; never
+    narrate the author's call stack).
+  - **Issues & Bug Reports**: **1 Audience / 1 Owner per issue**. Lead with a
+    `<= 8`-line human gist (`what` + `ask` + `@owner`), encapsulating AI traces
+    in
     `<details><summary><b>Detailed code trace & affected targets (AI-assisted)</b></summary>...</details>`.
-- **Dart & Package Standards**: ALWAYS review `~/.agents/CODING_STANDARDS.md`
-  before authoring Dart code, modifying `pubspec.yaml`, `CHANGELOG.md`, or
-  `README.md`, or bumping SemVer versions.
-- **Agent Skills (`~/.agents/skills`)**: Edit skills only in their source repos:
-  `personal-dotfiles`/`upkeep`/`relay` via `dot`; personal/OSS skills in
-  `~/github/kevmoo/kevmoo_skills/skills/<name>/`; corp skills via
-  `~/.dotfiles-corp`.
-- **External Repos (`~/github`)**: Clone `github.com/kevmoo/*` under
-  `~/github/kevmoo/<repo>`; clone all other orgs flat at `~/github/<repo>`
-  (`~/github/flutter`, `~/github/google-cloud-dart`, `~/github/dart-sdk`—check
-  `~/github/dart-sdk/.agents/`). On sandbox `.dart_tool` rename errors
-  (`errno = 2`), use `dart pub get --no-precompile`, `dart test -c source`, and
-  `dart <script.dart>`.
+- **Dart & Package Standards**: Review `~/.agents/CODING_STANDARDS.md` before
+  editing Dart code, `pubspec.yaml`, `CHANGELOG.md`, `README.md`, or SemVer.
+- **Agent Skills (`~/.agents/skills`)**: Edit only in source repos (`dot`,
+  `~/github/kevmoo/kevmoo_skills/skills/<name>/`, or `dotcorp`).
+- **External Repos (`~/github`)**: `github.com/kevmoo/*` under
+  `~/github/kevmoo/<repo>`; other orgs flat at `~/github/<repo>`
+  (`~/github/dart-sdk` uses bare-clone worktree
+  `~/github/dart-sdk/core/main/sdk/`; check `.agents/`). On `.dart_tool` rename
+  errors (`errno = 2`), use `dart pub get --no-precompile`,
+  `dart test -c source`, and `dart <script.dart>`.
 - **Dotfiles**: `~/.dotfiles` (`dot`, see
   `~/.agents/skills/personal-dotfiles/SKILL.md`) and `~/.dotfiles-corp`
   (`dotcorp`).
-- **Cross-Machine Agent Relay (`Cloudtop` ☁️🐧⚡ · `Darwin Pro` 🍎🏎️✨
-  · `Bluefin-DX` 🐧🛠️🐳)**:
+- **Cross-Machine Agent Relay (`Cloudtop` ☁️🐧⚡ · `Darwin Pro` 🍎🏎️✨ ·
+  `Bluefin-DX` 🐧🛠️🐳)**:
   - **Corp-Private** (`$AGENT_RELAY_CORP_REPO` via `ggh` at
     `$AGENT_RELAY_CORP_DIR`): Required for internal paths/shortlinks (`cl/`,
     `b/`, `go/`, `cs/`).
