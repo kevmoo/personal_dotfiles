@@ -42,8 +42,10 @@
   be **Deep**. Export only top-level orchestrators, immutable configuration
   value objects, and result records. Hide AST walkers, SQL builders, and parser
   helpers inside `lib/src/` (never re-exported in `lib/<pkg>.dart`). Use
-  explicit `export 'src/...' show ...;` when splitting files to prevent API
-  leaks.
+  explicit `export 'src/...' show ...;` **only in public `lib/<pkg>.dart`
+  entrypoints**; when splitting an internal `lib/src/` file, update internal
+  `import` sites directly rather than leaving `export ... show` bridge shims
+  inside `lib/src/` files.
 - **Public API Surface Verification (`dart run api_summary@^1.1.0`)**: After any
   file split or refactoring in a Dart package (Dart 3.12+ remote package
   runner—zero `pubspec.yaml` edits or global install required):
@@ -99,7 +101,11 @@
 - **Behavioral & Boundary Assertions**: Assert observable outputs, state
   transitions, and boundary conditions of the code that _consumes_ constants and
   models (e.g., passing 280 vs. 281 characters into a validator) against
-  concrete expected values.
+  concrete expected values. When testing live catalogs, registries, or shared
+  JSON fixtures that grow over time, assert **structural and relational
+  invariants** (e.g., `isNotEmpty`, required keys/anchors present, or
+  `mergedCount + openCount == totalCount`) rather than hard-coding brittle
+  total-length counts (`hasLength(33)`).
 - **Direct Execution & Rendering Verification**: Verify runtime behavior,
   control flow, and UI/CLI output by invoking functions, running CLI commands,
   or rendering components directly. Use raw file-text reads
@@ -116,9 +122,23 @@
 
 ## Dart & CLI Design Defaults
 
-- **Zero-Alias CLI Design**: Never add `package:args` `aliases`; register
-  non-canonical verbs in `CommonMistakes` (`FuzzyCommandRunner`) to fail fast
-  with a prescriptive hint.
+- **Zero-Alias CLI Design & Scope**: Never add `package:args` `aliases` or
+  speculative CLI flags not requested by the spec; register non-canonical verbs
+  in `CommonMistakes` (`FuzzyCommandRunner`) to fail fast with a prescriptive
+  hint.
+- **URI & Path-Segment Parsing**: Prefer `Uri.tryParse` combined with Dart 3
+  object/list pattern matching on `uri.host` and `uri.pathSegments` (e.g.,
+  `case Uri(host: 'github.com', pathSegments: [final owner, final repo, 'pull', final id, ...])`)
+  over ad-hoc multi-group URL regexes.
+- **Resource Lifecycle & Pre-`exit()` Cleanup**: After acquiring an OS resource
+  (`HttpServer.bind`, `ServerSocket`, temp directory), wrap any post-bind setup
+  in `try` / `catch` (`await server.close(force: true); rethrow;`) or `try` /
+  `finally` so setup exceptions never leak open sockets. Always `await` / flush
+  open file streams (`IOSink.flush()` + `close()`) before invoking `dart:io`
+  `exit(code)`.
+- **Public OSS Dartdoc & Comment Hygiene**: Never cite internal corporate
+  shortlinks (`b/`, `cl/`, `go/`) or session task handles (`#XXXX`) in public
+  OSS dartdoc, comments, or commit messages.
 - **Dart Getters**: Prefer `@override String get name => '...';` over
   `@override final String name = '...';`.
 - **Dependency Bounds**: Widen upper bounds (`'>=0.5.0 <0.7.0'`) rather than
