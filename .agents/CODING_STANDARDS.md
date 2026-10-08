@@ -45,7 +45,8 @@
   explicit `export 'src/...' show ...;` **only in public `lib/<pkg>.dart`
   entrypoints**; when splitting an internal `lib/src/` file, update internal
   `import` sites directly rather than leaving `export ... show` bridge shims
-  inside `lib/src/` files.
+  inside `lib/src/` files (which obscure symbol provenance and risk circular
+  imports).
 - **Public API Surface Verification (`dart run api_summary@^1.1.0`)**: After any
   file split or refactoring in a Dart package (Dart 3.12+ remote package
   runner—zero `pubspec.yaml` edits or global install required):
@@ -60,7 +61,7 @@
   `_Populator` / `_Runner` helper classes that mutate caller maps/sets in-place;
   require **file-private pure functions (`_computeX(input) -> output`)** inside
   the same library or narrow internal modules with zero out-parameters. Stop
-  decomposing once a function reaches the **Target Zone (`8–15`, not `0`)**, cap
+  decomposing once a function reaches the **Target Zone (`8-15`, not `0`)**, cap
   extracted helpers at `<= 4` parameters (`<= 3` preferred,
   `sliceScoreAtRoot >= 3`), and run
   `dart run cognitive_complexity:shallow@^1.0.0 lib/` to detect and re-inline
@@ -102,10 +103,11 @@
   transitions, and boundary conditions of the code that _consumes_ constants and
   models (e.g., passing 280 vs. 281 characters into a validator) against
   concrete expected values. When testing live catalogs, registries, or shared
-  JSON fixtures that grow over time, assert **structural and relational
-  invariants** (e.g., `isNotEmpty`, required keys/anchors present, or
-  `mergedCount + openCount == totalCount`) rather than hard-coding brittle
-  total-length counts (`hasLength(33)`).
+  fixtures that grow independently of the test case, assert **structural and
+  relational invariants** (e.g., `isNotEmpty`, required keys/anchors present, or
+  `mergedCount + openCount == totalCount`) rather than hard-coding total-length
+  counts (`hasLength(33)`) that break whenever an entry is added (reserve exact
+  length assertions for deterministic unit inputs).
 - **Direct Execution & Rendering Verification**: Verify runtime behavior,
   control flow, and UI/CLI output by invoking functions, running CLI commands,
   or rendering components directly. Use raw file-text reads
@@ -129,16 +131,20 @@
 - **URI & Path-Segment Parsing**: Prefer `Uri.tryParse` combined with Dart 3
   object/list pattern matching on `uri.host` and `uri.pathSegments` (e.g.,
   `case Uri(host: 'github.com', pathSegments: [final owner, final repo, 'pull', final id, ...])`)
-  over ad-hoc multi-group URL regexes.
+  over ad-hoc multi-group URL regexes—`Uri.tryParse` strips query strings and
+  fragments automatically and binds named variables without brittle positional
+  `match.group(n)` indexing.
 - **Resource Lifecycle & Pre-`exit()` Cleanup**: After acquiring an OS resource
   (`HttpServer.bind`, `ServerSocket`, temp directory), wrap any post-bind setup
   in `try` / `catch` (`await server.close(force: true); rethrow;`) or `try` /
-  `finally` so setup exceptions never leak open sockets. Always `await` / flush
-  open file streams (`IOSink.flush()` + `close()`) before invoking `dart:io`
-  `exit(code)`.
-- **Public OSS Dartdoc & Comment Hygiene**: Never cite internal corporate
-  shortlinks (`b/`, `cl/`, `go/`) or session task handles (`#XXXX`) in public
-  OSS dartdoc, comments, or commit messages.
+  `finally` so setup exceptions never leak open sockets or hang the test runner.
+  Flush and close open file streams (`await sink.flush(); await sink.close();`)
+  before calling `dart:io` `exit(code)`, which terminates the VM immediately
+  without draining buffered async writes.
+- **Public OSS Dartdoc & Comment Hygiene**: Omit internal corporate shortlinks
+  (`b/`, `cl/`, `go/`) and local task handles (`#XXXX`) from public OSS dartdoc,
+  comments, and commit messages—internal links are dead text to external
+  readers, and `#XXXX` tokens false-link to unrelated GitHub issues/PRs.
 - **Dart Getters**: Prefer `@override String get name => '...';` over
   `@override final String name = '...';`.
 - **Dependency Bounds**: Widen upper bounds (`'>=0.5.0 <0.7.0'`) rather than
