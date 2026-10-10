@@ -151,8 +151,9 @@ Hard boundaries first; working style after.
     on GitHub works via `@mention`, which the user handles manually), and on
     GitHub encapsulate raw repro outputs/code traces in
     `<details><summary><b>Detailed code trace & affected targets (AI-assisted)</b></summary>...</details>`.
-- **Dart & Package Standards**: Review `~/.agents/CODING_STANDARDS.md` before
-  editing Dart code, `pubspec.yaml`, `CHANGELOG.md`, `README.md`, or SemVer.
+- **Coding, Shell & Package Standards**: Review `~/.agents/CODING_STANDARDS.md`
+  before editing Dart code, shell scripts, `pubspec.yaml`, `CHANGELOG.md`,
+  `README.md`, or SemVer.
 - **Agent Skills (`~/.agents/skills`)**: Edit only in source repos (`dot`,
   `~/github/kevmoo/kevmoo_skills/skills/<name>/`, or `dotcorp`).
 - **External Repos (`~/github`)**: `github.com/kevmoo/*` under

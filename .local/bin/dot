@@ -1,2 +1,2 @@
-#!/bin/bash
-/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME "$@"
+#!/bin/sh
+exec /usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME" "$@"

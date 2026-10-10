@@ -167,3 +167,27 @@
     `>300 lines`, and `sem entities <dir> --text "<str>"` for AST-scoped string
     search. In `>10k-file` monorepos (`dart-sdk`), restrict `sem` to
     `sem find|callers|refs|grep` or path-scoped `sem entities <subpath>`.
+
+## Shell & Wrapper Scripts (`sh` / `bash`)
+
+- **Canonical Style & `<100`-Line Ceiling**: Follow the
+  [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html)
+  (`set -euo pipefail`, `local` separated from `$(...)` to preserve exit codes,
+  `readonly` constants, explicit `if` blocks instead of bare `[[ ... ]] && ...`
+  under `set -e`, and pure-Bash `${var}` / `[[ =~ ]]` over `echo | sed`
+  subshells). Rewrite scripts exceeding `~100 lines` in Dart (`kscripts`) or
+  Python.
+- **`#!/bin/sh` vs. `#!/usr/bin/env bash` (`BASH_ENV` Fast-Path)**: Hot-path
+  wrappers (`_kscripts_shim`, `grep`, `find`, `du`, `relay-gh`) MUST use
+  `#!/bin/sh` so non-interactive subshells with `BASH_ENV=~/.zshenv` do not
+  re-source `~/.zshenv` on every call. Keep `~/.zshenv` POSIX/`bash`-compatible
+  (guard any Zsh-only syntax with `[ -n "${ZSH_VERSION:-}" ]`).
+- **Zero-Alias Prescriptive CLI Wrappers**: Never silently rewrite or alias
+  unsupported CLI flags in `~/.local/bin/*` wrappers—fail fast (`exit 64`) with
+  a concise prescriptive hint teaching the canonical invocation. Scan leading
+  flags up to the first non-flag token (and stop option scanning at `--`) rather
+  than inspecting only `${1:-}`.
+- **Verification (`shellcheck` + Failing Edge-Case Probe)**: Run
+  `shellcheck <script>` (zero warnings/errors) and execute at least 2 safe,
+  failing/adversarial flag combinations (`--flag=val`, `--flag val`, `-fval`,
+  `--`) before committing.
