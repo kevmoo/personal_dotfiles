@@ -152,8 +152,8 @@ Hard boundaries first; working style after.
     GitHub encapsulate raw repro outputs/code traces in
     `<details><summary><b>Detailed code trace & affected targets (AI-assisted)</b></summary>...</details>`.
 - **Coding, Shell & Package Standards**: Review `~/.agents/CODING_STANDARDS.md`
-  before editing Dart code, shell scripts, `pubspec.yaml`, `CHANGELOG.md`,
-  `README.md`, or SemVer.
+  before editing Dart code, shell scripts, `pubspec.yaml`, `CHANGELOG.md`, or
+  `README.md`.
 - **Agent Skills (`~/.agents/skills`)**: Edit only in source repos (`dot`,
   `~/github/kevmoo/kevmoo_skills/skills/<name>/`, or `dotcorp`).
 - **External Repos (`~/github`)**: `github.com/kevmoo/*` under
