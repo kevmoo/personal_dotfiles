@@ -126,10 +126,13 @@ Hard boundaries first; working style after.
   `pm-orient`, and open Dolt tasks as target state/plans, never completed work,
   unless backed by a `CLOSED` task + `*submitted*`/`MERGED` artifact. Exclude
   `experimental/users/kevmoo/` PM-OS bookkeeping commits from impact reports.
-- **Memory Provenance (`~/memory/default/projects/*.md`)**: Prefix every saved
-  PR, CL, or doc with `[YOUR_WORK]`, `[TEAM_CONTRIB]`, or `[ECOSYSTEM_REF]` +
-  state (`MERGED`, `OPEN`, `DRAFT`). Never store unlabeled external PRs or
-  speculative brainstorms as facts.
+- **Memory Routing Stubs & Provenance (`~/memory/default/projects/*.md`)**: Keep
+  project memory files `<= 25 lines` and `<= 2,500 bytes` (`<= 200 chars/line`):
+  store only Piper/Dolt pointers, active (`OPEN`/`DRAFT`) worktrees/PRs, and
+  durable gotchas. NEVER append landed CLs (`cl/...`) or merged/closed PRs as
+  changelogs after shipping. Prefix any referenced active PR/CL/doc with
+  `[YOUR_WORK]`, `[TEAM_CONTRIB]`, or `[ECOSYSTEM_REF]` + state (`OPEN`,
+  `DRAFT`).
 
 ## GitHub PRs & Workspace
 
@@ -158,8 +161,8 @@ Hard boundaries first; working style after.
      audience and one owner per artifact.
   5. **Anchor, verify, then cold-read.** Every claim carries a permalink;
      inference is labeled as inference; PR bodies state what changed and how it
-     was verified within the first 3 lines. Traces go in `<details>` (GitHub)
-     or attachments (Buganizer). Run `/cold-read` on the publish form and fix
+     was verified within the first 3 lines. Traces go in `<details>` (GitHub) or
+     attachments (Buganizer). Run `/cold-read` on the publish form and fix
      anything the reader cannot decide from the first 3 lines.
   - Mechanics: `# <Proposed Title>` on line 1 of drafts; inline review comments
     `<= 50` words; `@mentions` only when the user names them.
