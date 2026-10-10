@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
-"""Cross-agent PreToolUse / BeforeTool hook for process-termination safety.
+"""Cross-agent PreToolUse / BeforeTool hook for process and subagent safety.
 
 Supports Claude Code (`Bash`), Gemini CLI (`run_shell_command`), and IDE agent
-harnesses (`run_command`, `manage_task`) across Linux and macOS:
+harnesses (`run_command`, `manage_task`, `invoke_subagent`) across Linux and
+macOS:
 1. Blocks unscoped `pkill` / `killall` (preventing multi-session collateral
    damage and `bash -c` self-suicide when `pkill -f` lacks a bracketed
    character class `[x]` and a `/` path scope).
 2. Throttles repetitive `manage_task(Action="status"|"list")` polling within 30s
    while always permitting `kill` and `send_input` immediately.
+3. Blocks `invoke_subagent(TypeName="deepagent")` (unless `[ALLOW_DEEPAGENT]` is
+   present) with a habit-translating redirect (`--deep` skills, read-only
+   red-team subagent, `Owl`, `run_workflow`, or `swarm`), and auto-clamps
+   omitted or `"inherit"` subagent `Model` values to `"flash"` (unless
+   `[ALLOW_INHERIT]` is present).
 """
 
 import json
@@ -347,8 +353,144 @@ def _check_manage_task(args: dict, conv_id: str) -> tuple[bool, str]:
   return True, ""
 
 
+_SKILL_COLLISION_RE = re.compile(
+    r"(?:^|[\s/`'\"])(?:pr-review|cl-finalize|pr-triage|cl-triage|pr-cleanup|"
+    r"sharpen-saw|slice-and-dice|graph-learn|new-session)\b",
+    re.IGNORECASE,
+)
+_REDTEAM_RE = re.compile(
+    r"\b(?:red[- ]?team(?:ing)?|sanity[- ]?check|assumptions?|feasibility|"
+    r"review)\b",
+    re.IGNORECASE,
+)
+_ORCHESTRATOR_TYPENAMES = (
+    "owl",
+    "owlnext",
+    "deepcoder",
+    "deepinvestigator",
+    "aetherius",
+    "stellar_teamwork",
+)
+
+
+def _check_spec_entry(spec: dict) -> tuple[bool, str, bool]:
+  type_name = str(spec.get("TypeName") or spec.get("typeName") or "").strip()
+  role = str(spec.get("Role") or spec.get("role") or "")
+  prompt = str(spec.get("Prompt") or spec.get("prompt") or "")
+  model = str(spec.get("Model") or spec.get("model") or "").strip()
+  combined = f"{role}\n{prompt}"
+
+  if type_name.lower() == "deepagent" and "[ALLOW_DEEPAGENT]" not in combined:
+    if _SKILL_COLLISION_RE.search(combined):
+      return (
+          False,
+          (
+              "🛑 Blocked `invoke_subagent(TypeName='deepagent')` wrapper"
+              " around an interactive skill or review workflow.\n"
+              "`deepagent` spawns a non-interactive background subagent"
+              " (`IsInteractive=false`) that traps artifacts in the child"
+              " directory and bypasses `ask_question` gates.\n"
+              "Instead:\n"
+              "1. Execute the requested skill directly in the main conversation"
+              " using its native `--deep` mode (e.g. `pr-review --deep` or"
+              " `cl-finalize --deep`).\n"
+              "2. Keep artifact creation (`write_to_file`) and `ask_question`"
+              " in the parent conversation."
+          ),
+          False,
+      )
+    if _REDTEAM_RE.search(combined):
+      return (
+          False,
+          (
+              "🛑 Blocked `invoke_subagent(TypeName='deepagent')` for red-team"
+              " or review analysis.\n"
+              "Instead of `deepagent` (which routes into an A/B coding harness"
+              " on `Model: inherit`), invoke a deterministic read-only subagent"
+              " (`TypeName='review-agent'` for code diffs, or"
+              " `TypeName='self'` with `Model='flash'`) and include these"
+              " epistemic verification rules in its prompt:\n"
+              "1. Ruling out alternatives B and C does NOT confirm hypothesis"
+              " A; cite direct positive evidence (`file:line`, command output,"
+              " or spec).\n"
+              "2. Flag any hedging language ('likely', 'probably') as"
+              " `Unverified`.\n"
+              "3. Verify callers, callees, and sibling patterns beyond the"
+              " immediate diff or plan.\n"
+              "4. Return markdown findings directly in the response message"
+              " (do NOT call `write_to_file` with `ArtifactMetadata` inside the"
+              " subagent)."
+          ),
+          False,
+      )
+    return (
+        False,
+        (
+            "🛑 Blocked `invoke_subagent(TypeName='deepagent')` (habit guard;"
+            " include `[ALLOW_DEEPAGENT]` in `Prompt` only if explicitly"
+            " benchmarking `deepagent`).\n"
+            "Use a deterministic orchestrator instead:\n"
+            "1. Multi-file root-cause bug hunt + fix:"
+            " `invoke_subagent(TypeName='Owl', ...)` (or `/owl`)\n"
+            "2. Structured parallel fan-out (5+ items): `run_workflow` with"
+            " `parallel()` / `pipeline()` and `model='flash'`\n"
+            "3. Concurrent peer edits or cross-model verification: `swarm`"
+            " (`/swarm`) with `workspace='share'`\n"
+            "4. Scoped read-only research or exploration:"
+            " `invoke_subagent(TypeName='research-google' or 'self',"
+            " Model='flash')`"
+        ),
+        False,
+    )
+
+  lower_type = type_name.lower()
+  is_orchestrator = any(
+      lower_type == p or lower_type.startswith(p)
+      for p in _ORCHESTRATOR_TYPENAMES
+  )
+  needs_clamp = (
+      not is_orchestrator
+      and model in ("", "inherit")
+      and "[ALLOW_INHERIT]" not in combined
+  )
+  return True, "", needs_clamp
+
+
+def _check_invoke_subagent(args: dict) -> tuple[bool, str, dict | None]:
+  subagents = args.get("Subagents")
+  if isinstance(subagents, list):
+    any_clamped = False
+    updated_list: list[dict] = []
+    for item in subagents:
+      if not isinstance(item, dict):
+        updated_list.append(item)
+        continue
+      allowed, reason, needs_clamp = _check_spec_entry(item)
+      if not allowed:
+        return False, reason, None
+      new_item = dict(item)
+      if needs_clamp:
+        new_item["Model"] = "flash"
+        any_clamped = True
+      updated_list.append(new_item)
+    if any_clamped:
+      return True, "", {"Subagents": updated_list}
+    return True, "", None
+
+  if isinstance(args, dict) and ("TypeName" in args or "typeName" in args):
+    allowed, reason, needs_clamp = _check_spec_entry(args)
+    if not allowed:
+      return False, reason, None
+    if needs_clamp:
+      return True, "", {"Model": "flash"}
+  return True, "", None
+
+
 def _emit_response(
-    harness: str, allowed: bool, reason: str = ""
+    harness: str,
+    allowed: bool,
+    reason: str = "",
+    overwrite: dict | None = None,
 ) -> None:
   if harness == "claude":
     if allowed:
@@ -377,7 +519,10 @@ def _emit_response(
       )
   else:
     if allowed:
-      print(json.dumps({"decision": "allow"}))
+      out: dict = {"decision": "allow"}
+      if overwrite:
+        out["overwrite"] = overwrite
+      print(json.dumps(out))
     else:
       print(json.dumps({"decision": "deny", "reason": reason}))
 
@@ -402,6 +547,7 @@ def main() -> None:
     if "preToolHookArgs" in payload or "toolCall" in payload or tool_name in (
         "run_command",
         "manage_task",
+        "invoke_subagent",
     ):
       harness = "default"
     elif tool_name == "Bash" or event_name == "PreToolUse":
@@ -411,14 +557,17 @@ def main() -> None:
     else:
       harness = "default"
 
+    overwrite = None
     if tool_name in ("run_command", "run_shell_command", "Bash"):
       allowed, reason = _check_run_command(args)
     elif tool_name == "manage_task":
       allowed, reason = _check_manage_task(args, conv_id)
+    elif tool_name == "invoke_subagent":
+      allowed, reason, overwrite = _check_invoke_subagent(args)
     else:
       allowed, reason = True, ""
 
-    _emit_response(harness, allowed, reason)
+    _emit_response(harness, allowed, reason, overwrite)
   except Exception:  # pylint: disable=broad-exception-caught
     if '"Bash"' in raw or '"PreToolUse"' in raw:
       print(json.dumps({}))
