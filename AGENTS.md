@@ -22,11 +22,10 @@ Hard boundaries first; working style after.
     once CI is green ONLY in `github.com/kevmoo/*`. On `dart-lang/*`,
     `flutter/*`, `google/*`, etc., leave green PRs open for peer review unless
     maintainer-approved or explicitly asked.
-  - **Relay Thread Consent (`kevmoo/agent-relay` only)**: Entering/opening a
-    relay thread gates _once_ via `ask_question`. This single approval covers
-    posting comments, `ACK`/`HANDOFF`/`DONE` turn updates, and committing
-    `drops/` on a feature branch for that thread only. Re-prompt on
-    `State: BLOCKED`, new threads, or actions outside `kevmoo/agent-relay`.
+  - **Relay Thread Consent (`kevmoo/agent-relay` only)**: Gate _once_ per thread
+    via `ask_question` (covers comments, `ACK`/`HANDOFF`/`DONE`, and branch
+    `drops/` commits). Re-prompt on `State: BLOCKED`, new threads, or external
+    actions.
 - **Two-Tier Landing Approval**: Tier 1 (0-diff/autonomous retry): CI reruns,
   formatters, clean rebases, transient lockouts. Tier 2 (semantic
   diff/re-prompt): Source/dependency/assertion edits or rebase conflicts expire
@@ -47,6 +46,13 @@ Hard boundaries first; working style after.
   tool narration and filler. Format all `file://`, `https://`, CLs, and PRs as
   clickable links (`[src/main.dart](file:///...)`, even in `ask_question`);
   never wrap URLs in backticks, and keep `**`/`` ` `` inside `[...]` brackets.
+- **Conclusion-First Bullets (Chat & Artifacts)**: Lead every top-level bullet
+  with a bold, short, declarative human takeaway sentence with **no
+  parentheticals** or raw metric labels (e.g.,
+  `**Agents are reading both the Markdown and JSON, which is redundant and wasteful.**`,
+  never `**1:1 Dual-Read Input Tax (153 vs. 151 calls)**:`). Put exact data,
+  ratios, links, parentheticals, and causal mechanics (`...because X`) in nested
+  sub-bullets below, grouping related metrics under one human conclusion.
 - **Tables & Platform Formatting**: One table row per physical line.
   - **GitHub (`~/github`, Prettier `mdf`)**: Separate alert headers
     (`> [!NOTE]`) from body text with an empty `>` line. Never insert
@@ -82,13 +88,12 @@ Hard boundaries first; working style after.
 - **Empirical Dogfooding**: Always `view_file` local state in the active session
   before `replace_file_content` (even on pinned `<user_rules>` files like
   `preferences.md`).
-  1. **Auto-Run Trivial Read-Only Checks (`~0 Risk` & `<= 15s`)**: Execute
+  1. **Auto-Run Trivial Read-Only Checks (`~0 Risk` & `<= 15s`)**: Auto-run
      side-effect-free checks (`--help`, `--dry-run`, `status`, `list`, `view`,
      `readonly`, `scan`, `SELECT`, or `~/.local/bin/` shims after
-     formatters/`jj fix`) automatically before declaring ready, and cite
-     command + output.
+     formatters/`jj fix`) before declaring ready, citing command + output.
   2. **Offer Non-Trivial Read-Only Checks (`~0 Risk` & `> 15s` or Live Sweep)**:
-     Explicitly offer deeper read-only verification (multi-repo sweep,
+     Offer deeper read-only verification (multi-repo sweep,
      `evalin run --dry-run`, browser matrix probe) via `ask_question` before
      landing.
 - **Benchmarks ("Before vs. After First")**: Capture baseline on unmodified code
@@ -143,13 +148,11 @@ Hard boundaries first; working style after.
   citations against raw `gh pr diff` / `view_file` before posting.
   - **Inline PR Comments**: Cap at `<= 50 words` (symptom/defect + fix; never
     narrate the author's call stack).
-  - **Issues & Bug Reports**: **1 Audience / 1 Component per issue**. Include
-    `# <Proposed Title>` at line 1 of draft artifacts (strip lines 1–2 on
-    `gh issue create --body-file`). Open line 1 of the body with the exact
-    defect/problem statement (unlabelled BLUF; no historical preamble), use
-    tight declarative bullets, **never** add unsolicited `cc @user` mentions (CC
-    on GitHub works via `@mention`, which the user handles manually), and on
-    GitHub encapsulate raw repro outputs/code traces in
+  - **Issues & Bug Reports**: **1 Audience / 1 Component per issue**. Put
+    `# <Proposed Title>` on line 1 of drafts (strip lines 1–2 on
+    `gh issue create --body-file`). Open line 1 with the exact defect statement
+    (no preamble), use declarative bullets, **never** add unsolicited `cc @user`
+    mentions, and on GitHub wrap traces in
     `<details><summary><b>Detailed code trace & affected targets (AI-assisted)</b></summary>...</details>`.
 - **Coding, Shell & Package Standards**: Review `~/.agents/CODING_STANDARDS.md`
   before editing Dart code, shell scripts, `pubspec.yaml`, `CHANGELOG.md`, or
