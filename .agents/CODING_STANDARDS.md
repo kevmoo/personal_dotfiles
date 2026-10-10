@@ -191,3 +191,20 @@
   `shellcheck <script>` (zero warnings/errors) and execute at least 2 safe,
   failing/adversarial flag combinations (`--flag=val`, `--flag val`, `-fval`,
   `--`) before committing.
+
+## Agent Skills & Bundled Scripts (`SKILL.md`, `scripts/*`)
+
+- **Frontmatter & Markdown Hygiene**:
+  - **Trigger-Only `description:`**: Open with 1 capability sentence (what
+    outcome the skill achieves), followed by `Use when ...` and
+    `Don't use when/for ...` (naming alternative skills). Never summarize
+    internal step sequences, prompt templates, or output formats in frontmatter.
+  - **No Unicode Dashes in Code**: Never put Unicode em-dashes (`—`, `U+2014`)
+    or en-dashes (`–`, `U+2013`) inside fenced code blocks, inline backticks, or
+    CLI string literals; use ASCII `--` or `-`.
+  - **No `[TOC]` & No Hardcoded `/tmp`**: Omit `[TOC]` in `SKILL.md` (saves
+    agent context tokens) and avoid hardcoded `/tmp/...` paths (use `mktemp -d`
+    or session-scoped directories).
+- **Bundled Scripts**: Include docstrings on all functions, keep helpers `<= 40`
+  lines with descriptive variable names, and pair every non-trivial script with
+  unit tests covering normal, multi-branch, and fast-exit edge cases.
