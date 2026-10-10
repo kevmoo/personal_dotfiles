@@ -142,18 +142,27 @@ Hard boundaries first; working style after.
   `APPROVED` review, check
   `gh pr view --json reviewDecision,latestReviews,reviewRequests` and offer
   `kscripts pr-triage re-request <login>`.
-- **Outbound Human Artifacts ("Pre-Chew & Encapsulate AI")**: Separate **Layer A
-  (Internal Proof)** from **Layer B (Outbound Human Payload)**—never paste raw
-  agent traces/inventories into GitHub/Critique/chat/email. Verify subagent PR
-  citations against raw `gh pr diff` / `view_file` before posting.
-  - **Inline PR Comments**: Cap at `<= 50 words` (symptom/defect + fix; never
-    narrate the author's call stack).
-  - **Issues & Bug Reports**: **1 Audience / 1 Component per issue**. Put
-    `# <Proposed Title>` on line 1 of drafts (strip lines 1–2 on
-    `gh issue create --body-file`). Open line 1 with the exact defect statement
-    (no preamble), use declarative bullets, **never** add unsolicited `cc @user`
-    mentions, and on GitHub wrap traces in
-    `<details><summary><b>Detailed code trace & affected targets (AI-assisted)</b></summary>...</details>`.
+- **Outbound Artifacts (issues, PRs, CLs, bugs, chat, email)**: Write for the
+  reader's next decision, not for the record of your work.
+  1. **Lead with the decision.** Line 1 states the defect, ask, or change.
+     Discovery history and process narrative go last or in a collapsed block.
+  2. **Budget words by reader count.** Title: hundreds of readers, search key +
+     decision signal, `<= 70` chars. First 3 lines: tens, enough to triage or
+     review. Body: one reader, repro + evidence + permalinks.
+  3. **Report the delta, not the tour.** Open with what is wrong or what
+     changes. The owner already knows how their code works today, so a
+     "currently, X does Y" opener is cut; a visitor gets one orienting line +
+     permalink.
+  4. **Fill a slot only if it changes a decision.** Delete empty template
+     sections, headers over single paragraphs, and parenthetical asides. One
+     audience and one owner per artifact.
+  5. **Anchor, verify, then cold-read.** Every claim carries a permalink;
+     inference is labeled as inference; PR bodies state what changed and how it
+     was verified within the first 3 lines. Traces go in `<details>` (GitHub)
+     or attachments (Buganizer). Run `/cold-read` on the publish form and fix
+     anything the reader cannot decide from the first 3 lines.
+  - Mechanics: `# <Proposed Title>` on line 1 of drafts; inline review comments
+    `<= 50` words; `@mentions` only when the user names them.
 - **Coding, Shell, Skill & Package Standards**: Review
   `~/.agents/CODING_STANDARDS.md` before editing Dart code, shell scripts, agent
   skills (`SKILL.md`, `scripts/*`), `pubspec.yaml`, `CHANGELOG.md`, or
