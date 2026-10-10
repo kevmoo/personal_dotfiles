@@ -154,8 +154,9 @@ Hard boundaries first; working style after.
     (no preamble), use declarative bullets, **never** add unsolicited `cc @user`
     mentions, and on GitHub wrap traces in
     `<details><summary><b>Detailed code trace & affected targets (AI-assisted)</b></summary>...</details>`.
-- **Coding, Shell & Package Standards**: Review `~/.agents/CODING_STANDARDS.md`
-  before editing Dart code, shell scripts, `pubspec.yaml`, `CHANGELOG.md`, or
+- **Coding, Shell, Skill & Package Standards**: Review
+  `~/.agents/CODING_STANDARDS.md` before editing Dart code, shell scripts, agent
+  skills (`SKILL.md`, `scripts/*`), `pubspec.yaml`, `CHANGELOG.md`, or
   `README.md`.
 - **Agent Skills (`~/.agents/skills`)**: Edit only in source repos (`dot`,
   `~/github/kevmoo/kevmoo_skills/skills/<name>/`, or `dotcorp`).
