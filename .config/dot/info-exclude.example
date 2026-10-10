@@ -86,6 +86,8 @@
 !.agents/skills/AGENTS.md
 !.agents/skills/clarify-confirm-continue/
 !.agents/skills/clarify-confirm-continue/**
+!.agents/skills/cold-read/
+!.agents/skills/cold-read/**
 !.agents/skills/dart-cleanup/
 !.agents/skills/dart-cleanup/**
 !.agents/skills/domain-modeling/

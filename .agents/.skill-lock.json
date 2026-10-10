@@ -198,6 +198,15 @@
       "skillFolderHash": "decc4af017248fe7902cba19b21ebda2c23141da",
       "installedAt": "2026-10-07T23:06:46.919Z",
       "updatedAt": "2026-10-07T23:06:46.919Z"
+    },
+    "cold-read": {
+      "source": "kevmoo/kevmoo_skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
+      "skillPath": "skills/cold-read/SKILL.md",
+      "skillFolderHash": "40acc7b4395ea1ad5144973b53f57833fbe9a0bd",
+      "installedAt": "2026-10-10T22:52:45.064Z",
+      "updatedAt": "2026-10-10T22:52:45.064Z"
     }
   },
   "dismissed": {
