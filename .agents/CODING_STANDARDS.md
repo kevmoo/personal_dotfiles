@@ -7,9 +7,10 @@
    (`publish_to != 'none'` and already published on `pub.dev`) at a released
    version (`0.15.7`), **unconditionally** bump to `-wip` (`0.15.8-wip`) and
    prepend `## 0.15.8-wip` in `CHANGELOG.md` (unless explicitly asked to cut a
-   single-PR release). **Never** append new changes under an already-published
-   `## X.Y.Z` section (only touch historical sections to fix typos or misplaced
-   entries). Never-published packages (`0.1.0-wip` with `- Initial release.` /
+   single-PR release, or only fixing historical `CHANGELOG.md` typos/misplaced
+   entries). **Never** append new changes under an already-published `## X.Y.Z`
+   section (only touch historical sections to fix typos or misplaced entries).
+   Never-published packages (`0.1.0-wip` with `- Initial release.` /
    `- First release.`) do not accumulate per-PR `CHANGELOG.md` bullets prior to
    first `pub.dev` publication.
 2. **New Feature / Public API -> Minor `-wip` (`X.(Y+1).0-wip` for `X >= 1`,
@@ -47,10 +48,11 @@
    `.dart` file.
 5. **Publishing via GitHub Releases (`dart-lang/ecosystem` `publish.yaml`)**: In
    repositories using `dart-lang/ecosystem/.github/workflows/publish.yaml`
-   (`package:firehose`), never push a bare Git tag (`git tag && git push`),
-   which triggers `pub.dev` publication without creating a GitHub Release.
-   Instead, after merging the release PR to `main` (and after gating via
-   `ask_question`), parse the URL-encoded `tag`, `title`
+   (`package:firehose`, paired with `health.yaml`, `post_summaries.yaml`, and
+   `write-comments: false` for fork-safe PR comments), never push a bare Git tag
+   (`git tag && git push`), which triggers `pub.dev` publication without
+   creating a GitHub Release. Instead, after merging the release PR to `main`
+   (and after gating via `ask_question`), parse the URL-encoded `tag`, `title`
    (`package:<pkg> v<ver>`), and `body` from the `releases/new?` link in the
    PR's `## Package publishing` bot comment (falling back to the `## <ver>`
    section of `CHANGELOG.md`) and run:
