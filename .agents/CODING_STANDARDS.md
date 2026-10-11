@@ -18,10 +18,15 @@
    `6.3.1-wip` -> `7.0.0-wip`; for `0.Y.Z` pre-v1 packages, `0.3.1` ->
    `0.4.0-wip`) in both `pubspec.yaml` and `CHANGELOG.md` (promoting any
    unreleased patch/minor `-wip` heading).
-4. Add changelog bullets only for user-visible feature/API/behavior changes;
-   leave `## <ver>-wip` empty (header only) for `test/`/`tool/`/internal-only
-   edits. Copy the repo's BSD license header into any newly created `.dart`
-   file.
+4. **Never document user-invisible changes in `CHANGELOG.md`**: Add changelog
+   bullets strictly for user-visible feature, public API, CLI, or behavior
+   changes. Do **not** add changelog entries for internal refactorings,
+   cognitive complexity reductions, `file_split` module splits, private helper
+   extractions, or `test/`/`tool/` edits—bumping the version to `-wip` is fine
+   when needed, and leaving `CHANGELOG.md` unchanged (if already at `-wip`) or
+   with an empty `## <ver>-wip` heading is expected when there are no
+   user-visible changes. Copy the repo's BSD license header into any newly
+   created `.dart` file.
 5. **Publishing via GitHub Releases (`dart-lang/ecosystem` `publish.yaml`)**: In
    repositories using `dart-lang/ecosystem/.github/workflows/publish.yaml`
    (`package:firehose`), never push a bare Git tag (`git tag && git push`),
