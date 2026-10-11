@@ -2,32 +2,57 @@
 
 ## Published Package `-wip` Bumps & Releases (`pubspec.yaml` & `CHANGELOG.md`)
 
-1. Whenever modifying _any_ file (`lib/`, `bin/`, `test/`, `tool/`) in a package
-   at a released version (`0.15.7`), **unconditionally** bump to `-wip`
-   (`0.15.8-wip`) and add `## 0.15.8-wip` in `CHANGELOG.md`.
+1. Whenever modifying _any_ file (`lib/`, `bin/`, `test/`, `tool/`, `README.md`,
+   `pubspec.yaml`, `CHANGELOG.md`) in a published package
+   (`publish_to != 'none'` and already published on `pub.dev`) at a released
+   version (`0.15.7`), **unconditionally** bump to `-wip` (`0.15.8-wip`) and
+   prepend `## 0.15.8-wip` in `CHANGELOG.md` (unless explicitly asked to cut a
+   single-PR release, or only fixing historical `CHANGELOG.md` typos/misplaced
+   entries). **Never** append new changes under an already-published `## X.Y.Z`
+   section (only touch historical sections to fix typos or misplaced entries).
+   Never-published packages (`0.1.0-wip` with `- Initial release.` /
+   `- First release.`) do not accumulate per-PR `CHANGELOG.md` bullets prior to
+   first `pub.dev` publication.
 2. **New Feature / Public API -> Minor `-wip` (`X.(Y+1).0-wip` for `X >= 1`,
    `0.Y.(Z+1)-wip` for `0.Y.Z`)**: Whenever a change adds a new non-breaking
-   public feature or API, bump to the next **minor** `-wip` version (`3.1.2` or
-   `3.1.3-wip` -> `3.2.0-wip`; for `0.Y.Z` pre-v1 packages where `^0.Y.Z` caps
-   at `<0.(Y+1).0`, use `0.Y.(Z+1)-wip`) in both `pubspec.yaml` and
-   `CHANGELOG.md` (promoting any unreleased patch `-wip` heading).
+   public feature, API, or `pubspec.yaml` `executables:` entry, bump to the next
+   **minor** `-wip` version (`3.1.2` or `3.1.3-wip` -> `3.2.0-wip`; for `0.Y.Z`
+   pre-v1 packages where `^0.Y.Z` caps at `<0.(Y+1).0`, use `0.Y.(Z+1)-wip`) in
+   both `pubspec.yaml` and `CHANGELOG.md` (promoting any unreleased patch `-wip`
+   heading).
 3. **Breaking Change / Removed Public API -> Major `-wip` (`(X+1).0.0-wip` for
    `X >= 1`, `0.(Y+1).0-wip` for `0.Y.Z`)**: Whenever a change removes or
    incompatibly alters a public API (`api.txt` removal/signature change), CLI
-   flag, or config key, bump to the next **major** `-wip` version (`6.3.0` or
-   `6.3.1-wip` -> `7.0.0-wip`; for `0.Y.Z` pre-v1 packages, `0.3.1` ->
-   `0.4.0-wip`) in both `pubspec.yaml` and `CHANGELOG.md` (promoting any
-   unreleased patch/minor `-wip` heading).
-4. Add changelog bullets only for user-visible feature/API/behavior changes;
-   leave `## <ver>-wip` empty (header only) for `test/`/`tool/`/internal-only
-   edits. Copy the repo's BSD license header into any newly created `.dart`
-   file.
+   flag, config key, or removes/renames a `pubspec.yaml` `executables:` entry,
+   bump to the next **major** `-wip` version (`6.3.0` or `6.3.1-wip` ->
+   `7.0.0-wip`; for `0.Y.Z` pre-v1 packages, `0.3.1` -> `0.4.0-wip`) in both
+   `pubspec.yaml` and `CHANGELOG.md` (promoting any unreleased patch/minor
+   `-wip` heading).
+4. **Never document user-invisible changes in `CHANGELOG.md`**: Add changelog
+   bullets strictly for user-visible feature, public API, CLI, behavior,
+   `environment.sdk:`, or runtime `dependencies:` changes. Do **not** add
+   changelog entries for internal refactorings, cognitive complexity reductions,
+   `file_split` module splits, private helper extractions,
+   `test/`/`tool/`/`README.md` edits, or `pubspec.yaml`
+   `dev_dependencies:`/`dependency_overrides:`/`resolution:`/`topics:`/`issue_tracker:`
+   edits—bumping the version to `-wip` is fine when needed, and leaving
+   `CHANGELOG.md` unchanged (if already at `-wip`) or with an empty
+   `## <ver>-wip` heading is expected when there are no user-visible changes. In
+   `package:firehose` repositories (`health / changelog`), apply the
+   `skip-changelog-check` PR label when a package is already at `-wip` and a PR
+   touches `lib/`, `bin/`, or `pubspec.yaml` without user-visible changes.
+   Unreleased bullets under `## <ver>-wip` may be edited in place, coalesced
+   across PRs (e.g., updating `* Require Dart ^3.7.0.` to
+   `* Require Dart ^3.9.0.`), or deleted if an unreleased change is reverted
+   before publication. Copy the repo's BSD license header into any newly created
+   `.dart` file.
 5. **Publishing via GitHub Releases (`dart-lang/ecosystem` `publish.yaml`)**: In
    repositories using `dart-lang/ecosystem/.github/workflows/publish.yaml`
-   (`package:firehose`), never push a bare Git tag (`git tag && git push`),
-   which triggers `pub.dev` publication without creating a GitHub Release.
-   Instead, after merging the release PR to `main` (and after gating via
-   `ask_question`), parse the URL-encoded `tag`, `title`
+   (`package:firehose`, paired with `health.yaml`, `post_summaries.yaml`, and
+   `write-comments: false` for fork-safe PR comments), never push a bare Git tag
+   (`git tag && git push`), which triggers `pub.dev` publication without
+   creating a GitHub Release. Instead, after merging the release PR to `main`
+   (and after gating via `ask_question`), parse the URL-encoded `tag`, `title`
    (`package:<pkg> v<ver>`), and `body` from the `releases/new?` link in the
    PR's `## Package publishing` bot comment (falling back to the `## <ver>`
    section of `CHANGELOG.md`) and run:
