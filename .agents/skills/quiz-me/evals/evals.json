@@ -1,0 +1,70 @@
+{
+  "repo_criteria": ["evals/code_quality_rubric.json"],
+  "evals": [
+    {
+      "id": "quiz_me_task_1",
+      "prompt": "Use /quiz-me to verify and build my deep mental model of supply-chain package attestation and untrusted-registry verification (covering content digests, asymmetric identity binding, ephemeral workload certificates, transparency logs vs. active freshness, root rotation, self-referential policy traps, and anti-downgrade pinning).",
+      "expected_chat_output": [
+        "Uses plain engineering terminology (Prerequisite Graph, Concept, Mastered, Ready Next, Locked, Key Mental Shift, Scenario Check, Teaching Block, Transfer Question) with zero academic KST or graph-theory jargon (no 'Hasse diagram', 'Knowledge Space Theory', 'Outer Fringe', 'surmise', or '$F^+(K)$') and no raw LaTeX math ($...$) in prose.",
+        "Keeps the Turn 1 chat response concise (<= 25 lines): links to <topic>_learning_graph.md without pasting a duplicate Mermaid diagram into chat, shows a compact concept summary table (collapsing Locked range rows when needed), starts at a single foundational root concept (N1) with 1 concise causal Scenario Check (1 concept per turn), invites conversational skip-ahead (e.g., 'I already know N1/N2, skip to N3'), and includes an anti-guessing calibration nudge ('explain why' or say 'teach me' / 'not sure').",
+        "Stops calling tools and waits for the user's response without simulating user answers."
+      ],
+      "expected_repo_state": [
+        "Creates a persistent <topic>_learning_graph.md artifact in the session artifact directory or /tmp/<topic>_learning_graph.md (without dirtying the repository worktree) using classDef mastered, ready, and locked, with at least one convergence node (>= 2 direct prerequisites feeding one concept).",
+        "Includes a concise Source column in the 1-row-per-node Concept Index table and keeps Turn 1 <topic>_learning_graph.md lightweight (<= 80 lines including the Mermaid diagram) and spoiler-free: does NOT print Common Misconceptions or One-Line Definition explanations above unmastered Scenario Checks, and does NOT pre-author multi-line textbook sections for Locked concepts on Turn 1."
+      ],
+      "agent_config": "bare-agent"
+    },
+    {
+      "id": "quiz_me_task_2",
+      "prompt": "Run /quiz-me on this 6-step straight linear release pipeline where each step only depends on the single step immediately before it: (1) bump version in pubspec.yaml, (2) update CHANGELOG.md, (3) run dart analyze, (4) run dart test, (5) push git tag, (6) publish to pub.dev.",
+      "expected_chat_output": [
+        "Triggers the Pre-Flight Convergence Topology Gate (recognizing that the 6 steps form a straight linear chain with 0 convergence nodes rather than a convergent prerequisite graph) and halts before creating a Mermaid learning graph.",
+        "Clearly states why a prerequisite graph adds no value for a straight sequential chain with zero convergence nodes.",
+        "Offers the 3 pre-flight options: (1) Run linear/thematic mastery checks in quiz-me (Recommended), (2) Switch to /slice-and-dice for an unquizzed guided walkthrough, or (3) Broaden scope into a convergent system graph."
+      ],
+      "expected_repo_state": [
+        "Does NOT create a <topic>_learning_graph.md artifact before the user responds."
+      ],
+      "agent_config": "bare-agent"
+    },
+    {
+      "id": "quiz_me_task_3",
+      "prompt": "Use /quiz-me to test and teach me the entire browser rendering, networking, JavaScript engine, WebAssembly compiler, garbage collector, and compositor architecture end-to-end (covering 22 distinct atomic mechanisms across networking, DOM/CSS layout, JIT tiers, WasmGC, and GPU compositing).",
+      "expected_chat_output": [
+        "Maps atomic concepts honestly without compressing distinct mechanisms into muddy umbrella nodes just to fit under 15 nodes.",
+        "Triggers the Pre-Flight Upper-Bound Gate (> 15 atomic concepts) and halts before starting calibration.",
+        "Presents a compact bulleted cluster breakdown in chat (without cramming multi-line <br> concept lists into wide Markdown table cells) and prompts the user with the 3 scoping options: (1) Start with a foundational sub-area first (Recommended), (2) Prune to a specific target goal, or (3) Proceed with all N concepts."
+      ],
+      "expected_repo_state": [
+        "Does NOT start diagnostic calibration until the user chooses a scope option."
+      ],
+      "agent_config": "bare-agent"
+    },
+    {
+      "id": "quiz_me_task_4",
+      "prompt": "Continue a /quiz-me session at active concept N2 (Asymmetric Identity Binding, Source: docs/attestation.md#L26-L48) after the user replies to N2-Q1 ('Why does bundling META-INF/signer.pub inside the tarball break publisher authentication?'): 'I think verification fails because Ed25519 signatures only verify the raw bytes and don't hash the filename—Wait, actually I'm not sure why bundling META-INF/signer.pub inside the tarball breaks identity verification if the Ed25519 math passes. Teach me!'",
+      "expected_chat_output": [
+        "Acknowledges what held up in the user's intuition first (that Ed25519 verifies the raw bytes) without sycophantic flattery adjectives ('Spot on', 'Great', 'Brilliant') and without a robotic '- **Diagnosis:** ...' header line, then teaches N2 immediately.",
+        "Delivers a focused Teaching Block (Pedagogy) anchored in docs/attestation.md#L26-L48 explaining why an in-band public key bundled inside the untrusted tarball cannot establish trusted publisher identity (paired with a concrete structural analogy).",
+        "Poses 1 fresh Transfer Question (N2-T1) (Assessment) that changes the failure mode or scenario mechanics (either open-ended or inline (A)/(B)/(C) options requiring a 'why' explanation) rather than merely swapping surface nouns."
+      ],
+      "expected_repo_state": [
+        "Keeps N2 in 🎯 Ready Next state without inserting a spurious new prerequisite node into <topic>_learning_graph.md."
+      ],
+      "agent_config": "bare-agent"
+    },
+    {
+      "id": "quiz_me_task_5",
+      "prompt": "In an active /quiz-me session, N1 (Deterministic Content Digests) was asked as a plain-text Scenario Check and N2-T1 (Asymmetric Identity Binding) was asked with inline options (A), (B), (C) requiring a 'why' explanation. First, for N1, the user replied with informal plain-English intuition: 'basically a git tag is just a sticky note somebody can move to a totally different commit, whereas a sha256 hash is baked from the actual bytes so changing one byte changes the hash!' Second, when N2-T1 was presented with inline options (A), (B), (C), the user replied with just a bare letter: 'B'. Handle this N2-T1 reply (assuming N1 was just credited as Mastered).",
+      "expected_chat_output": [
+        "Credits informal plain-English causal intuition generously for N1 (✅ Mastered) without demanding textbook buzzwords and without sycophantic flattery ('Spot on', 'Great', 'Brilliant').",
+        "Enforces the 'Explain Why' anti-guessing gate on N2-T1 when the user replies with only the bare letter 'B': confirms that (B) is the right option, does NOT mark N2 as ✅ Mastered yet, and asks a concise 1-line follow-up ('Why does signature verification still succeed in (B)?') so a lucky multiple-choice guess cannot bypass comprehension verification."
+      ],
+      "expected_repo_state": [
+        "Marks N1 as ✅ Mastered in <topic>_learning_graph.md while keeping N2 in 🎯 Ready Next until the user explains why (B) happens."
+      ],
+      "agent_config": "bare-agent"
+    }
+  ]
+}

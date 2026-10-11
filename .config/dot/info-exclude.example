@@ -98,8 +98,6 @@
 !.agents/skills/gerrit-stacked-cls/**
 !.agents/skills/gh-post/
 !.agents/skills/gh-post/**
-!.agents/skills/graph-learn/
-!.agents/skills/graph-learn/**
 !.agents/skills/grilling/
 !.agents/skills/grilling/**
 !.agents/skills/gws-calendar/
@@ -120,6 +118,8 @@
 !.agents/skills/pr-triage/**
 !.agents/skills/quick-question/
 !.agents/skills/quick-question/**
+!.agents/skills/quiz-me/
+!.agents/skills/quiz-me/**
 !.agents/skills/relay/
 !.agents/skills/relay/**
 !.agents/skills/repo-align/
