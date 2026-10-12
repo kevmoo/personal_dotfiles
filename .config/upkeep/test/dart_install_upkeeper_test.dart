@@ -149,6 +149,8 @@ packages:
 
       final sourceRepo = Directory('${tempInstallDir.path}/source_repo')
         ..createSync(recursive: true);
+      File('${sourceRepo.path}/pubspec.yaml')
+          .writeAsStringSync('name: my_tool\n');
 
       final pubspecLock = File('${localDir.path}/pubspec.lock');
       pubspecLock.writeAsStringSync('''
@@ -210,6 +212,49 @@ packages:
               cmd[0] == 'dart' &&
               cmd[1] == 'install' &&
               cmd[2] == 'dhttpd',
+        ),
+      ).isTrue();
+    });
+
+    test('update preserves path for monorepo git packages', () async {
+      final gitDir = Directory(
+        '${tempInstallDir.path}/app-bundles/cli_readme/git/1111111111111111111111111111111111111111',
+      )..createSync(recursive: true);
+
+      File('${gitDir.path}/pubspec.lock').writeAsStringSync('''
+packages:
+  cli_readme:
+    description:
+      path: "packages/cli_readme"
+      url: "https://github.com/kevmoo/analytica.dart"
+''');
+
+      final executedArgs = <List<String>>[];
+      final upkeeper = DartInstallUpkeeper(
+        installDirOverride: tempInstallDir,
+        processRunner: (executable, args) async {
+          executedArgs.add([executable, ...args]);
+          if (executable == 'git' && args.contains('ls-remote')) {
+            return ProcessResult(
+              0,
+              0,
+              '2222222222222222222222222222222222222222\tHEAD',
+              '',
+            );
+          }
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final result = await upkeeper.update();
+      check(result.success).isTrue();
+      check(
+        executedArgs.any(
+          (cmd) =>
+              cmd.length == 3 &&
+              cmd[0] == 'dart' &&
+              cmd[1] == 'install' &&
+              cmd[2] == 'cli_readme@{git: {url: https://github.com/kevmoo/analytica.dart, path: packages/cli_readme}}',
         ),
       ).isTrue();
     });
