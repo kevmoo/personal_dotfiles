@@ -202,11 +202,14 @@
   under `set -e`, and pure-Bash `${var}` / `[[ =~ ]]` over `echo | sed`
   subshells). Rewrite scripts exceeding `~100 lines` in Dart (`kscripts`) or
   Python.
-- **`#!/bin/sh` vs. `#!/usr/bin/env bash` (`BASH_ENV` Fast-Path)**: Hot-path
-  wrappers (`_kscripts_shim`, `grep`, `find`, `du`, `relay-gh`) MUST use
-  `#!/bin/sh` so non-interactive subshells with `BASH_ENV=~/.zshenv` do not
+- **`#!/bin/sh` vs. `#!/usr/bin/env bash` (`BASH_ENV` Fast-Path & macOS Bash 3.2)**:
+  Hot-path wrappers (`_kscripts_shim`, `grep`, `find`, `du`, `relay-gh`) MUST
+  use `#!/bin/sh` so non-interactive subshells with `BASH_ENV=~/.zshenv` do not
   re-source `~/.zshenv` on every call. Keep `~/.zshenv` POSIX/`bash`-compatible
-  (guard any Zsh-only syntax with `[ -n "${ZSH_VERSION:-}" ]`).
+  (guard any Zsh-only syntax with `[ -n "${ZSH_VERSION:-}" ]`). Avoid Bash 4+
+  builtins (`mapfile`, `readarray`, `declare -A`, `${var,,}`) in scripts or Git
+  hooks that can run under macOS `/bin/bash` 3.2; use `while IFS= read -r` loops
+  instead.
 - **Zero-Alias Prescriptive CLI Wrappers**: Never silently rewrite or alias
   unsupported CLI flags in `~/.local/bin/*` wrappers—fail fast (`exit 64`) with
   a concise prescriptive hint teaching the canonical invocation. Scan leading

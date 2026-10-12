@@ -7,7 +7,12 @@ cd "$(git rev-parse --show-toplevel)"
 
 # Find all staged Dart files (Added, Copied, Modified).
 # Skip vendored agent skills (synced verbatim by `npx skills`).
-mapfile -t staged_files < <(git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' | grep -v '^\.agents/skills/' || true)
+staged_files=()
+while IFS= read -r file; do
+  if [[ -n "$file" ]]; then
+    staged_files+=("$file")
+  fi
+done < <(git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' | grep -v '^\.agents/skills/' || true)
 
 if [[ ${#staged_files[@]} -eq 0 ]]; then
   exit 0

@@ -16,6 +16,7 @@ class _DartInstallApp {
   final String currentRef; // version or commit SHA
   final String? latestRef;
   final String? sourceUrl;
+  final String? gitPath;
 
   const _DartInstallApp({
     required this.name,
@@ -23,6 +24,7 @@ class _DartInstallApp {
     required this.currentRef,
     this.latestRef,
     this.sourceUrl,
+    this.gitPath,
   });
 
   bool get isOutdated => latestRef != null && currentRef != latestRef;
@@ -153,6 +155,11 @@ class DartInstallUpkeeper implements Upkeeper {
     final shaEntity = shaDirs.first;
     final sha = p.basename(shaEntity.path);
     final gitUrl = _readLockDescriptionField(shaEntity, pkgName, 'url');
+    final rawGitPath = _readLockDescriptionField(shaEntity, pkgName, 'path');
+    final gitPath =
+        (rawGitPath != null && rawGitPath.isNotEmpty && rawGitPath != '.')
+        ? rawGitPath
+        : null;
 
     String? remoteSha;
     if (gitUrl != null) {
@@ -181,6 +188,7 @@ class DartInstallUpkeeper implements Upkeeper {
       currentRef: sha,
       latestRef: remoteSha,
       sourceUrl: gitUrl,
+      gitPath: gitPath,
     );
   }
 
@@ -195,7 +203,8 @@ class DartInstallUpkeeper implements Upkeeper {
     var currentRef = 'installed';
     String? latestRef;
 
-    if (sourcePath != null && Directory(sourcePath).existsSync()) {
+    if (sourcePath != null &&
+        File(p.join(sourcePath, 'pubspec.yaml')).existsSync()) {
       try {
         final bundleDir = Directory(p.join(localDir.path, 'bundle'));
         final bundleMtime = bundleDir.existsSync()
@@ -332,21 +341,29 @@ class DartInstallUpkeeper implements Upkeeper {
       final errors = <String>[];
 
       for (final app in outdated) {
-        final (:spec, :error) = switch ((app.type, app.sourceUrl)) {
-          ('hosted', _) => (spec: app.name, error: null),
-          ('git', final url?) => (
+        final (:spec, :error) = switch ((
+          app.type,
+          app.sourceUrl,
+          app.gitPath,
+        )) {
+          ('hosted', _, _) => (spec: app.name, error: null),
+          ('git', final url?, final gitPath?) => (
+            spec: '${app.name}@{git: {url: $url, path: $gitPath}}',
+            error: null,
+          ),
+          ('git', final url?, null) => (
             spec: '${app.name}@{git: {url: $url}}',
             error: null,
           ),
-          ('git', null) => (
+          ('git', null, _) => (
             spec: null,
             error: '${app.name}: missing remote Git URL in pubspec.lock',
           ),
-          ('local', final path?) => (
+          ('local', final path?, _) => (
             spec: '${app.name}@{path: $path}',
             error: null,
           ),
-          ('local', null) => (
+          ('local', null, _) => (
             spec: null,
             error: '${app.name}: missing local source path in pubspec.lock',
           ),
