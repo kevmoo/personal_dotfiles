@@ -156,12 +156,14 @@
   speculative CLI flags not requested by the spec; register non-canonical verbs
   in `CommonMistakes` (`FuzzyCommandRunner`) to fail fast with a prescriptive
   hint.
-- **URI & Path-Segment Parsing**: Prefer `Uri.tryParse` combined with Dart 3
-  object/list pattern matching on `uri.host` and `uri.pathSegments` (e.g.,
-  `case Uri(host: 'github.com', pathSegments: [final owner, final repo, 'pull', final id, ...])`)
-  over ad-hoc multi-group URL regexes—`Uri.tryParse` strips query strings and
-  fragments automatically and binds named variables without brittle positional
-  `match.group(n)` indexing.
+- **Pattern Matching & Multi-Field Destructuring
+  (`dart-use-pattern-matching`)**: Prefer `Uri.tryParse` with object/list
+  patterns on `uri.host` and `uri.pathSegments` over multi-group URL regexes,
+  and unpack multi-field objects, records, and `MapEntry` loops
+  (`final Spec(:a, :b!) = spec;`,
+  `for (final MapEntry(:key, :value) in map.entries)`) when extracting `>= 3`
+  fields, eliminating a single-use temp, or promoting nullable fields. Details:
+  `~/github/skills/skills/dart-use-pattern-matching/SKILL.md`.
 - **Resource Lifecycle & Pre-`exit()` Cleanup**: After acquiring an OS resource
   (`HttpServer.bind`, `ServerSocket`, temp directory), wrap any post-bind setup
   in `try` / `catch` (`await server.close(force: true); rethrow;`) or `try` /
@@ -202,14 +204,14 @@
   under `set -e`, and pure-Bash `${var}` / `[[ =~ ]]` over `echo | sed`
   subshells). Rewrite scripts exceeding `~100 lines` in Dart (`kscripts`) or
   Python.
-- **`#!/bin/sh` vs. `#!/usr/bin/env bash` (`BASH_ENV` Fast-Path & macOS Bash 3.2)**:
-  Hot-path wrappers (`_kscripts_shim`, `grep`, `find`, `du`, `relay-gh`) MUST
-  use `#!/bin/sh` so non-interactive subshells with `BASH_ENV=~/.zshenv` do not
-  re-source `~/.zshenv` on every call. Keep `~/.zshenv` POSIX/`bash`-compatible
-  (guard any Zsh-only syntax with `[ -n "${ZSH_VERSION:-}" ]`). Avoid Bash 4+
-  builtins (`mapfile`, `readarray`, `declare -A`, `${var,,}`) in scripts or Git
-  hooks that can run under macOS `/bin/bash` 3.2; use `while IFS= read -r` loops
-  instead.
+- **`#!/bin/sh` vs. `#!/usr/bin/env bash` (`BASH_ENV` Fast-Path & macOS Bash
+  3.2)**: Hot-path wrappers (`_kscripts_shim`, `grep`, `find`, `du`, `relay-gh`)
+  MUST use `#!/bin/sh` so non-interactive subshells with `BASH_ENV=~/.zshenv` do
+  not re-source `~/.zshenv` on every call. Keep `~/.zshenv`
+  POSIX/`bash`-compatible (guard any Zsh-only syntax with
+  `[ -n "${ZSH_VERSION:-}" ]`). Avoid Bash 4+ builtins (`mapfile`, `readarray`,
+  `declare -A`, `${var,,}`) in scripts or Git hooks that can run under macOS
+  `/bin/bash` 3.2; use `while IFS= read -r` loops instead.
 - **Zero-Alias Prescriptive CLI Wrappers**: Never silently rewrite or alias
   unsupported CLI flags in `~/.local/bin/*` wrappers—fail fast (`exit 64`) with
   a concise prescriptive hint teaching the canonical invocation. Scan leading
