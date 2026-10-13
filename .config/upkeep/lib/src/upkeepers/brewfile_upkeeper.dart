@@ -7,14 +7,44 @@ import 'upkeeper.dart';
 
 class BrewfileUpkeeper implements Upkeeper {
   final bool? isCloudtopOverride;
+  final bool? isMacOSOverride;
+  final String Function()? homeDirOverride;
+  final ProcessRunner _processRunner;
+  final String? Function()? inputReader;
+  final void Function(String)? outputWriter;
 
-  BrewfileUpkeeper({this.isCloudtopOverride});
+  BrewfileUpkeeper({
+    this.isCloudtopOverride,
+    this.isMacOSOverride,
+    this.homeDirOverride,
+    ProcessRunner? processRunner,
+    this.inputReader,
+    this.outputWriter,
+  }) : _processRunner = processRunner ?? Process.run;
 
   @override
   String get id => 'brewfile';
 
   @override
   String get displayName => 'Homebrew Brewfile Sync';
+
+  bool _isMacOS() => isMacOSOverride ?? Platform.isMacOS;
+
+  void _write(String text) {
+    if (outputWriter != null) {
+      outputWriter!(text);
+    } else {
+      stdout.write(text);
+    }
+  }
+
+  void _writeln([String text = '']) => _write('$text\n');
+
+  String _readLine() =>
+      (inputReader != null ? inputReader!() : stdin.readLineSync())
+          ?.trim()
+          .toLowerCase() ??
+      '';
 
   bool _isCloudtop() {
     if (isCloudtopOverride != null) return isCloudtopOverride!;
@@ -27,18 +57,20 @@ class BrewfileUpkeeper implements Upkeeper {
   Future<bool> isSupported() async {
     if (_isCloudtop()) return false;
     try {
-      final result = await Process.run('which', ['brew']);
+      final result = await _processRunner('which', ['brew']);
       return result.exitCode == 0;
     } catch (_) {
       return false;
     }
   }
 
-  String _homeDir() => Platform.environment['HOME'] ?? Directory.current.path;
+  String _homeDir() => homeDirOverride != null
+      ? homeDirOverride!()
+      : (Platform.environment['HOME'] ?? Directory.current.path);
 
   String _getOsBrewfilePath() {
     final home = _homeDir();
-    if (Platform.isMacOS) {
+    if (_isMacOS()) {
       return p.join(home, '.config', 'brew', 'Brewfile.mac');
     } else {
       return p.join(home, '.config', 'brew', 'Brewfile.linux');
@@ -61,7 +93,7 @@ class BrewfileUpkeeper implements Upkeeper {
   }
 
   Future<Set<String>> _brewSet(List<String> args) async {
-    final res = await Process.run('brew', args);
+    final res = await _processRunner('brew', args);
     if (res.exitCode != 0) return {};
     return res.stdout
         .toString()
@@ -150,9 +182,12 @@ class BrewfileUpkeeper implements Upkeeper {
       return UpkeepStatus(
         upkeeperId: id,
         displayName: displayName,
-        state: UpkeepState.outdated,
+        state: totalMissing > 0
+            ? UpkeepState.outdated
+            : UpkeepState.needsTriage,
         summary: summaryParts.join(', '),
         details: details,
+        actionHint: totalUnmanaged > 0 ? 'upkeep triage' : null,
       );
     } catch (e) {
       return UpkeepStatus(
@@ -181,20 +216,22 @@ class BrewfileUpkeeper implements Upkeeper {
         audit.unmanagedCasks.isEmpty &&
         audit.missingFormulae.isEmpty &&
         audit.missingCasks.isEmpty) {
-      print('✨ All Homebrew packages are fully synchronized with Brewfiles!');
+      _writeln(
+        '✨ All Homebrew packages are fully synchronized with Brewfiles!',
+      );
       return;
     }
 
-    print('\n🍏 Interactive Brewfile Triage\n');
+    _writeln('\n🍏 Interactive Brewfile Triage\n');
 
-    _triageUnmanagedGroup(
+    await _triageUnmanagedGroup(
       audit.unmanagedFormulae,
       header: '📦 Managing unmanaged Formulae:',
       kind: 'formula',
       directive: 'brew',
       files: (shared: audit.sharedFile, os: audit.osFile),
     );
-    _triageUnmanagedGroup(
+    await _triageUnmanagedGroup(
       audit.unmanagedCasks,
       header: '🖥️ Managing unmanaged Casks:',
       kind: 'cask',
@@ -216,48 +253,86 @@ class BrewfileUpkeeper implements Upkeeper {
       files: (shared: audit.sharedFile, os: audit.osFile),
     );
 
-    print('✨ Interactive Brewfile triage completed.');
+    _writeln('✨ Interactive Brewfile triage completed.');
   }
 
-  void _triageUnmanagedGroup(
+  Future<void> _triageUnmanagedGroup(
     List<String> items, {
     required String header,
     required String kind,
     required String directive,
     required ({File shared, File os}) files,
-  }) {
+  }) async {
     if (items.isEmpty) return;
-    final (osLabel, osKey) = Platform.isMacOS ? ('mac', 'm') : ('linux', 'l');
-    print(header);
+    final (osLabel, osKey) = _isMacOS() ? ('mac', 'm') : ('linux', 'l');
+    _writeln(header);
     for (final item in items) {
-      var resolved = false;
-      while (!resolved) {
-        stdout.write(
-          "Add $kind '$item' to Brewfile? [s]hared, [$osKey]$osLabel, or [n]o: ",
-        );
-        final choice = stdin.readLineSync()?.trim().toLowerCase() ?? '';
-        switch (choice) {
-          case 's':
-            files.shared.writeAsStringSync(
-              '$directive "$item"\n',
-              mode: FileMode.append,
+      await _triageUnmanagedItem(
+        item,
+        kind: kind,
+        directive: directive,
+        osLabel: osLabel,
+        osKey: osKey,
+        files: files,
+      );
+    }
+    _writeln();
+  }
+
+  Future<void> _triageUnmanagedItem(
+    String item, {
+    required String kind,
+    required String directive,
+    required String osLabel,
+    required String osKey,
+    required ({File shared, File os}) files,
+  }) async {
+    final uninstallArgs = directive == 'cask'
+        ? ['uninstall', '--cask', item]
+        : ['uninstall', item];
+    while (true) {
+      _write(
+        "Action for unmanaged $kind '$item'? "
+        '[r]emove, [$osKey]$osLabel, [s]hared, or [d]o nothing: ',
+      );
+      final choice = _readLine();
+      switch (choice) {
+        case 'r':
+          _writeln('Running: brew ${uninstallArgs.join(' ')}');
+          final res = await _processRunner('brew', uninstallArgs);
+          if (res.exitCode == 0) {
+            _writeln("Removed '$item'");
+          } else {
+            _writeln(
+              "Failed to remove '$item': ${res.stderr.toString().trim()}",
             );
-            print("Added '$item' to Brewfile.shared");
-            resolved = true;
-          case _ when choice == osKey:
-            files.os.writeAsStringSync(
-              '$directive "$item"\n',
-              mode: FileMode.append,
-            );
-            print("Added '$item' to Brewfile.$osLabel");
-            resolved = true;
-          case 'n' || '':
-            print("Skipped '$item'");
-            resolved = true;
-        }
+          }
+          return;
+        case _ when choice == osKey:
+          _appendBrewfileEntry(files.os, '$directive "$item"');
+          _writeln("Added '$item' to Brewfile.$osLabel");
+          return;
+        case 's':
+          _appendBrewfileEntry(files.shared, '$directive "$item"');
+          _writeln("Added '$item' to Brewfile.shared");
+          return;
+        case 'd' || 'n' || '':
+          _writeln("Skipped '$item'");
+          return;
       }
     }
-    print('');
+  }
+
+  void _appendBrewfileEntry(File file, String entry) {
+    file.parent.createSync(recursive: true);
+    var prefix = '';
+    if (file.existsSync()) {
+      final existing = file.readAsStringSync();
+      if (existing.isNotEmpty && !existing.endsWith('\n')) {
+        prefix = '\n';
+      }
+    }
+    file.writeAsStringSync('$prefix$entry\n', mode: FileMode.append);
   }
 
   Future<void> _triageMissingGroup(
@@ -271,32 +346,47 @@ class BrewfileUpkeeper implements Upkeeper {
     final baseInstallArgs = directive == 'cask'
         ? const ['install', '--cask']
         : const ['install'];
-    print(header);
+    _writeln(header);
     for (final item in items) {
-      var resolved = false;
-      while (!resolved) {
-        stdout.write(
-          "Action for $kind '$item'? [i]nstall, [r]emove from config, or [k]eep: ",
-        );
-        final choice = stdin.readLineSync()?.trim().toLowerCase() ?? '';
-        switch (choice) {
-          case 'i':
-            final installArgs = [...baseInstallArgs, item];
-            print('Running: brew ${installArgs.join(' ')}');
-            await Process.run('brew', installArgs);
-            resolved = true;
-          case 'r':
-            _removeFromBrewfile(files.shared, '$directive "$item"');
-            _removeFromBrewfile(files.os, '$directive "$item"');
-            print("Removed '$item' from Brewfile");
-            resolved = true;
-          case 'k' || '':
-            print("Kept configuration for '$item'");
-            resolved = true;
-        }
+      await _triageMissingItem(
+        item,
+        kind: kind,
+        directive: directive,
+        baseInstallArgs: baseInstallArgs,
+        files: files,
+      );
+    }
+    _writeln();
+  }
+
+  Future<void> _triageMissingItem(
+    String item, {
+    required String kind,
+    required String directive,
+    required List<String> baseInstallArgs,
+    required ({File shared, File os}) files,
+  }) async {
+    while (true) {
+      _write(
+        "Action for $kind '$item'? [i]nstall, [r]emove from config, or [k]eep: ",
+      );
+      final choice = _readLine();
+      switch (choice) {
+        case 'i':
+          final installArgs = [...baseInstallArgs, item];
+          _writeln('Running: brew ${installArgs.join(' ')}');
+          await _processRunner('brew', installArgs);
+          return;
+        case 'r':
+          _removeFromBrewfile(files.shared, '$directive "$item"');
+          _removeFromBrewfile(files.os, '$directive "$item"');
+          _writeln("Removed '$item' from Brewfile");
+          return;
+        case 'k' || '':
+          _writeln("Kept configuration for '$item'");
+          return;
       }
     }
-    print('');
   }
 
   void _removeFromBrewfile(File file, String targetLine) {
@@ -338,7 +428,7 @@ class BrewfileUpkeeper implements Upkeeper {
         '--file=${tempBrewfile.path}',
         if (cleanup) '--force-cleanup',
       ];
-      final bundleProc = await Process.run('brew', bundleArgs);
+      final bundleProc = await _processRunner('brew', bundleArgs);
       if (bundleProc.exitCode != 0) {
         return UpkeepResult(
           upkeeperId: id,

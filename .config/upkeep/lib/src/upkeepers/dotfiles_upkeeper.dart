@@ -69,41 +69,10 @@ class DotfilesUpkeeper implements Upkeeper {
           ? (int.tryParse(revProc.stdout.toString().trim()) ?? 0)
           : 0;
 
-      if (behindCount > 0 || dirtyLines.isNotEmpty) {
-        final summaryParts = <String>[
-          if (behindCount > 0)
-            '$behindCount commit(s) behind remote repository',
-          if (dirtyLines.isNotEmpty)
-            '${dirtyLines.length} uncommitted/untracked file(s) in dotfiles',
-        ];
-        final details = <String>[
-          if (behindCount > 0)
-            '$behindCount new commit(s) available on remote dotfiles',
-          ...dirtyLines,
-        ];
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: UpkeepState.outdated,
-          summary: summaryParts.join(', '),
-          details: details,
-        );
-      }
-
-      if (revProc.exitCode != 0) {
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: UpkeepState.upToDate,
-          summary: 'Dotfiles up to date (no upstream branch tracked)',
-        );
-      }
-
-      return UpkeepStatus(
-        upkeeperId: id,
-        displayName: displayName,
-        state: UpkeepState.upToDate,
-        summary: 'Dotfiles repository is up to date',
+      return _buildStatus(
+        behindCount: behindCount,
+        dirtyLines: dirtyLines,
+        hasUpstream: revProc.exitCode == 0,
       );
     } catch (e) {
       return UpkeepStatus(
@@ -114,6 +83,42 @@ class DotfilesUpkeeper implements Upkeeper {
         errorMessage: e.toString(),
       );
     }
+  }
+
+  UpkeepStatus _buildStatus({
+    required int behindCount,
+    required List<String> dirtyLines,
+    required bool hasUpstream,
+  }) {
+    if (behindCount > 0 || dirtyLines.isNotEmpty) {
+      final summaryParts = <String>[
+        if (behindCount > 0) '$behindCount commit(s) behind remote repository',
+        if (dirtyLines.isNotEmpty)
+          '${dirtyLines.length} uncommitted/untracked file(s) in dotfiles',
+      ];
+      final details = <String>[
+        if (behindCount > 0)
+          '$behindCount new commit(s) available on remote dotfiles',
+        ...dirtyLines,
+      ];
+      return UpkeepStatus(
+        upkeeperId: id,
+        displayName: displayName,
+        state: behindCount > 0 ? UpkeepState.outdated : UpkeepState.needsTriage,
+        summary: summaryParts.join(', '),
+        details: details,
+        actionHint: dirtyLines.isNotEmpty ? 'dot status' : null,
+      );
+    }
+
+    return UpkeepStatus(
+      upkeeperId: id,
+      displayName: displayName,
+      state: UpkeepState.upToDate,
+      summary: hasUpstream
+          ? 'Dotfiles repository is up to date'
+          : 'Dotfiles up to date (no upstream branch tracked)',
+    );
   }
 
   @override

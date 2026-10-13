@@ -130,9 +130,10 @@ class LocalBinUpkeeper implements Upkeeper {
     return UpkeepStatus(
       upkeeperId: id,
       displayName: displayName,
-      state: UpkeepState.outdated,
+      state: UpkeepState.needsTriage,
       summary: '${parts.join(', ')} in ~/.local/bin',
       details: details,
+      actionHint: 'Track via "dot add -f", allowlist in ~/.config/upkeep/local_bin_allowlist*, or remove',
     );
   }
 

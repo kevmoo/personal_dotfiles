@@ -76,7 +76,8 @@ void main() {
       );
 
       final status = await upkeeper.check();
-      check(status.state).equals(UpkeepState.outdated);
+      check(status.state).equals(UpkeepState.needsTriage);
+      check(status.actionHint).isNotNull().contains('dot add -f');
       check(status.summary).contains('1 untracked, 1 broken symlink(s)');
       check(status.details).any((d) => d.contains('mystery-script'));
       check(status.details).any(

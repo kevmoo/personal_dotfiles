@@ -1,5 +1,6 @@
 import 'package:args/command_runner.dart';
 
+import '../models.dart';
 import '../runner.dart';
 import '../ui/interactive_select.dart';
 import '../ui/table_formatter.dart';
@@ -63,12 +64,14 @@ class UpdateCommand extends Command<int> {
     print(TableFormatter.formatStatusTable(statuses));
 
     final outdated = statuses.where((s) => s.isOutdated).toList();
+    final needsTriage = statuses.where((s) => s.isNeedsTriage).toList();
 
     List<String> toUpdate;
     if (targets.isNotEmpty) {
       toUpdate = statuses.map((s) => s.upkeeperId).toList();
     } else if (outdated.isEmpty) {
       print('✨ Everything is up to date! No updates required.');
+      _printTriageFooter(needsTriage);
       return 0;
     } else if (autoYes) {
       toUpdate = outdated.map((s) => s.upkeeperId).toList();
@@ -78,6 +81,7 @@ class UpdateCommand extends Command<int> {
 
     if (toUpdate.isEmpty) {
       print('⏭️  Skipped updates.');
+      _printTriageFooter(needsTriage);
       return 0;
     }
 
@@ -101,7 +105,22 @@ class UpdateCommand extends Command<int> {
       }
     }
 
+    _printTriageFooter(needsTriage);
     print('\n✨ System upkeep run completed.');
     return hadErrors ? 1 : 0;
+  }
+
+  void _printTriageFooter(List<UpkeepStatus> needsTriage) {
+    if (needsTriage.isEmpty) return;
+    final hints = needsTriage
+        .map((s) => s.actionHint)
+        .whereType<String>()
+        .toSet();
+    final hintSuffix = hints.isNotEmpty
+        ? ' (see ${hints.map((h) => '"$h"').join(' / ')})'
+        : '';
+    print(
+      '🔵 FYI: ${needsTriage.length} subsystem(s) have items needing human intervention$hintSuffix.',
+    );
   }
 }
