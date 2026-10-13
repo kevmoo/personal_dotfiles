@@ -166,7 +166,8 @@ void main() {
 
       final dotfilesUpkeeper = DotfilesUpkeeper(homeDirOverride: home);
       final status = await dotfilesUpkeeper.check();
-      check(status.state).equals(UpkeepState.outdated);
+      check(status.state).equals(UpkeepState.needsTriage);
+      check(status.actionHint).equals('dot status');
       check(status.summary).contains('uncommitted/untracked file(s)');
 
       evalFile.deleteSync();

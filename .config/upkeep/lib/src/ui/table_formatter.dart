@@ -20,6 +20,10 @@ class TableFormatter {
         ]);
         buffer.writeln('   Command: $formattedCmd');
       }
+      if (s.actionHint != null) {
+        final formattedHint = wrapWith(s.actionHint!, [styleBold, blue]);
+        buffer.writeln('   Action:  $formattedHint');
+      }
 
       if (s.details.isNotEmpty) {
         for (final d in s.details) {
@@ -41,6 +45,8 @@ class TableFormatter {
         return '🟢';
       case UpkeepState.outdated:
         return '🟡';
+      case UpkeepState.needsTriage:
+        return '🔵';
       case UpkeepState.error:
         return '🔴';
       case UpkeepState.skipped:
@@ -54,6 +60,8 @@ class TableFormatter {
         return green.wrap('Up to date')!;
       case UpkeepState.outdated:
         return yellow.wrap('Outdated / Action Required')!;
+      case UpkeepState.needsTriage:
+        return blue.wrap('FYI / Needs Triage')!;
       case UpkeepState.error:
         return red.wrap('Error')!;
       case UpkeepState.skipped:

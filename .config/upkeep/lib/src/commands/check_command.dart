@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 
+import '../models.dart';
 import '../runner.dart';
 import '../ui/table_formatter.dart';
 import '../upkeepers/brewfile_upkeeper.dart';
@@ -77,19 +78,33 @@ class CheckCommand extends Command<int> {
       return 0;
     }
 
+    _printSummaryFooter(statuses);
+    return 0;
+  }
+
+  void _printSummaryFooter(List<UpkeepStatus> statuses) {
     final outdated = statuses.where((s) => s.isOutdated).toList();
-    if (outdated.isEmpty) {
+    final needsTriage = statuses.where((s) => s.isNeedsTriage).toList();
+    if (outdated.isEmpty && needsTriage.isEmpty) {
       print('✨ Everything is up to date! No updates required.');
-    } else {
+      return;
+    }
+    if (outdated.isNotEmpty) {
       print(
         'ℹ️  Check mode active. ${outdated.length} item(s) available for update.',
       );
-      if (statuses.any((s) => s.upkeeperId == 'brewfile' && s.isOutdated)) {
-        print(
-          '💡 Tip: Run "upkeep check -i" (or "upkeep triage") to interactively manage Brewfile packages.',
-        );
-      }
     }
-    return 0;
+    if (needsTriage.isNotEmpty) {
+      print(
+        '🔵 FYI: ${needsTriage.length} subsystem(s) have items needing human triage.',
+      );
+    }
+    if (statuses.any(
+      (s) => s.upkeeperId == 'brewfile' && (s.isOutdated || s.isNeedsTriage),
+    )) {
+      print(
+        '💡 Tip: Run "upkeep triage" (or "upkeep check -i") to interactively manage Brewfile packages.',
+      );
+    }
   }
 }

@@ -1,4 +1,4 @@
-enum UpkeepState { upToDate, outdated, error, skipped }
+enum UpkeepState { upToDate, outdated, needsTriage, error, skipped }
 
 class UpkeepStatus {
   final String upkeeperId;
@@ -7,6 +7,7 @@ class UpkeepStatus {
   final String summary;
   final List<String> details;
   final String? errorMessage;
+  final String? actionHint;
 
   const UpkeepStatus({
     required this.upkeeperId,
@@ -15,9 +16,11 @@ class UpkeepStatus {
     required this.summary,
     this.details = const [],
     this.errorMessage,
+    this.actionHint,
   });
 
   bool get isOutdated => state == UpkeepState.outdated;
+  bool get isNeedsTriage => state == UpkeepState.needsTriage;
   bool get isUpToDate => state == UpkeepState.upToDate;
   bool get isError => state == UpkeepState.error;
   bool get isSkipped => state == UpkeepState.skipped;
@@ -29,6 +32,7 @@ class UpkeepStatus {
     'summary': summary,
     'details': details,
     if (errorMessage != null) 'error': errorMessage,
+    if (actionHint != null) 'actionHint': actionHint,
   };
 }
 

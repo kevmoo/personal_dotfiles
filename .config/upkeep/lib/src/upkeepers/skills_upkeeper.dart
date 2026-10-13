@@ -68,10 +68,11 @@ class SkillsUpkeeper implements Upkeeper {
           return UpkeepStatus(
             upkeeperId: id,
             displayName: displayName,
-            state: UpkeepState.outdated,
+            state: UpkeepState.needsTriage,
             summary:
                 'Agent skills have uncommitted changes in ~/.dotfiles (${dirty.length} file(s))',
             details: dirty,
+            actionHint: 'dot status',
           );
         }
 
@@ -108,10 +109,11 @@ class SkillsUpkeeper implements Upkeeper {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
-          state: UpkeepState.outdated,
+          state: UpkeepState.needsTriage,
           summary:
               'Agent skills have uncommitted changes in ~/.dotfiles (${dirty.length} file(s))',
           details: dirty,
+          actionHint: 'dot status',
         );
       }
 

@@ -19,5 +19,22 @@ void main() {
       check(json['summary']).equals('2 updates pending');
       check((json['details'] as List).length).equals(2);
     });
+
+    test('UpkeepStatus needsTriage and actionHint serialization', () {
+      const status = UpkeepStatus(
+        upkeeperId: 'brewfile',
+        displayName: 'Homebrew Brewfile Sync',
+        state: UpkeepState.needsTriage,
+        summary: '1 unmanaged in Brewfile',
+        details: ['Unmanaged formula: ffmpeg'],
+        actionHint: 'upkeep triage',
+      );
+
+      check(status.isNeedsTriage).isTrue();
+      check(status.isOutdated).isFalse();
+      final json = status.toJson();
+      check(json['state']).equals('needsTriage');
+      check(json['actionHint']).equals('upkeep triage');
+    });
   });
 }
