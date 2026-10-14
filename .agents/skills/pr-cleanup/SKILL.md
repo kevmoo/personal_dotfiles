@@ -18,153 +18,58 @@ metadata:
 
 > [!NOTE]
 >
-> This skill targets the personal repository layout (`~/github` and
-> `~/github/kevmoo/*`) and invokes the unified `kscripts` AOT CLI.
+> This skill invokes the unified `kscripts pr-cleanup` CLI to inspect and prune
+> worktrees, branches, and PRs/CLs across `~/github` and Gerrit in parallel.
 
-## Quick Start & Prerequisites
+## 1. Quick Start & Prerequisites
 
-Ensure `kscripts` is installed and up to date on `PATH`. If `kscripts` is
-missing, install it from the canonical Git remote:
+Ensure `kscripts` is installed and current:
 
 ```bash
-dart install 'kevmoo_scripts@{git: https://github.com/kevmoo/scripts.dart}'
+which kscripts || dart install 'kevmoo_scripts@{git: https://github.com/kevmoo/scripts.dart}'
 ```
 
-Thereafter `upkeep update dart_install` keeps it current -- it re-reads the
-source descriptor from the installed bundle's own `pubspec.lock` and reinstalls
-from the same remote.
+## 2. Phase 1 — Read-Only Unified Sweep (Always Start Read-Only)
 
-> [!WARNING]
->
-> Do **not** run `dart install ~/github/kevmoo/scripts.dart`. Installing from a
-> local path builds whatever branch that checkout is on, and it _replaces_ the
-> `app-bundles/kevmoo_scripts/git/<sha>/` bundle with a `local/` one -- which
-> permanently repoints `upkeep update dart_install` at that checkout instead of
-> the remote. Only use a path install to test uncommitted work, and reinstall
-> from Git afterwards.
+Never pass `--apply` on the initial turn. Run the unified collector:
 
-## 1. Read-Only Pre-Flight Sweep (Always Start Read-Only)
+```bash
+kscripts pr-cleanup --markdown
+```
 
-Never pass `--apply` on the initial scan. Execute the 3 read-only collectors in
-parallel to build a unified view of `~/github`:
+_(Pass `--json` when machine parsing is preferred, or `-R <owner/repo>` to scope to specific repositories)._
 
-1. **Merged/Closed PRs, Stale Worktrees & Dangling Remote Branches**:
-   ```bash
-   kscripts gh-clean -l 50 --markdown
-   ```
-2. **Open Active GitHub PRs & Reviewer/CI Next Steps**:
-   ```bash
-   kscripts gh-view -d 14 --markdown
-   ```
-   _(Omit `-d 14` if the user asks for all open PRs regardless of recency, or
-   adjust `-d <days>` to match the user's window)._
-3. **Dart SDK Gerrit Worktrees & CL Status** _(when `~/github/dart-sdk`
-   exists)_:
-   ```bash
-   kscripts gerrit-view -p ~/github/dart-sdk
-   ```
-   _(Automatically resolves `~/github/dart-sdk/core/main/sdk` on bare-clone
-   layouts, matches worktrees and local branches via `Change-Id:` footers,
-   commit SHAs, and `branch.*.gerritissue`, reconstructs `in_reply_to` comment
-   chains so only leaf comments are evaluated for resolution, and outputs
-   reviewers, CQ dry run status, and next steps)._
-4. **Open Assigned GitHub Issues** _(optional — run when asked for broader
-   backlog/next-steps triage)_:
-   ```bash
-   kscripts gh-issues --linked-prs --markdown
-   ```
+The unified collector queries GitHub landed PRs, active open PRs, local Git checkouts, and Gerrit Dart SDK CLs concurrently, categorizing everything into three deterministic buckets:
 
-## 2. Active Worktree & Session Ownership Cross-Reference
+- **Bucket A — Active / In-Flight (`🚫 Hands-Off`)**: Open PRs and active Gerrit CLs with CI and reviewer status badges, along with mapped local worktrees.
+- **Bucket B — Safe to Prune Immediately (`✅ Ready`)**: Landed PRs and merged Gerrit CLs with clean worktrees, deleted remote branches, and merged local branches.
+- **Bucket C — Requires Explicit Confirmation (`⚠️ Review First`)**: Worktrees with uncommitted/dirty changes, unpushed commits ahead of trunk, or closed-unmerged PRs.
 
-Before proposing to delete any worktree, local branch, or unpushed commit:
+## 3. Phase 2 — Present Findings & Approval Gate
 
-1. **Inspect Dirty / Unpushed Worktrees**:
-   - For any worktree flagged by `kscripts gh-clean` as having uncommitted
-     changes or unpushed commits, run:
-     ```bash
-     git -C <worktree_path> status -s
-     git -C <worktree_path> log -n 2 --oneline
-     ```
-   - **Squash-Merge Ancestry Check**: If a merged PR branch still reports
-     unpushed commits past PR HEAD, fetch `origin/main` first and check whether
-     the branch is an ancestor of `origin/main`:
-     ```bash
-     git -C <repo_path> fetch origin main --quiet
-     git -C <repo_path> rev-list --count origin/main..<branch>
-     ```
-     If the count is `0`, the branch was reset onto the squash-merge commit and
-     is safe to delete via `git -C <repo_path> branch -D <branch>`.
-2. **Cross-Reference Active Sessions & Local Tasks**:
-   - Check whether any worktree is actively in use by another running terminal
-     or agent session before proposing deletion.
-   - If a worktree belongs to an **active** session or an open PR/CL, classify
-     it in **Bucket A (`🚫 DO NOT TOUCH`)**.
-   - If a worktree belongs to a **waiting/idle** session whose PR/CL has already
-     **merged**, include pruning its VCS state in **Bucket B** and reconcile any
-     linked local tasks or waiting sessions according to your workspace rules.
-
-## 3. Three-Bucket Classification & Report
-
-Present the findings in a structured Markdown report (or artifact for large
-sweeps) divided into 3 buckets:
-
-- **Bucket A — `🚫 Active / Hands-Off` (Open PRs, Active Gerrit CLs, In-Flight
-  Worktrees)**:
-  - List open PRs from `kscripts gh-view` and active Gerrit CLs from
-    `kscripts gerrit-view` with their CI status, reviewer state (`⏳ Awaiting`
-    vs `🔔 Ping Reviewer` vs `🔄 Re-request Review` vs `❌ Action Needed`), and
-    local worktree mapping.
-  - When `kscripts gh-view` flags `🔄 **Re-request Review** (@reviewer)`, that
-    human reviewer previously submitted a review (`COMMENTED`,
-    `CHANGES_REQUESTED`, or `DISMISSED`) and was dropped from GitHub's
-    `reviewRequests`. Even if an `@reviewer PTAL` comment was posted, the PR is
-    not in their GitHub Review Queue (`review-requested:@me`) until re-requested
-    via `gh pr edit <PR> -R <owner/repo> --add-reviewer <login>`.
-  - **Three-State `CHANGES_REQUESTED` Disambiguation (Zero Extra `gh` Calls)**:
-    1. `🔴 **Changes Requested** (@reviewer)`: Author has **not** yet pushed a
-       fix or replied since the review (`⚠️ Action Needed` — author's ball).
-    2. `🔄 **Re-request Review** (@reviewer)`: Author pushed a fix or replied
-       after the review and resolved threads, but `@reviewer` was dropped from
-       `reviewRequests` (`⚠️ Action Needed` — run `--add-reviewer <login>`).
-    3. `🟡 **Re-review Requested** (@reviewer)`: `@reviewer` is **already in
-       `reviewRequests`** (`🟡 In Review Queue` — reviewer's ball). Even though
-       GitHub's raw `reviewDecision` remains `CHANGES_REQUESTED`, do **not**
-       re-run `--add-reviewer` or run `pr-triage`. Only if another maintainer
-       has already `APPROVED` (`🟢 Approved (@approver)`) and the prior
-       `CHANGES_REQUESTED` review is a stale veto on an older commit, surface
-       the option (gated via `ask_question`) to dismiss the stale review.
-- **Bucket B — `✅ Safe to Prune Immediately` (Merged PRs/CLs & Clean
-  Worktrees)**:
-  - Clean worktrees (`git worktree remove`), merged local feature branches
-    (`git branch -D`), dangling remote head branches on writable repos, and
-    trunk fast-forwards (`--ff-only`).
-  - List any linked tasks or waiting sessions whose PRs have landed so they can
-    be reconciled after VCS cleanup.
-- **Bucket C — `⚠️ Requires Explicit Confirmation` (Closed-Unmerged PRs, Dirty
-  Worktrees, Unpushed Experiments)**:
-  - Detail the exact modified/untracked files (`git status -s`) or unmerged
-    commits so the user can decide whether to discard or keep each item.
-
-## 4. Approval Gate & Execution
-
-Gate execution via `ask_question` with explicit bucket choices:
+Present the Markdown report in chat. If Bucket B contains items to prune, prompt the user via `ask_question`:
 
 - `(Recommended) Execute Bucket B only (prune merged PRs, clean worktrees & remote branches)`
-- `Execute Bucket B + Bucket C (also force-remove dirty/closed-unmerged worktrees)`
+- `Execute Bucket B + approved Bucket C items`
 - `Stop here (keep read-only report only)`
 
-Once approved:
+## 4. Phase 3 — Execution
 
 1. **Execute Bucket B Pruning**:
-   - If **any** merged-PR worktree was held back in **Bucket A** (because an
-     active session is still using it), run
-     `kscripts gh-clean -R <owner/repo> --apply` for each approved Bucket B
-     repository individually so the Bucket A worktree is not touched.
-   - Only run unscoped `kscripts gh-clean -l 50 --apply` when **zero** merged-PR
-     worktrees were reclassified into Bucket A.
-2. **Execute Bucket C Pruning** _(only if Bucket C was explicitly approved)_:
-   - Run `git -C <parent_repo> worktree remove --force <worktree_path>` and
-     `git -C <parent_repo> branch -D <branch>`.
-3. **Reconcile Linked Tasks & Waiting Sessions**:
-   - After pruning landed PRs/CLs, verify and close any linked local tasks or
-     notify waiting sessions as configured in your local workspace rules.
+
+   ```bash
+   kscripts pr-cleanup --apply
+   ```
+
+   This atomically removes clean worktrees and deletes merged branches across both GitHub and Gerrit checkouts.
+
+2. **Execute Approved Bucket C Items** _(only if user explicitly instructed)_:
+
+   ```bash
+   git -C <repo_path> worktree remove --force <worktree_path>
+   git -C <repo_path> branch -D <branch>
+   ```
+
+3. **Reconcile Tasks & Sister Sessions**:
+   - Check the **Landed PR/CL IDs** section in the sweep output.
+   - For any matching open PM-OS or Wynette tasks, follow [pr-cleanup-pm-os-reconciliation.md](topics/pr-cleanup-pm-os-reconciliation.md) to close completed tasks or update waiting agent conversations.
