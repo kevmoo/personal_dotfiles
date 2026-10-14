@@ -159,11 +159,14 @@ Hard boundaries first; working style after.
   4. **Fill a slot only if it changes a decision.** Delete empty template
      sections, headers over single paragraphs, and parenthetical asides. One
      audience and one owner per artifact.
-  5. **Anchor, verify, then cold-read.** Every claim carries a permalink;
-     inference is labeled as inference; PR bodies state what changed and how it
-     was verified within the first 3 lines. Traces go in `<details>` (GitHub) or
-     attachments (Buganizer). Run `/cold-read` on the publish form and fix
-     anything the reader cannot decide from the first 3 lines.
+  5. **Anchor, verify, then cold-read.** In issues/bugs, every claim carries a
+     permalink and repro/verification steps. In PRs/CLs, never narrate the diff
+     file-by-file or recite routine CI checks (`dart analyze`/`dart test`)—state
+     only the intent/why, non-obvious callouts or breaking changes, `Fixes #N`,
+     and non-CI verification (e.g. benchmarks or manual UI checks). Traces go in
+     `<details>` (GitHub) or attachments (Buganizer). Run `/cold-read` on the
+     publish form and fix anything the reader cannot decide from the first 3
+     lines.
   - Mechanics: `# <Proposed Title>` on line 1 of drafts; inline review comments
     `<= 50` words; `@mentions` only when the user names them.
 - **Coding, Shell, Skill & Package Standards**: Review
