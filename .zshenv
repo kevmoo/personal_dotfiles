@@ -45,8 +45,12 @@ if [[ -d "$HOME/github/depot_tools" && ":$PATH:" != *":$HOME/github/depot_tools:
 fi
 unset _user_path _dart_install_bin
 
-# Disable formatting/styling and paging for the AI agent (needs to be in .zshenv for non-interactive shell commands)
-if [[ "$TERM" == "dumb" ]]; then
+# Disable formatting/styling, paging, and interactive prompts for non-interactive/agent shells
+if [[ "$TERM" == "dumb" || ! -o interactive ]]; then
   export NO_COLOR=1
   export PAGER=cat
+  export GIT_PAGER=cat
+  export EDITOR=true
+  export GIT_EDITOR=true
+  export GIT_TERMINAL_PROMPT=0
 fi
