@@ -4,10 +4,10 @@ description: >-
   Orchestrates multi-repo GitHub pull request, Gerrit CL, local Git worktree,
   and branch cleanup sweeps alongside active open-PR next-step triage. Use when
   asked to run a PR cleanup sweep, prune merged worktrees or branches, review
-  open PRs and next steps across repositories, or reconcile local checkouts in
-  ~/github against GitHub, Gerrit, and active agent sessions. Don't use for
-  triaging inline review comments or CI failures on a single PR (use pr-triage)
-  or creating new worktrees (use new-worktree).
+  open PRs and next steps across repositories, or reconcile local checkouts
+  against GitHub, Gerrit, and active agent sessions. Don't use for triaging
+  inline review comments or CI failures on a single PR (use pr-triage) or
+  creating new worktrees (use new-worktree).
 compatibility: "Requires kscripts (kevmoo_scripts via dart install) and local checkouts in ~/github"
 metadata:
   author: kevmoo
@@ -72,4 +72,4 @@ Present the Markdown report in chat. If Bucket B contains items to prune, prompt
 
 3. **Reconcile Tasks & Sister Sessions**:
    - Check the **Landed PR/CL IDs** section in the sweep output.
-   - For any matching open PM-OS or Wynette tasks, follow [pr-cleanup-pm-os-reconciliation.md](topics/pr-cleanup-pm-os-reconciliation.md) to close completed tasks or update waiting agent conversations.
+   - For any matching open PM-OS or Wynette tasks, follow `~/memory/default/topics/pr-cleanup-pm-os-reconciliation.md` to close completed tasks or update waiting agent conversations.
