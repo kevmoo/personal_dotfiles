@@ -1,6 +1,6 @@
 # Tmux Cheat Sheet
 
-[View `.tmux.conf`](../../.tmux.conf)
+[View `tmux.conf`](../tmux/tmux.conf)
 
 In `tmux`, everything starts with the **Prefix**: `Ctrl` + `b`. Press it, release, then hit the command key.
 

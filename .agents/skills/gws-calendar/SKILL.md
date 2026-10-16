@@ -1,6 +1,11 @@
 ---
 name: gws-calendar
-description: "Google Calendar: Manage calendars and events."
+description: >-
+  Manages Google Calendar calendars, events, access control rules, and free/busy
+  queries via the gws CLI. Use when viewing upcoming agenda items, creating or
+  updating calendar events, inspecting calendar lists or settings, or querying
+  free/busy schedules. Don't use for Gmail, Google Docs, Google Drive, or Google
+  Chat operations.
 metadata:
   version: 0.22.5
   openclaw:
@@ -23,8 +28,8 @@ gws calendar <resource> <method> [flags]
 
 | Command | Description |
 |---------|-------------|
-| [`+insert`](../gws-calendar-insert/SKILL.md) | create a new event |
-| [`+agenda`](../gws-calendar-agenda/SKILL.md) | Show upcoming events across all calendars |
+| `+insert` | create a new event |
+| `+agenda` | Show upcoming events across all calendars |
 
 ## API Resources
 
