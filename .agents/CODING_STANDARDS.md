@@ -127,15 +127,29 @@
     machines, data models, or algorithms with simple interfaces and rich
     internal behavior—to unit-test edge cases directly; test thin single-caller
     helpers through their owning module's entrypoint.
-- **Behavioral & Boundary Assertions**: Assert observable outputs, state
-  transitions, and boundary conditions of the code that _consumes_ constants and
-  models (e.g., passing 280 vs. 281 characters into a validator) against
-  concrete expected values. When testing live catalogs, registries, or shared
-  fixtures that grow independently of the test case, assert **structural and
-  relational invariants** (e.g., `isNotEmpty`, required keys/anchors present, or
-  `mergedCount + openCount == totalCount`) rather than hard-coding total-length
-  counts (`hasLength(33)`) that break whenever an entry is added (reserve exact
-  length assertions for deterministic unit inputs).
+- **Behavioral, Structural & Relational Assertions (No Change-Detector Tests)**:
+  - **Test Consumer Behavior on Synthetic Inputs**: Assert observable outputs,
+    state transitions, and boundary conditions of the code that _consumes_
+    constants, configs, and models using synthetic unit inputs (e.g., passing
+    280 vs. 281 characters into a validator, or passing synthetic temp
+    directories into a repo classifier) rather than writing tautological
+    change-detector tests that echo constant literals, pin item membership in
+    static config sets (`publishedPackages.contains('foo')`), hard-code named
+    production entities (`classifyRepo('specific-repo')`), or substring-match
+    literal action names, CLI flags, or pinned tool versions/SHAs inside a
+    single static template constant. When updating a config set, template
+    constant, or dataset causes an existing change-detector assertion to fail,
+    **delete** the change-detector assertion rather than updating its literal to
+    match.
+  - **Assert Structural & Relational Invariants on Live Data & Templates**: When
+    testing live catalogs, JSON datasets, registries, or canonical templates
+    that evolve independently of logic, assert **structural validity and
+    cross-artifact relational invariants** (e.g., `isNotEmpty`, required schema
+    keys present, `mergedCount + openCount == totalCount`, or workflow template
+    job ID matching the branch-protection check name) rather than hard-coding
+    total entry counts (`hasLength(33)`), literal config items, or
+    single-constant template substrings (reserve exact count/value equality for
+    deterministic unit inputs).
 - **Direct Execution & Rendering Verification**: Verify runtime behavior,
   control flow, and UI/CLI output by invoking functions, running CLI commands,
   or rendering components directly. Use raw file-text reads
