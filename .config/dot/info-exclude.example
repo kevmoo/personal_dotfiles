@@ -81,6 +81,9 @@
 
 !.agents/
 !.agents/.skill-lock.json
+!.agents/AGENT_DOCS_STANDARDS.md
+!.agents/CODING_STANDARDS.md
+!.agents/README.md
 !.agents/skills/
 .agents/skills/*
 !.agents/skills/AGENTS.md
