@@ -3,26 +3,29 @@
 Authoritative standards for authoring and maintaining `SKILL.md`, `AGENTS.md`,
 `CLAUDE.md`, `GEMINI.md`, and skill `references/*.md` files.
 
-## 1. Line-Budget Ceilings & Progressive Disclosure ("Cognitive Complexity for Prompts")
+## 1. Character / Token Budgets & Progressive Disclosure ("Cognitive Complexity for Prompts")
 
-- **`SKILL.md` (`50–250` lines target, `<= 350` lines hard ceiling)**: Keep
-  `SKILL.md` as the lean execution spine (`## Quick Start`, numbered workflow
-  phases, and decision gates). Offload JSON/YAML schemas, GraphQL queries, long
-  lookup tables, and copy-paste templates into `references/<topic>.md` (`<= 300`
-  lines per file) loaded on demand.
-- **Always-On Instruction Files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md` `<= 200`
-  lines)**: Every line in an always-on instruction file taxes every turn of
-  every session. Offload one-time workstation onboarding, detailed workflow
-  playbooks, and reference tables into `docs/<topic>.md`,
-  `references/<topic>.md`, or `.agents/skills/<name>/SKILL.md`, linking each
-  from `AGENTS.md` with a 1-line conditional read cue (for example:
+- **`SKILL.md` (`<= 25,000` chars / `~6,250` tokens ceiling)**: Measure prompt
+  size in characters (`~4 chars/token`) rather than physical line counts, which
+  unfairly penalize `80`-column Prettier wrapping (`--prose-wrap always`), blank
+  separator lines, and fenced CLI examples. Keep `SKILL.md` self-contained when
+  within budget; only offload large JSON/YAML schemas, GraphQL queries, or long
+  lookup tables into `references/<topic>.md` (`<= 20,000` chars per file) when a
+  skill exceeds `25,000` characters or the reference material is rarely needed.
+- **Always-On Instruction Files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md` `<=
+15,000` chars / `~3,750` tokens)**: Every character in an always-on
+  instruction file taxes every turn of every session. Offload one-time
+  workstation onboarding, deep architecture guides, and optional playbooks into
+  `docs/<topic>.md`, `references/<topic>.md`, or `.agents/skills/<name>/SKILL.md`,
+  linking each from `AGENTS.md` with a 1-line conditional read cue (for example:
   `For macOS onboarding, read [docs/mac_setup.md](docs/mac_setup.md)`).
-- **Zero Content Loss on Extraction (The `shallow` Equivalent)**: Never lower a
-  `SKILL.md` or `AGENTS.md` line count by silently deleting CLI flags,
-  edge-case guards, verification commands, or decision branches. Tightening
-  wordy prose in-place is encouraged, provided all commands, flags, thresholds,
-  and branches remain intact either inline or in a linked `docs/` /
-  `references/` file.
+- **Zero Content Loss & No Safety-Critical Hop Splits**: Never lower a
+  `SKILL.md` or `AGENTS.md` character count by silently deleting CLI flags,
+  edge-case guards, verification commands, or decision branches. Do not extract
+  core safety invariants or mandatory execution steps into `references/*.md`
+  when a file is already within budget, as each `references/*.md` split adds a
+  probabilistic `read_file` tool hop that agents may skip under context
+  pressure.
 
 ## 2. Frontmatter & Trigger Contract (`SKILL.md` Only)
 
