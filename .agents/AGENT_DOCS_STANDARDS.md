@@ -93,3 +93,26 @@ Authoritative standards for authoring and maintaining `SKILL.md`, `AGENTS.md`,
   helpers `<= 40` lines with descriptive variable names, and pair non-trivial
   scripts with unit tests covering normal, multi-branch, and fast-exit edge
   cases.
+
+## 5. 3D Paranoia Tier Classification (`OQ3`)
+
+<!-- SPOT_DEF: workflow-3d-paranoia-tiers -->
+
+- **Banner Format**: Render at the top of review and PR draft preview artifacts
+  (and in chat):
+  `🛡️ Paranoia Tier: Ring <0..4B> (<Label>) · Confidence: <High|Low> · Door: <🚪 One-Way | 🔄 Two-Way>`
+- **Reuse Ring (`Ring 0..4B`)**: `Ring 0` (personal dotfiles & private configs) ·
+  `Ring 1-2` (public skills, utilities & internal scripts) · `Ring 3` (published
+  `pub.dev` packages) · `Ring 4A` (upstream Dart/Flutter framework & packages) ·
+  `Ring 4B` (upstream C++, Dart VM internals, WIMP, Skwasm engine). Default to
+  `Review Mode: Standard` on `Ring 0-2` and `Review Mode: Deep` on `Ring 3-4` or
+  when `--deep` (`--paranoid`) is passed.
+- **Confidence (`High | Low`)**: `High` for familiar pure Dart, CLI, package &
+  framework code; `Low` (forcing `Review Mode: Deep`) for unfamiliar C++, VM
+  internals, or WIMP/Skwasm/engine plumbing.
+- **Door Type (`🚪 One-Way | 🔄 Two-Way`)**: `🚪 One-Way` (forcing
+  `Review Mode: Deep`) for public `api.txt` / CLI flag / JSON schema deltas,
+  SemVer `-wip` bumps, DB migrations, or CI release workflows; `🔄 Two-Way` for
+  internal `lib/src/` refactors, isolated tests, and docs.
+
+<!-- END_SPOT_DEF: workflow-3d-paranoia-tiers -->

@@ -147,6 +147,8 @@ Hard boundaries first; working style after.
   `kscripts pr-triage re-request <login>`.
 - **Outbound Artifacts (issues, PRs, CLs, bugs, chat, email)**: Write for the
   reader's next decision, not for the record of your work.
+
+  <!-- SPOT_DEF: workflow-outbound-five-principles -->
   1. **Lead with the decision.** Line 1 states the defect, ask, or change.
      Discovery history and process narrative go last or in a collapsed block.
   2. **Budget words by reader count.** Title: hundreds of readers, search key +
@@ -164,11 +166,13 @@ Hard boundaries first; working style after.
      file-by-file or recite routine CI checks (`dart analyze`/`dart test`)—state
      only the intent/why, non-obvious callouts or breaking changes, `Fixes #N`,
      and non-CI verification (e.g. benchmarks or manual UI checks). Traces go in
-     `<details>` (GitHub) or attachments (Buganizer). Run `/cold-read` on the
-     publish form and fix anything the reader cannot decide from the first 3
-     lines.
+     `<details>` or issue attachments. Run `/cold-read` on the publish form and
+     fix anything the reader cannot decide from the first 3 lines.
+
+  <!-- END_SPOT_DEF: workflow-outbound-five-principles -->
   - Mechanics: `# <Proposed Title>` on line 1 of drafts; inline review comments
     `<= 50` words; `@mentions` only when the user names them.
+
 - **Coding, Shell & Package Standards**: Review `~/.agents/CODING_STANDARDS.md`
   before editing Dart code, shell scripts (`scripts/*`), `pubspec.yaml`,
   `CHANGELOG.md`, or `README.md`.
