@@ -168,6 +168,10 @@ state-machine notes, and underlying GraphQL/REST schemas.
   `kscripts pr-triage re-request --dir <repo-path> <reviewer_login>`.
 - **Stop When Already Queued**: If `<login>` is already in `reviewRequests` and
   all feedback is addressed on the latest commit, **STOP**.
+- **Never Promise Future Work in Review Replies (`gspencer`)**: Never promise
+  deferred follow-up PRs, future issues, or later refactors in review replies
+  unless explicitly instructed by the user; reply strictly about what changed in
+  the active PR.
 
 ## Constraints
 

@@ -44,8 +44,10 @@ to purge hallucinatory AI fluff, pedantic theater, and unverified assumptions.
 1. **Target & Ownership Detection (`OQ1`)**:
    - **Explicit PR (`#N` or URL)**:
      ```bash
-     gh pr view <PR> --json author,headRepositoryOwner,headRepository,headRefName,baseRefName,headRefOid,number,title,body,url
+     # 1. Blind-first diff pass (before reading PR title/body/comments):
      gh pr diff <PR>
+     # 2. Fetch PR metadata after summarizing raw diff intent in 2-3 sentences:
+     gh pr view <PR> --json author,headRepositoryOwner,headRepository,headRefName,baseRefName,headRefOid,number,title,body,url
      ```
    - **Local Branch / Worktree (no arguments)**:
      ```bash
@@ -53,6 +55,10 @@ to purge hallucinatory AI fluff, pedantic theater, and unverified assumptions.
      git diff ${TARGET_BASE}..HEAD
      gh pr view --json author,headRepositoryOwner,headRefName,number,title,url,headRefOid 2>/dev/null
      ```
+   - **Blind-First Intent Reconciliation (`gspencer`)**: Summarize what the raw
+     diff actually does in 2–3 sentences _before_ reading the PR `title`,
+     `body`, or comments, then compare against the author's stated intent and
+     linked issue to classify `Intent Alignment: MATCHES | PARTIAL | DIVERGES | UNSTATED`.
    - Classify ownership into two tiers:
      - **Tier 1 (Own Repo `kevmoo/*` + Author `kevmoo` /
        `$(gh api user --jq .login)` with `headRefName` checked out locally, or
@@ -160,34 +166,44 @@ chat).
 🛡️ Paranoia Tier: Ring <0..4B> (<Label>) · Confidence: <High|Low> · Door: <🚪 One-Way | 🔄 Two-Way> -> Review Mode: <Standard | Deep>
 
 **PR**: [<owner>/<repo>#<number>](https://github.com/<owner>/<repo>/pull/<number>) | **Author**: `<author>` | **Head**: `<headRef>` (`<headSHA>`)
+**Intent Alignment**: `MATCHES` | `PARTIAL` | `DIVERGES` | `UNSTATED` (<1-line blind-diff vs. stated-intent reconciliation>)
 **Verdict**: `✅ Approved` | `⚠️ Approved with suggestions` | `❌ Changes requested`
 
 ## Executive Summary
+
 - <1-2 bullet summary of change intent, review outcome, and Inquisitor filter count>
 
 ### Spec & Issue Contract Traceability
-| Requirement | Status [Met ✅ / Partial ⚠️ / Unmet ❌ / Out-of-Scope ➖] | Evidence (file:line & test) |
-| :--- | :--- | :--- |
-| <Requirement from issue #N> | Met ✅ | `lib/foo.dart:42`, `test/foo_test.dart:18` |
+
+| Requirement                 | Status [Met ✅ / Partial ⚠️ / Unmet ❌ / Out-of-Scope ➖] | Evidence (file:line & test)                |
+| :-------------------------- | :-------------------------------------------------------- | :----------------------------------------- |
+| <Requirement from issue #N> | Met ✅                                                    | `lib/foo.dart:42`, `test/foo_test.dart:18` |
 
 ## Findings
 
 ### 🚨 Blocking Issues
+
 - [ ] [**path/to/file.dart#L42-L48**](https://github.com/<owner>/<repo>/blob/<sha>/path/to/file.dart#L42-L48)
   - **Internal Proof (Do Not Post)**: <Call-site trace, invariant check, and why alternatives fail Inquisitor filters.>
   - **Outbound Inline Comment (`<= 50 words`)**:
     > <1 sentence stating what breaks/throws + 1 sentence or `suggestion` block with the fix. Zero call-stack narration.>
 
 ### 💡 Suggestions
+
 - [ ] [**path/to/file.dart#L105**](https://github.com/<owner>/<repo>/blob/<sha>/path/to/file.dart#L105)
   - **Internal Proof (Do Not Post)**: <Verification of caller fan-in, complexity delta, or test seam.>
   - **Outbound Inline Comment (`<= 50 words`)**:
     > <1-2 sentences stating the simplification or edge case + concrete fix.>
 
 ### 🧹 Hygiene Nits
+
 - [ ] [**path/to/file.dart#L12**](https://github.com/<owner>/<repo>/blob/<sha>/path/to/file.dart#L12)
   - **Outbound Inline Comment (`<= 25 words`)**:
     > <Direct 1-line nit.>
+
+## Checked and Found Clean (Internal Disproof Ledger — Do Not Post)
+
+- `<hypothesis>`: `<Executed | Read | Deduction>` — <disproving evidence or `[DISMISSED: <FILTER>]` rationale>
 ```
 
 ---

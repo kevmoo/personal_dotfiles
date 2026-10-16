@@ -168,7 +168,9 @@ Hard boundaries first; working style after.
      publish form and fix anything the reader cannot decide from the first 3
      lines.
   - Mechanics: `# <Proposed Title>` on line 1 of drafts; inline review comments
-    `<= 50` words; `@mentions` only when the user names them.
+    `<= 50` words; never promise future work (follow-up PRs, deferred issues, or
+    later refactors) in review replies unless explicitly instructed; `@mentions`
+    only when the user names them.
 - **Coding, Shell, Skill & Package Standards**: Review
   `~/.agents/CODING_STANDARDS.md` before editing Dart code, shell scripts, agent
   skills (`SKILL.md`, `scripts/*`), `pubspec.yaml`, `CHANGELOG.md`, or
