@@ -1,16 +1,9 @@
 ---
 name: pr-review
 description: >-
-  Reviews GitHub Pull Requests or local Git branch diffs for defects, removed
-  behavior, and specification drift using a 13-angle rubric and adversarial
-  noise filtering. Use when reviewing a GitHub PR (#N or URL), auditing a local
-  feature branch before opening a PR, or invoked via /pr-review. Don't use for
-  triaging existing PR review comments or CI failures (use pr-triage),
-  multi-repo branch cleanup sweeps (use pr-cleanup), or Google3 Piper
-  changelists (use cl-finalize or review).
+  Reviews GitHub Pull Requests or local Git branch diffs for defects, removed behavior, and specification drift using a 13-angle rubric and adversarial noise filtering. Use when reviewing a GitHub PR (#N or URL), auditing a local feature branch before opening a PR, or invoked via /pr-review. Don't use for triaging existing PR review comments or CI failures (use pr-triage), multi-repo branch cleanup sweeps (use pr-cleanup), or Google3 Piper changelists (use cl-finalize or review).
 key_features:
-  - Explicit 3D Paranoia Tiering (Ring, Confidence, One-Way/Two-Way Door) with
-    --deep escalation
+  - Explicit 3D Paranoia Tiering (Ring, Confidence, One-Way/Two-Way Door) with --deep escalation
   - Two-Axis Evaluation (Linked Issue Spec Traceability + CODING_STANDARDS.md)
   - 13 analytical review angles + Inquisitor Presumption of Theater doctrine
   - 2-Tier ownership action gate (own repo auto-fix vs. external read-only)
@@ -177,46 +170,34 @@ regresses** and **(2) the concrete fix**.
 ```markdown
 # Code Review: <Repo> PR #<Number> - <PR Title>
 
-🛡️ Paranoia Tier: Ring <0..4B> (<Label>) · Confidence: <High|Low> · Door: <🚪
-One-Way | 🔄 Two-Way> -> Review Mode: <Standard | Deep>
+🛡️ Paranoia Tier: Ring <0..4B> (<Label>) · Confidence: <High|Low> · Door: <🚪 One-Way | 🔄 Two-Way> -> Review Mode: <Standard | Deep>
 
-**PR**:
-[<owner>/<repo>#<number>](https://github.com/<owner>/<repo>/pull/<number>) |
-**Author**: `<author>` | **Head**: `<headRef>` (`<headSHA>`) **Verdict**:
-`✅ Approved` | `⚠️ Approved with suggestions` | `❌ Changes requested`
+**PR**: [<owner>/<repo>#<number>](https://github.com/<owner>/<repo>/pull/<number>) | **Author**: `<author>` | **Head**: `<headRef>` (`<headSHA>`)
+**Verdict**: `✅ Approved` | `⚠️ Approved with suggestions` | `❌ Changes requested`
 
 ## Executive Summary
-
-- <1-2 bullet summary of change intent, review outcome, and Inquisitor filter
-  count>
+- <1-2 bullet summary of change intent, review outcome, and Inquisitor filter count>
 
 ### Spec & Issue Contract Traceability
-
-| Requirement                 | Status [Met ✅ / Partial ⚠️ / Unmet ❌ / Out-of-Scope ➖] | Evidence (file:line & test)                |
-| :-------------------------- | :-------------------------------------------------------- | :----------------------------------------- |
-| <Requirement from issue #N> | Met ✅                                                    | `lib/foo.dart:42`, `test/foo_test.dart:18` |
+| Requirement | Status [Met ✅ / Partial ⚠️ / Unmet ❌ / Out-of-Scope ➖] | Evidence (file:line & test) |
+| :--- | :--- | :--- |
+| <Requirement from issue #N> | Met ✅ | `lib/foo.dart:42`, `test/foo_test.dart:18` |
 
 ## Findings
 
 ### 🚨 Blocking Issues
-
 - [ ] [**path/to/file.dart#L42-L48**](https://github.com/<owner>/<repo>/blob/<sha>/path/to/file.dart#L42-L48)
-  - **Internal Proof (Do Not Post)**: <Call-site trace, invariant check, and why
-    alternatives fail Inquisitor filters.>
+  - **Internal Proof (Do Not Post)**: <Call-site trace, invariant check, and why alternatives fail Inquisitor filters.>
   - **Outbound Inline Comment (`<= 50 words`)**:
-    > <1 sentence stating what breaks/throws + 1 sentence or `suggestion` block
-    > with the fix. Zero call-stack narration.>
+    > <1 sentence stating what breaks/throws + 1 sentence or `suggestion` block with the fix. Zero call-stack narration.>
 
 ### 💡 Suggestions
-
 - [ ] [**path/to/file.dart#L105**](https://github.com/<owner>/<repo>/blob/<sha>/path/to/file.dart#L105)
-  - **Internal Proof (Do Not Post)**: <Verification of caller fan-in, complexity
-    delta, or test seam.>
+  - **Internal Proof (Do Not Post)**: <Verification of caller fan-in, complexity delta, or test seam.>
   - **Outbound Inline Comment (`<= 50 words`)**:
     > <1-2 sentences stating the simplification or edge case + concrete fix.>
 
 ### 🧹 Hygiene Nits
-
 - [ ] [**path/to/file.dart#L12**](https://github.com/<owner>/<repo>/blob/<sha>/path/to/file.dart#L12)
   - **Outbound Inline Comment (`<= 25 words`)**:
     > <Direct 1-line nit.>
