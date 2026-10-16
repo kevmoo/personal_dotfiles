@@ -162,12 +162,13 @@ Hard boundaries first; working style after.
      sections, headers over single paragraphs, and parenthetical asides. One
      audience and one owner per artifact.
   5. **Anchor, verify, then cold-read.** In issues/bugs, every claim carries a
-     permalink and repro/verification steps. In PRs/CLs, never narrate the diff
-     file-by-file or recite routine CI checks (`dart analyze`/`dart test`)—state
-     only the intent/why, non-obvious callouts or breaking changes, `Fixes #N`,
-     and non-CI verification (e.g. benchmarks or manual UI checks). Traces go in
-     `<details>` or issue attachments. Run `/cold-read` on the publish form and
-     fix anything the reader cannot decide from the first 3 lines.
+     permalink and repro/verification steps. In PRs and code reviews, never
+     narrate the diff file-by-file or recite routine CI checks (`dart analyze`/
+     `dart test`)—state only the intent/why, non-obvious callouts or breaking
+     changes, `Fixes #N`, and non-CI verification (e.g. benchmarks or manual UI
+     checks). Traces go in `<details>` or issue attachments. Run `/cold-read` on
+     the publish form and fix anything the reader cannot decide from the first 3
+     lines.
 
   <!-- END_SPOT_DEF: workflow-outbound-five-principles -->
   - Mechanics: `# <Proposed Title>` on line 1 of drafts; inline review comments
@@ -176,9 +177,9 @@ Hard boundaries first; working style after.
 - **Coding, Shell & Package Standards**: Review `~/.agents/CODING_STANDARDS.md`
   before editing Dart code, shell scripts (`scripts/*`), `pubspec.yaml`,
   `CHANGELOG.md`, or `README.md`.
-- **Agentic Docs & Skill Standards**: Review
-  `~/.agents/AGENT_DOCS_STANDARDS.md` before creating or editing `SKILL.md`,
-  `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, or skill `references/*.md`.
+- **Agentic Docs & Skill Standards**: Review `~/.agents/AGENT_DOCS_STANDARDS.md`
+  before creating or editing `SKILL.md`, `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`,
+  or skill `references/*.md`.
 - **Agent Skills (`~/.agents/skills`)**: Edit only in source repos (`dot`,
   `~/github/kevmoo/kevmoo_skills/skills/<name>/`, or `dotcorp`).
 - **External Repos (`~/github`)**: `github.com/kevmoo/*` under
