@@ -2,11 +2,12 @@
 """Cross-agent PreToolUse / BeforeTool hook for process and subagent safety.
 
 Supports Claude Code (`Bash`), Gemini CLI (`run_shell_command`), and IDE agent
-harnesses (`run_command`, `manage_task`, `invoke_subagent`) across Linux and
-macOS:
+harnesses (`run_command`, `manage_task`, `invoke_subagent`, `ask_question`)
+across Linux and macOS:
 1. Blocks unscoped `pkill` / `killall` (preventing multi-session collateral
    damage and `bash -c` self-suicide when `pkill -f` lacks a bracketed
-   character class `[x]` and a `/` path scope).
+   character class `[x]` and a `/` path scope) and blocks unchained commands
+   after `jj new main|trunk|master`.
 2. Throttles repetitive `manage_task(Action="status"|"list")` polling within 30s
    while always permitting `kill` and `send_input` immediately.
 3. Blocks `invoke_subagent(TypeName="deepagent")` (unless `[ALLOW_DEEPAGENT]` is
@@ -14,6 +15,9 @@ macOS:
    red-team subagent, `Owl`, `run_workflow`, or `swarm`), and auto-clamps
    omitted or `"inherit"` subagent `Model` values to `"flash"` (unless
    `[ALLOW_INHERIT]` is present).
+4. Blocks `ask_question` prompts or options that reference report/artifact `.md`
+   files without a `[filename.md](file:///...)` link or PR/CL handles without an
+   `[#N](https://...)` link.
 """
 
 import json
@@ -147,6 +151,21 @@ def _unwrap_tokens(tokens: list[str]) -> list[str]:
   return tokens[idx:]
 
 
+_JJ_NEW_CHAIN_RE = re.compile(
+    r"\bjj\s+new\s+(?:main|trunk|master)\s+(?!-|[&;|><]|$)"
+)
+_FILE_MD_LINK_RE = re.compile(
+    r"\[(?:[^\[\]]|\[[^\]]*\])*\]\(file:///[^\)\s]+\)"
+)
+_HTTP_MD_LINK_RE = re.compile(
+    r"\[(?:[^\[\]]|\[[^\]]*\])*\]\(https?://[^\)\s]+\)"
+)
+_ARTIFACT_FILENAME_RE = re.compile(
+    r"\b[a-zA-Z0-9_-]+_(?:report|brainstorm|plan|audit|review|triage)[a-zA-Z0-9_-]*\.md\b"
+)
+_UNLINKED_PR_CL_RE = re.compile(r"\bPR\s+#\d+\b|\b(?:cl|CL)[/ ]\d+\b")
+
+
 def _check_run_command(args: dict) -> tuple[bool, str]:
   cmd = (
       args.get("CommandLine")
@@ -155,7 +174,7 @@ def _check_run_command(args: dict) -> tuple[bool, str]:
       or ""
   )
   if not isinstance(cmd, str) or (
-      "pkill" not in cmd and "killall" not in cmd
+      "pkill" not in cmd and "killall" not in cmd and "jj" not in cmd
   ):
     return True, ""
 
@@ -178,6 +197,22 @@ def _check_run_command(args: dict) -> tuple[bool, str]:
           if not ok:
             return False, reason
           break
+      continue
+
+    if exe == "jj":
+      seg_str = " ".join(["jj"] + rest).strip()
+      if _JJ_NEW_CHAIN_RE.search(seg_str):
+        return (
+            False,
+            (
+                "🛑 Blocked unchained command after `jj new main` (or"
+                " `trunk`/`master`).\nPassing a shell command as positional"
+                " arguments to `jj new` fails because `jj new` interprets"
+                " trailing tokens as revision specs.\nChain the next command"
+                " explicitly with `&&` or `;`, e.g.:\n  `jj new main &&"
+                " <next_command>`"
+            ),
+        )
       continue
 
     if exe == "killall":
@@ -486,6 +521,60 @@ def _check_invoke_subagent(args: dict) -> tuple[bool, str, dict | None]:
   return True, "", None
 
 
+def _check_ask_question(args: dict) -> tuple[bool, str]:
+  questions = args.get("questions") or args.get("Questions")
+  if not isinstance(questions, list):
+    return True, ""
+
+  texts: list[str] = []
+  for q in questions:
+    if not isinstance(q, dict):
+      continue
+    q_text = q.get("question") or q.get("Question")
+    if isinstance(q_text, str):
+      texts.append(q_text)
+    opts = q.get("options") or q.get("Options")
+    if isinstance(opts, list):
+      for opt in opts:
+        if isinstance(opt, str):
+          texts.append(opt)
+
+  for text in texts:
+    without_file_links = _FILE_MD_LINK_RE.sub(" __LINKED_FILE__ ", text)
+    art_match = _ARTIFACT_FILENAME_RE.search(without_file_links)
+    if art_match:
+      fname = art_match.group(0)
+      return (
+          False,
+          (
+              f"🛑 Blocked `ask_question` with unlinked artifact filename"
+              f" `{fname}`.\nPre-tool text collapses in the chat UI, so any"
+              " report or artifact mentioned in `ask_question` (`question` or"
+              " `options`) must be a clickable Markdown link directly inside"
+              " the prompt:\n  `["
+              f"{fname}"
+              f"](file:///absolute/path/to/{fname})`"
+          ),
+      )
+
+    without_http_links = _HTTP_MD_LINK_RE.sub(" __LINKED_HTTP__ ", text)
+    pr_cl_match = _UNLINKED_PR_CL_RE.search(without_http_links)
+    if pr_cl_match:
+      handle = pr_cl_match.group(0)
+      return (
+          False,
+          (
+              f"🛑 Blocked `ask_question` with unlinked PR/CL reference"
+              f" `{handle}`.\nPre-tool text collapses in the chat UI, so any"
+              " PR or CL mentioned in `ask_question` (`question` or `options`)"
+              " must be a clickable Markdown link directly inside the prompt:\n"
+              f"  `[{handle}](https://...)` or `[#N](https://...)`"
+          ),
+      )
+
+  return True, ""
+
+
 def _emit_response(
     harness: str,
     allowed: bool,
@@ -548,6 +637,7 @@ def main() -> None:
         "run_command",
         "manage_task",
         "invoke_subagent",
+        "ask_question",
     ):
       harness = "default"
     elif tool_name == "Bash" or event_name == "PreToolUse":
@@ -564,6 +654,8 @@ def main() -> None:
       allowed, reason = _check_manage_task(args, conv_id)
     elif tool_name == "invoke_subagent":
       allowed, reason, overwrite = _check_invoke_subagent(args)
+    elif tool_name == "ask_question":
+      allowed, reason = _check_ask_question(args)
     else:
       allowed, reason = True, ""
 

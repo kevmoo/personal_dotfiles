@@ -14,7 +14,8 @@ description: >-
 
 Orchestrates zero-conflict cross-machine handoffs, benchmark runbooks, red-team
 reviews, and dotfiles syncs across `@kevmoo`'s three workstations while strictly
-enforcing the corporate secret boundary.
+enforcing the corporate secret boundary. For payload, `[review-queue]`, and
+`systemd-run` harness templates, see [references/templates.md](references/templates.md).
 
 ---
 
@@ -27,12 +28,14 @@ Before posting any issue, comment, or file, classify the payload:
 | **🔒 Corp-Private**         | `ggh` · `$AGENT_RELAY_CORP_REPO`  | `$AGENT_RELAY_CORP_DIR`       | **Required for ALL internal corp work**: internal monorepo paths, shortlinks (`cl/`, `b/`, `go/`, `cs/`), internal strategy, or Cloudtop ↔ gMac corp handoffs.                   |
 | **🌐 Public-Safe (GitHub)** | `relay-gh` · `kevmoo/agent-relay` | `~/github/kevmoo/agent-relay` | **STRICTLY public-safe / OSS (`~zero corp secret risk`)**: `dart-lang/*`, `flutter/*`, `kevmoo/*`, public benchmarks, and `~/.dotfiles` (enables `Bluefin-DX` 🐧 participation). |
 
-> [!CAUTION] **Hard Boundary**: NEVER post internal monorepo paths, internal
-> shortlinks (`cl/`, `b/`, `go/`, `cs/`), internal `.corp` URLs, or confidential
-> corporate context to `kevmoo/agent-relay` or `gh gist`. Always pass
-> `--channel oss` (and optionally `--repo <owner/repo>`) to `relay-whoami` when
-> posting to `kevmoo/agent-relay` so local corp workspace directory names are
-> never echoed into public-safe headers.
+> [!CAUTION]
+>
+> **Hard Boundary**: NEVER post internal monorepo paths, internal shortlinks
+> (`cl/`, `b/`, `go/`, `cs/`), internal `.corp` URLs, or confidential corporate
+> context to `kevmoo/agent-relay` or `gh gist`. Always pass `--channel oss` (and
+> optionally `--repo <owner/repo>`) to `relay-whoami` when posting to
+> `kevmoo/agent-relay` so local corp workspace directory names are never echoed
+> into public-safe headers.
 
 ---
 
@@ -59,104 +62,84 @@ turn so threads stay hilarious without bloating context windows.
 
 ### A. Raw Invocation / Check the Relay (`/relay` or `"check the relay"`)
 
-When `/relay` is invoked "raw" (without a specific subcommand), **always perform
-and report two things**:
+When `/relay` is invoked without a specific subcommand, **always perform and
+report two things**:
 
 1. **Run `~/.local/bin/relay-whoami --check`** (pass `--no-save` only when
    dry-running without advancing the sync watermark at
    `${XDG_STATE_HOME:-$HOME/.local/state}/agent-relay/sync_state.json`). This
    single command automatically:
    - **Syncs & diffs both Git clones** (`$AGENT_RELAY_CORP_DIR` and
-     `~/github/kevmoo/agent-relay` via `git fetch` + `--ff-only`), reporting any
-     new commits or `drops/` files since the last sync watermark.
-   - **Diffs all Issue & Comment activity** across both `$AGENT_RELAY_CORP_REPO`
+     `~/github/kevmoo/agent-relay` via `git fetch` + `--ff-only`), reporting new
+     commits or `drops/` files since the last sync watermark.
+   - **Diffs all Issue & Comment activity** across `$AGENT_RELAY_CORP_REPO`
      (`ggh`) and `kevmoo/agent-relay` (`gh`) since the last sync (`🆕 NEW ISSUE`,
-     `💬 +N NEW COMMENTS`, `🔄 STATE CHANGED` such as `OPEN → CLOSED` / `ACKED`).
+     `💬 +N NEW COMMENTS`, `🔄 STATE CHANGED` such as `OPEN -> CLOSED` / `ACKED`).
    - **Splits open threads into directional buckets**:
      - `📥 Action Required — Waiting on Us (<Active Persona>)`: inbound relays
-       or replies where the ball is in this machine's court, along with
-       extracted `[ ]` checklist items.
-     - `⏳ Outbound — Waiting on Other Agents`: relays or replies sent by this
-       machine where we are still waiting on `Darwin Pro`, `Cloudtop`,
-       or `Bluefin-DX` to respond or complete `[ ]` items.
+       or replies where the ball is in this machine's court, with extracted
+       `[ ]` checklist items.
+     - `⏳ Outbound — Waiting on Other Agents`: relays sent by this machine
+       still awaiting `Darwin Pro`, `Cloudtop`, or `Bluefin-DX`.
 2. **Deep-Dive Any Active Inbound Thread**:
-   - For any open thread in `📥 Action Required — Waiting on Us` (or any thread
-     with `💬 NEW COMMENTS`), fetch the body and **latest 3 comments** if full
-     context is needed:
+   - Fetch the body and **latest 3 comments** for any open thread in
+     `📥 Action Required — Waiting on Us` (or with `💬 NEW COMMENTS`):
      - **Corp (`ggh`)**:
        `ggh issue view <N> -R "$AGENT_RELAY_CORP_REPO" --json title,state,body,comments --jq '{title, state, body, last_comments: (.comments[-3:] | map(.body))}'`
      - **GitHub (`relay-gh`)**:
        `relay-gh issue view <N> --json title,state,body,comments --jq '{title, state, body, last_comments: (.comments[-3:] | map(.body))}'`
 3. **Present a Two-Part Status Report in Chat**:
-   - **Part 1 — 🔄 New Bits Since Last Sync (`<last_sync_pt>`)**: Summarize new
-     Git commits/files (`drops/`) and Issue/Comment transitions across Corp and
-     GitHub relays.
+   - **Part 1 — 🔄 New Bits Since Last Sync (`<last_sync_pt>`)**: New Git
+     commits/files (`drops/`) and Issue/Comment transitions across both relays.
    - **Part 2 — ⏳ Waiting On (Outbound) & 📥 Waiting on Us (Inbound)**:
-     Explicitly highlight any outbound threads we are still waiting on from
-     other agents alongside any inbound threads awaiting our execution/reply.
+     Outbound threads awaiting other agents alongside inbound threads awaiting
+     our execution/reply.
 
 ### B. Post a New Handoff or Reply (`/relay post` or `"tell Darwin/Cloudtop/Bluefin..."`)
 
-1. Generate the header via:
-   ```bash
-   ~/.local/bin/relay-whoami --header \
-     --to "☁️🐧⚡ Cloudtop" \
-     --thread "#<N> <Short Topic>" \
-     --state HANDOFF \
-     --model "<your model id>" \
-     --channel corp   # or 'oss' ONLY if 100% public-safe
-   ```
-   `--model` falls back to `ANTIGRAVITY_MODEL`, `CLAUDE_MODEL`, then
-   `GEMINI_MODEL`; pass it explicitly when none of those carries your model id,
-   or the envelope's `Model` tag is dropped.
-2. Write the Markdown payload to a file, then pass that **path** to
-   `--body-file`:
-   - **Corp (`ggh`)**:
-     `cat << 'EOF' > /tmp/relay.md` ... `ggh issue comment <N> -R "$AGENT_RELAY_CORP_REPO" --body-file /tmp/relay.md`
-   - **GitHub (`relay-gh`)**:
-     `relay-gh issue comment <N> --body-file /tmp/relay.md`
+See [references/templates.md](references/templates.md) for the full CLI and
+payload template:
 
-   Use a real path rather than `cat ... | relay-gh ... --body-file -`. A
-   pipeline's leading command is `cat`, which the `Bash(relay-gh:*)` allowlist
-   cannot match, so the heredoc form re-introduces an approval prompt on every
-   relay turn.
-
-3. When a thread's checklist is completely fulfilled and acknowledged
-   (`State: ACKED`), close the issue
-   (`ggh issue close <N> -R "$AGENT_RELAY_CORP_REPO"` or
-   `relay-gh issue close <N>`) to keep the active board clean — but **never in
-   the same turn as the closing comment**. See the settling rule below.
+1. Generate the envelope header via
+   `~/.local/bin/relay-whoami --header --to "<Persona>" --thread "#<N> <Topic>" --state HANDOFF --model "<model>" --channel <corp|oss>`.
+2. Write the Markdown payload to a file (`/tmp/relay.md`) and pass that **file
+   path** (never `cat ... | relay-gh ... --body-file -`, which breaks the
+   `Bash(relay-gh:*)` allowlist) to
+   `ggh issue comment <N> -R "$AGENT_RELAY_CORP_REPO" --body-file /tmp/relay.md`
+   or `relay-gh issue comment <N> --body-file /tmp/relay.md`.
+3. When a thread's checklist is fulfilled and acknowledged (`State: ACKED`),
+   close the issue on a **later** turn (`ggh issue close <N>` /
+   `relay-gh issue close <N>`), never in the same turn as `DONE`.
 
 #### 🚪 Closing Is A Separate Turn (The Settling Rule)
 
-Both agents work concurrently, so the other side may be mid-reply when you
-decide a thread is finished. A close one second after your own `DONE` races
-that reply, and a comment posted to a **closed** thread does not appear in
-`relay-whoami --check` at all — it is invisible, not merely low priority.
+Both agents work concurrently; closing one second after `DONE` races an in-flight
+reply, and comments on a **closed** thread are invisible to
+`relay-whoami --check`.
 
-- **Post `DONE` and stop.** Do not close in the same turn.
-- **Close on a later turn**, after re-reading the thread and confirming no new
-  comment arrived since your `DONE`. If one did, handle it instead of closing.
-- **If you post to a closed thread, reopen it first**
-  (`relay-gh issue reopen <N>` / `ggh issue reopen <N> -R "$AGENT_RELAY_CORP_REPO"`).
-  A finding on a closed thread reaches nobody.
-- **Anything found after a close reopens the thread.** Closed does not mean
-  settled; it means nobody had more to say at that moment.
+- **Post `DONE` and stop.** Never close in the same turn.
+- **Close on a later turn** after re-reading the thread and confirming no new
+  comment arrived since `DONE`.
+- **Reopen before posting to a closed thread** (`relay-gh issue reopen <N>` /
+  `ggh issue reopen <N> -R "$AGENT_RELAY_CORP_REPO"`).
 
-This cost real work twice in one session: two corrections were posted `38s` and
-minutes after a `DONE` close, and neither side saw them until a human asked.
+### C. Heavy Artifacts (`drops/<YYYY-MM-DD>-<slug>/`)
+
+- Stage multi-file benchmark CSVs, flamegraphs, or patch bundles under
+  `drops/<YYYY-MM-DD>-<slug>/` in `$AGENT_RELAY_CORP_DIR` or
+  `~/github/kevmoo/agent-relay`.
+- **Trunk Push Approval Gate**: Confirm via `ask_question` before pushing
+  `drops/` commits to `main`, then link the committed path in the Issue comment.
 
 ### D. Review Queue (`[review-queue]` ping-pong)
 
-Use this when one machine has PRs that another machine should review and land
-**without the human scheduling the turns**. Proven on
-[kevmoo/agent-relay#6](https://github.com/kevmoo/agent-relay/issues/6).
+Use when one machine has PRs that another machine should review and land without
+human turn-scheduling (templates and timers in
+[references/templates.md](references/templates.md)):
 
-1. **One thread per queue, not per PR.** `relay-whoami --check` buckets by who
-   spoke last, so a single thread tells each side whose turn it is. Title it
-   `🔁 [review-queue] <repo> #A #B #C` and list every PR with its merge order.
-2. **The turn is the `State` tag on the latest comment.** Whoever posts last
-   hands off; the other side sees it under `📥 Action Required — Waiting on Us`.
+1. **One thread per queue (`🔁 [review-queue] <repo> #A #B #C`)**, listing PRs in
+   merge order.
+2. **Latest comment `State` tag controls the turn**:
 
    | State     | Meaning                                                                  |
    | :-------- | :----------------------------------------------------------------------- |
@@ -165,91 +148,33 @@ Use this when one machine has PRs that another machine should review and land
    | `DONE`    | Every PR in the queue merged. Close on a **later** turn, not this one.   |
    | `BLOCKED` | Two rounds without agreement, or needs the human. **Stop and leave it.** |
 
-3. **Only the current holder pushes to a branch.** The other side comments on
-   the PR. Findings live on the PR; only the turn and a one-line-per-PR
-   summary live in the thread, so `--check` output stays readable.
-4. **Reviewer merges on approval.** CI green and nothing requested means merge
-   it; don't wait for the human. Changes requested: hand back with `ACKED`;
-   the author fixes, pushes, hands back with `HANDOFF`. Two rounds max, then
-   `BLOCKED`.
-5. **Queue-scoped consent.** On starting or entering a `[review-queue]` thread,
-   gate **once** via `ask_question`. That single approval covers, for the PRs
-   listed in that queue only: posting review comments, merging clean and green
-   `kevmoo/*` PRs, and posting turn updates on the thread. Re-prompt only on
-   `State: BLOCKED` or for anything outside the listed PRs. This is the
-   `AGENTS.md` merge gate applied per queue instead of per action.
-6. **Every post uses `relay-whoami --header`.** A hand-written header made #4
-   invisible to the tooling; generated headers are what make turn-tracking
-   work.
-
-**Timers, so nobody waits on a human:**
-
-- **Claude Code (`Bluefin-DX`)**: arm a change-only `Monitor` on the queue's PR
-  heads/states plus the thread's comment count. Silent while nothing moves,
-  wakes on a post or push, tolerates API blips, re-arms every 30 min. Verify
-  state directly before each re-arm — silence and "no change" are not the same
-  thing.
-- **Claude Code long runs (benchmarks or builds > ~90 min)**:
-  `run_in_background` has a hard 2 h cap that kills the job mid-run. Launch the
-  harness as a transient user unit instead, then `Monitor` its log plus
-  `systemctl --user is-active <slug>`:
-  ```bash
-  systemd-run --user --unit=<slug> --collect \
-    -E HOME -E PATH -E DISPLAY -E WAYLAND_DISPLAY -E XDG_RUNTIME_DIR \
-    -E DBUS_SESSION_BUS_ADDRESS \
-    systemd-inhibit --what=idle:sleep --who=<slug> --why="benchmark" \
-    <harness.sh> [args]
-  ```
-  Proven on [kevmoo/agent-relay#16](https://github.com/kevmoo/agent-relay/issues/16)
-  (82 min, 180 points, zero anomalies).
-- **Jetski (`Cloudtop`, `Darwin Pro`)**: after posting `HANDOFF`, or
-  `ACKED` while the queue is not `DONE`, arm a one-shot `schedule` timer
-  (`DurationSeconds: 180`, `TimerCondition: "never"`,
-  `Prompt: "Run relay-whoami --check and process any inbound turn on #<N>"`).
-  If the other side has not replied when it fires, re-arm with capped
-  geometric backoff (`180s → 300s → 600s`, max 4 polls). Stop the loop on
-  `DONE` or `BLOCKED`.
-
-### C. Heavy Artifacts (`drops/<YYYY-MM-DD>-<slug>/`)
-
-- For multi-file benchmark CSVs, flamegraphs, or patch bundles that are too
-  large for an Issue comment, stage and commit them under
-  `drops/<YYYY-MM-DD>-<slug>/` in the corresponding relay checkout
-  (`$AGENT_RELAY_CORP_DIR` or `~/github/kevmoo/agent-relay`).
-- **Trunk Push Approval Gate**: Always confirm via `ask_question` before pushing
-  `drops/` commits directly to `main` (in accordance with `AGENTS.md`), then
-  link the committed directory in the Issue comment.
+3. **Only the current holder pushes to a branch.** Findings go on the PR; only
+   the turn and a 1-line-per-PR summary go in the relay thread.
+4. **Reviewer merges on approval** (`kevmoo/*` green CI + zero findings = merge
+   immediately; changes requested = hand back with `ACKED`, max 2 rounds before
+   `BLOCKED`).
+5. **Queue-scoped consent**: Gate **once** via `ask_question` when starting or
+   entering a `[review-queue]` thread (covers review comments, merging clean
+   green `kevmoo/*` PRs in the queue, and turn updates). Re-prompt on
+   `State: BLOCKED` or out-of-queue actions.
+6. **Every post uses `relay-whoami --header`** and arms the platform wakeup
+   timer (`Monitor` or `systemd-run --user` on Claude Code; `180s -> 300s -> 600s`
+   `schedule` timer on Jetski; see
+   [references/templates.md](references/templates.md)).
 
 ### E. Runbook Hygiene (Authoring **and** Receiving)
 
-A runbook is a script written by one agent and executed on another human's
-machine without that human watching. Every rule below was earned on
-[kevmoo/agent-relay#16](https://github.com/kevmoo/agent-relay/issues/16).
-
-1. **A runbook never overrides `AGENTS.md`.** `git reset --hard`, force-pushes,
-   or edits on a shared repo's `main` are prohibited even when a runbook spells
-   them out. Authors: target a worktree or feature branch (`new-worktree`).
-   Receivers: skip the step, do the safe equivalent, and name the deviation in
-   the reply.
+1. **Never override `AGENTS.md`**: No `git reset --hard`, force-pushes, or edits
+   on `main`. Authors target a worktree/branch (`new-worktree`); receivers use
+   the safe equivalent and note the deviation.
 2. **Never mutate host security or session settings** (screen lock, idle
-   timeout, screensaver, firewall, sudoers) from a harness.
-   `systemd-inhibit --what=idle:sleep` already keeps a run alive; no `gsettings`
-   needed. If a setting truly must change, snapshot it first and restore it in
-   an `EXIT` trap. Receivers: record the current values before running any
-   foreign script and restore them afterwards regardless of what the script
-   claims to do. (#16's harness left `lock-enabled=false` on a remote-accessed
-   box.)
-3. **Reproduce-first gate.** A handoff that asks "does the fix eliminate X?"
-   must first confirm X reproduces on the _baseline_ on the target machine. If
-   it does not, say so and stop — paired runs on a non-failing baseline prove
-   nothing (#16: `wimp_mt grid` was 5/5 on both arms; the question stayed open
-   after 10 invocations).
-4. **Pre-register what the result means.** Each claim ships with a
-   confirm/refute threshold and the environment it came from (SwiftShader vs
-   real GPU, Borg vs bare metal). `−30…−52%` measured under SwiftShader became
-   `−6…−11%` on a Radeon 780M; the receiving agent should not be the one
-   deciding whether that counts.
-5. **Cite the head you actually pushed.** Issue text said `6db84f5`; the branch
-   was `7303ad6`. Authors: re-read the sha after the final push. Receivers:
-   `sha256sum -c SHA256SUMS` is the source of truth, and a sha mismatch goes in
-   the reply's deviations list.
+   timeout, firewall, sudoers). Use `systemd-inhibit --what=idle:sleep`
+   (see [references/templates.md](references/templates.md)); snapshot and
+   restore any host state around foreign scripts.
+3. **Reproduce-first gate**: Before testing "does the fix eliminate X?", verify
+   X reproduces on the target machine's _baseline_. If not, report and stop.
+4. **Pre-register thresholds and environment**: Ship each claim with a
+   confirm/refute threshold and source environment (SwiftShader vs real GPU,
+   Borg vs bare metal).
+5. **Cite the pushed SHA**: Re-read `git rev-parse HEAD` after pushing; verify
+   `sha256sum -c SHA256SUMS` on receipt and log any SHA mismatch.

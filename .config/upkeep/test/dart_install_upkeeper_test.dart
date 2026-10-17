@@ -184,6 +184,114 @@ packages:
       ).contains('  • my_tool (local): built earlier -> newer commit abcdef1');
     });
 
+    test('check falls back to bare ~/.dotfiles repo when git -C fails for local package', () async {
+      final localDir = Directory(
+        '${tempInstallDir.path}/app-bundles/upkeep/local',
+      )..createSync(recursive: true);
+      Directory('${localDir.path}/bundle').createSync(recursive: true);
+
+      final sourceRepo = Directory('${tempInstallDir.path}/upkeep_repo')
+        ..createSync(recursive: true);
+      File('${sourceRepo.path}/pubspec.yaml')
+          .writeAsStringSync('name: upkeep\n');
+
+      File('${localDir.path}/pubspec.lock').writeAsStringSync('''
+packages:
+  upkeep:
+    description:
+      path: "${sourceRepo.path}"
+''');
+
+      final executedArgs = <List<String>>[];
+      final home = Platform.environment['HOME'] ?? '';
+      final upkeeper = DartInstallUpkeeper(
+        installDirOverride: tempInstallDir,
+        processRunner: (executable, args) async {
+          executedArgs.add([executable, ...args]);
+          if (executable == 'git' && args.contains('-C')) {
+            return ProcessResult(0, 128, '', 'fatal: not a git repository');
+          }
+          if (executable == 'git' &&
+              args.contains('--git-dir=$home/.dotfiles') &&
+              args.contains('log')) {
+            final futureEpoch =
+                DateTime.now()
+                    .add(const Duration(hours: 1))
+                    .millisecondsSinceEpoch ~/
+                1000;
+            return ProcessResult(0, 0, '$futureEpoch 9876543\n', '');
+          }
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final status = await upkeeper.check();
+      check(status.state).equals(UpkeepState.outdated);
+      check(status.summary).equals('1 tool(s) outdated (upkeep)');
+      check(
+        status.details,
+      ).contains('  • upkeep (local): built earlier -> newer commit 9876543');
+      check(
+        executedArgs.any(
+          (cmd) =>
+              cmd.contains('--git-dir=$home/.dotfiles') &&
+              cmd.contains('--work-tree=$home') &&
+              cmd.contains('log') &&
+              cmd.last == sourceRepo.path,
+        ),
+      ).isTrue();
+    });
+
+    test('check detects uncommitted local changes via status --porcelain in bare ~/.dotfiles repo', () async {
+      final localDir = Directory(
+        '${tempInstallDir.path}/app-bundles/upkeep/local',
+      )..createSync(recursive: true);
+      Directory('${localDir.path}/bundle').createSync(recursive: true);
+
+      final sourceRepo = Directory('${tempInstallDir.path}/upkeep_repo')
+        ..createSync(recursive: true);
+      File('${sourceRepo.path}/pubspec.yaml')
+          .writeAsStringSync('name: upkeep\n');
+
+      File('${localDir.path}/pubspec.lock').writeAsStringSync('''
+packages:
+  upkeep:
+    description:
+      path: "${sourceRepo.path}"
+''');
+
+      final home = Platform.environment['HOME'] ?? '';
+      final upkeeper = DartInstallUpkeeper(
+        installDirOverride: tempInstallDir,
+        processRunner: (executable, args) async {
+          if (executable == 'git' && args.contains('-C')) {
+            return ProcessResult(0, 128, '', 'fatal: not a git repository');
+          }
+          if (executable == 'git' &&
+              args.contains('--git-dir=$home/.dotfiles') &&
+              args.contains('log')) {
+            return ProcessResult(0, 0, '1000 1234567\n', '');
+          }
+          if (executable == 'git' &&
+              args.contains('--git-dir=$home/.dotfiles') &&
+              args.contains('status')) {
+            return ProcessResult(
+              0,
+              0,
+              ' M .config/upkeep/lib/upkeep.dart\n',
+              '',
+            );
+          }
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final status = await upkeeper.check();
+      check(status.state).equals(UpkeepState.outdated);
+      check(status.details)
+          .contains('  • upkeep (local): built earlier -> uncommitted changes');
+    });
+
     test('update executes dart install for outdated hosted packages', () async {
       final hostedDir = Directory(
         '${tempInstallDir.path}/app-bundles/dhttpd/hosted/4.3.0',

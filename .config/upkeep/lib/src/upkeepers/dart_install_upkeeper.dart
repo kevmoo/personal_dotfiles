@@ -210,13 +210,28 @@ class DartInstallUpkeeper implements Upkeeper {
         final bundleMtime = bundleDir.existsSync()
             ? bundleDir.statSync().modified.millisecondsSinceEpoch ~/ 1000
             : 0;
-        final logRes = await _processRunner('git', [
+        var logRes = await _processRunner('git', [
           '-C',
           sourcePath,
           'log',
           '-1',
           '--format=%ct %h',
         ]);
+        var useBareDotfiles = false;
+        final home = Platform.environment['HOME'] ?? '';
+        final dotfilesGitDir = p.join(home, '.dotfiles');
+        if (logRes.exitCode != 0 && home.isNotEmpty) {
+          logRes = await _processRunner('git', [
+            '--git-dir=$dotfilesGitDir',
+            '--work-tree=$home',
+            'log',
+            '-1',
+            '--format=%ct %h',
+            '--',
+            sourcePath,
+          ]);
+          useBareDotfiles = logRes.exitCode == 0;
+        }
         if (logRes.exitCode == 0) {
           final parts = logRes.stdout.toString().trim().split(' ');
           final commitEpoch = int.tryParse(parts.firstOrNull ?? '') ?? 0;
@@ -224,6 +239,23 @@ class DartInstallUpkeeper implements Upkeeper {
           if (commitEpoch > bundleMtime) {
             currentRef = 'built earlier';
             latestRef = 'newer commit $commitShort';
+          } else {
+            final statusArgs = useBareDotfiles
+                ? [
+                    '--git-dir=$dotfilesGitDir',
+                    '--work-tree=$home',
+                    'status',
+                    '--porcelain',
+                    '--',
+                    sourcePath,
+                  ]
+                : ['-C', sourcePath, 'status', '--porcelain', '--', sourcePath];
+            final statusRes = await _processRunner('git', statusArgs);
+            if (statusRes.exitCode == 0 &&
+                statusRes.stdout.toString().trim().isNotEmpty) {
+              currentRef = 'built earlier';
+              latestRef = 'uncommitted changes';
+            }
           }
         }
       } catch (_) {}
