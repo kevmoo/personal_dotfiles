@@ -35,27 +35,18 @@ evaluate the input against the [Skill Catalog](#-skill-catalog) using this
 
 - **Tier 1: Unambiguous Clear Match (High Confidence / 90%+ sure)**
   - Exactly 1 skill in the catalog clearly maps to the requested transformation.
-  - _Action_:
-    1. Check for the target `SKILL.md` at its candidate path in `~/github/`.
-    2. If missing, output the
-       [Missing Checkout Safety Net](#missing-checkout-safety-net).
-    3. If present, call `view_file` on the target `SKILL.md`, hydrate its
-       untruncated instructions into active context, and execute the refactoring
-       immediately.
+  - _Action_: Verify the target `SKILL.md` exists in `~/github/` (or output the
+    [Missing Checkout Safety Net](#2-missing-checkout-safety-net)), call
+    `view_file` to hydrate its instructions, and execute the refactoring.
 - **Tier 2: Uncertain / Close Match (Medium Confidence)**
   - A skill seems close or relevant, but there is ambiguity.
-  - _Action_: Stop and ask the user for confirmation before hydrating:
-    > _"I think you might mean **`<skill-name>`**"_
-    > _([SKILL.md](file:///path/to/SKILL.md)). Would you like me to load and_
-    > _run this workflow?"_
+  - _Action_: Stop and ask for confirmation before hydrating: _"I think you
+    might mean **`<skill-name>`** ([SKILL.md](file:///path/to/SKILL.md)). Would
+    you like me to load and run this workflow?"_
 - **Tier 3: No Clear Match or Bare Invocation (Low Confidence / Empty Input)**
-  - No skill matches the prompt, or `/dart-cleanup` was invoked with no
-    arguments.
-  - _Action_: Output:
-    > _"I couldn't find an unambiguous skill match for your request. Here is_
-    > _the catalog of available specialized Dart skills:"_ Render the
-    > categorized [Skill Catalog](#-skill-catalog) with clickable `file://`
-    > links so the user can choose.
+  - No skill matches the prompt, or `/dart-cleanup` was invoked with no args.
+  - _Action_: Render the categorized [Skill Catalog](#-skill-catalog) with
+    clickable `file://` links so the user can choose.
 
 ### 2. Missing Checkout Safety Net
 
@@ -68,81 +59,28 @@ output:
 
 ### 3. Coding Standards, Public API & Config Guardrails
 
-1. **Architecture, Boundary & Testing Guardrails**:
+Consult [`references/patterns.md`](references/patterns.md) for full
+architectural boundary rules and modern Dart 3+ code examples:
 
-   <!-- BEGIN SPOT: dart-complexity-and-helpers -->
-   - **Public Package / Subsystem Boundary (`lib/<pkg>.dart` & `api.txt`)**:
-     Must be **Deep**. Export only top-level orchestrators, immutable
-     configuration value objects, and result records. Hide AST walkers, SQL
-     builders, and parser helpers inside `lib/src/` (never re-exported in
-     `lib/<pkg>.dart`). Use explicit `export 'src/...' show ...;` **only in
-     public `lib/<pkg>.dart` entrypoints**; when splitting an internal
-     `lib/src/` file, update internal `import` sites directly rather than
-     leaving `export ... show` bridge shims inside `lib/src/` files (which
-     obscure symbol provenance and risk circular imports).
-   - **Public API Surface Verification (`dart run api_summary@^1.1.0`)**: After
-     any file split or refactoring in a Dart package (Dart 3.12+ remote package
-     runner—zero `pubspec.yaml` edits or global install required):
-     - If `api.txt` is tracked: run `dart run api_summary@^1.1.0 --check` and
-       require exit code `0`.
-     - If `api.txt` is not tracked: capture
-       `dart run api_summary@^1.1.0 -o /tmp/api_before.txt` before refactoring
-       and `diff -u /tmp/api_before.txt /tmp/api_after.txt` after, requiring
-       zero diff unless a public API change was requested.
-   - **Internal Decomposition & Shallow-Helper Guardrail (`lib/src/`)**: **Stop
-     rule:** only declarations above `cognitive_complexity` 15 (production) or
-     40 (`_test.dart`) are work items; stop once the max is `<= 15` (Target Zone
-     `8–15`, not `0`). When decomposing, forbid stateful `_Populator` /
-     `_Runner` helper classes that mutate caller maps/sets in-place; require
-     **file-private pure functions (`_computeX(input) -> output`)** with zero
-     out-parameters and `<= 4` parameters (`<= 3` preferred,
-     `sliceScoreAtRoot >= 3`). Flag single-caller (`FanIn == 1`,
-     `TestFanIn == 0`) pass-through helpers (`cognitive_complexity:shallow`:
-     high-arity `>= 5` parameters, micro-helpers `< 5` body lines and `CC <= 1`,
-     `SignatureLines >= BodyLines`, or `CROSS_FILE_SINGLE_CALLER`): re-inline a
-     `SAFE_INLINE` helper when `CallerCCAfter <= 15` and it is a pass-through
-     with no same-shape siblings and no meaningful domain contract; when
-     `CallerCCAfter > 15` and `HelperCC <= 4` (`FLATTEN_AND_INLINE`), flatten
-     the caller in place instead of bucket-brigading local variables across
-     helper signatures. Benchmark hot per-element loops before splitting them;
-     prefer a per-declaration `// cognitive_complexity:ignore` with a reason
-     comment. Details: the `dart-cognitive-complexity` skill.
-
-   <!-- END SPOT: dart-complexity-and-helpers -->
-
-   <!-- BEGIN SPOT: dart-load-bearing-boundaries -->
-   - **Load-Bearing Library Boundary Rule (`part` / `part of` vs. Separate
-     Libraries)**:
-     - **Core Principle**: Prefer the boundary the language compiler enforces
-       (library privacy + class modifiers) over one an annotation suggests
-       (`@internal`, which is only an analyzer lint and still leaks into
-       `api.txt` when attached to a member of an exported `PublicClass`).
-     - **Tier 1 — Standalone `lib/src/` Library (Default When Boundary Is Not
-       Load-Bearing)**: Extract declarations into a separate library under
-       `lib/src/` with explicit `import` / `show` **only** when the cut requires
-       **zero** visibility widening (`0` cross-cut `_private` member accesses)
-       and crosses **zero** library-scoped class modifier boundaries (`sealed`,
-       `final`, `interface`, `base`, or private generative constructors `._()`).
-     - **Tier 2 — `part` / `part of` (Preferred When the Library Boundary Is
-       Load-Bearing)**: Whenever multiple types require privileged library-level
-       access to each other—such as subtyping a `sealed`, `final`, `interface`,
-       or `base` class/mixin, calling a private constructor `._()` for subtype
-       capability, or accessing `_private` members on a public or shared
-       class—**keep them in the same library using `part` / `part of`**. Never
-       force tightly privileged types into a single giant file just to avoid
-       `part`, and never widen `PublicClass._member` to `@internal` just to
-       split libraries.
-
-   <!-- END SPOT: dart-load-bearing-boundaries -->
-   - **Testing & Real Test Doubles (`dart-test-fundamentals`)**: For test seam
-     discipline, hermetic test doubles, and behavioral/structural assertions,
-     follow the `dart-test-fundamentals` skill in the catalog below.
-
+1. **Architecture, Boundary & Testing Guardrails
+   ([`references/patterns.md`](references/patterns.md))**:
+   - **Deep Public Boundary & `api_summary`**: Export only top-level
+     orchestrators, immutable config objects, and result records in
+     `lib/<pkg>.dart`. Verify zero unintended public API diffs after refactors
+     via `dart run api_summary@^1.1.0 --check`.
+   - **Pure Internal Decomposition (`cognitive_complexity <= 15`)**: Decompose
+     only functions above `15` (production) or `40` (`_test.dart`) into
+     file-private pure functions (`_computeX(input) -> output`, `<= 4` params,
+     zero out-params). Avoid shallow single-caller pass-through helpers.
+   - **Load-Bearing Library Boundaries (`part` vs. `lib/src/`)**: Use standalone
+     `lib/src/` libraries when `0` `_private` accesses or class-modifier
+     boundaries (`sealed`, `final`, `interface`, `base`, `._()`) are crossed;
+     use `part` / `part of` when types share privileged library access.
+   - **Testing (`dart-test-fundamentals`)**: Follow `dart-test-fundamentals` in
+     the catalog below for real test doubles and behavioral assertions.
 2. **Optional `kscripts` Config Hygiene (`lint-cleanup` & `tighten`)**:
-   - When `kscripts` is on `PATH`, use `kscripts lint-cleanup --rewrite` to
-     prune redundant lints in `analysis_options.yaml` and `kscripts tighten` (or
-     `kscripts tighten --workspace`) to align `pubspec.yaml` lower bounds with
-     `pubspec.lock`.
+   - When `kscripts` is on `PATH`, run `kscripts lint-cleanup --rewrite` and
+     `kscripts tighten` (or `kscripts tighten --workspace`).
 
 ---
 
@@ -156,9 +94,10 @@ output:
 
 | Repository | Local Directory | Synced Commit |
 | :--- | :--- | :--- |
-| [`dart-lang/skills`](https://github.com/dart-lang/skills) | `~/github/skills` | [`b046fa1`](https://github.com/dart-lang/skills/commit/b046fa14cf8c2cbc203c6ccd08354653e41d17d1) |
-| [`kevmoo/analytica.dart`](https://github.com/kevmoo/analytica.dart) | `~/github/kevmoo/analytica.dart` | [`1955b9e`](https://github.com/kevmoo/analytica.dart/commit/1955b9ed485f54ba7f6898de6b1c7a37b1b1b4e6) |
-| [`kevmoo/dash_skills`](https://github.com/kevmoo/dash_skills) | `~/github/kevmoo/dash_skills` | [`397a703`](https://github.com/kevmoo/dash_skills/commit/397a703060ec8449b4cee63749036f19662b1f0e) |
+| [`dart-lang/skills`](https://github.com/dart-lang/skills) | `~/github/skills` | [`bf984f3`](https://github.com/dart-lang/skills/commit/bf984f3ef223dd85e92036f934bbcb6bf301e4ce) |
+| [`kevmoo/analytica.dart`](https://github.com/kevmoo/analytica.dart) | `~/github/kevmoo/analytica.dart` | [`5d2e9dd`](https://github.com/kevmoo/analytica.dart/commit/5d2e9dde47c657527ff517b184f29c666b6e50e8) |
+| [`kevmoo/dash_skills`](https://github.com/kevmoo/dash_skills) | `~/github/kevmoo/dash_skills` | [`ce6cdbd`](https://github.com/kevmoo/dash_skills/commit/ce6cdbde55300d871c974f70a686d329aafc01af) |
+| [`kevmoo/source_gen_test`](https://github.com/kevmoo/source_gen_test) | `~/github/kevmoo/source_gen_test` | [`b42ebf0`](https://github.com/kevmoo/source_gen_test/commit/b42ebf0851a7e0c1ee0fbd2042b28186622edacb) |
 
 ### A. Refactoring & Code Quality
 * **`dart-build-cli-app`**: CLI entrypoint structure, argument parsing
@@ -236,6 +175,10 @@ output:
 * **`dart-test-fundamentals`**: Core `package:test` practices, test grouping,
   `setUp`/`tearDown` lifecycles, and `dart_test.yaml` configuration.
   * *Path*: `~/github/kevmoo/dash_skills/skills/dart-test-fundamentals/SKILL.md`
+* **`source-gen-test-fuzz`**: Stress-tests Dart `source_gen` `Generator` and
+  `GeneratorForAnnotation` code generators across combinatorial AST declaration
+  matrices (`cartesianProduct` and `verifyGeneratorBatch`).
+  * *Path*: `~/github/kevmoo/source_gen_test/skills/source-gen-test-fuzz/SKILL.md`
 
 ### D. Documentation, Packaging & Native Interop
 * **`dart-doc-validation`**: Validates doc comments using `dart doc` to catch
