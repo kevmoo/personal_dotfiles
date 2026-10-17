@@ -63,6 +63,8 @@
 
 ## Architecture: "Deep Externally, Pure Internally"
 
+<!-- SPOT_DEF: dart-complexity-and-helpers -->
+
 - **Public Package / Subsystem Boundary (`lib/<pkg>.dart` & `api.txt`)**: Must
   be **Deep**. Export only top-level orchestrators, immutable configuration
   value objects, and result records. Hide AST walkers, SQL builders, and parser
@@ -82,18 +84,28 @@
     `diff -u /tmp/api_before.txt /tmp/api_after.txt` after, requiring zero diff
     unless a public API change was requested.
 - **Internal Decomposition & Shallow-Helper Guardrail (`lib/src/`)**: **Stop
-  rule:** only declarations above `cognitive_complexity` 15 are work items; stop
-  once the max is `<= 15` (Target Zone `8-15`, not `0`). When decomposing,
-  forbid stateful `_Populator` / `_Runner` helper classes that mutate caller
-  maps/sets in-place; require **file-private pure functions
-  (`_computeX(input) -> output`)** with zero out-parameters and `<= 4`
-  parameters (`<= 3` preferred). `shallow` / `file_split` findings are advisory
-  review prompts, not gates (never run `--fail-on-safe-inline`): re-inline a
-  `SAFE_INLINE` helper only when it is a true pass-through with no same-shape
-  siblings and no meaningful name or doc comment. Benchmark hot per-element
-  loops before splitting them; prefer a per-declaration
+  rule:** only declarations above `cognitive_complexity` 15 (production) or 40
+  (`_test.dart`) are work items; stop once the max is `<= 15` (Target Zone
+  `8–15`, not `0`). When decomposing, forbid stateful `_Populator` / `_Runner`
+  helper classes that mutate caller maps/sets in-place; require **file-private
+  pure functions (`_computeX(input) -> output`)** with zero out-parameters and
+  `<= 4` parameters (`<= 3` preferred, `sliceScoreAtRoot >= 3`). Flag
+  single-caller (`FanIn == 1`, `TestFanIn == 0`) pass-through helpers
+  (`cognitive_complexity:shallow`: high-arity `>= 5` parameters, micro-helpers
+  `< 5` body lines and `CC <= 1`, `SignatureLines >= BodyLines`, or
+  `CROSS_FILE_SINGLE_CALLER`): re-inline a `SAFE_INLINE` helper when
+  `CallerCCAfter <= 15` and it is a pass-through with no same-shape siblings and
+  no meaningful domain contract; when `CallerCCAfter > 15` and `HelperCC <= 4`
+  (`FLATTEN_AND_INLINE`), flatten the caller in place instead of
+  bucket-brigading local variables across helper signatures. Benchmark hot
+  per-element loops before splitting them; prefer a per-declaration
   `// cognitive_complexity:ignore` with a reason comment. Details: the
   `dart-cognitive-complexity` skill.
+
+<!-- END_SPOT_DEF: dart-complexity-and-helpers -->
+
+<!-- SPOT_DEF: dart-load-bearing-boundaries -->
+
 - **Load-Bearing Library Boundary Rule (`part` / `part of` vs. Separate
   Libraries)**:
   - **Core Principle**: Prefer the boundary the language compiler enforces
@@ -116,7 +128,39 @@
     `part`, and never widen `PublicClass._member` to `@internal` just to split
     libraries.
 
+<!-- END_SPOT_DEF: dart-load-bearing-boundaries -->
+
+<!-- SPOT_DEF: dart-inquisitor-dismissal-filters -->
+
+- **Dart Inquisitorial Review Dismissal Filters (`[DISMISSED: DART_THEATER]`)**:
+  - **Exhaustive `switch` vs. Lookup Map Theater**: Never replace an exhaustive
+    Dart 3 `switch` statement or `switch` expression over an `enum` or
+    `sealed class` with a `Map<Enum, Handler>` lookup table or polymorphic
+    Strategy class (which destroys compile-time exhaustiveness checking and adds
+    heap allocation).
+  - **Low-Cognitive-Complexity Split Theater**: Never split a Dart function
+    whose AST `cognitive_complexity` score is `<= 15` (production) or `<= 40`
+    (`_test.dart`) solely because of line count (`~50 lines`) or multi-phase
+    procedural structure.
+  - **High-Arity / Shallow Helper Extraction Theater**: Never extract a private
+    helper that requires `>= 4` parameters (`HIGH_ARITY`), returns a
+    record/tuple of mutated local state, or would be flagged by
+    `cognitive_complexity:shallow` (`SAFE_INLINE`, `MICRO_HELPER`, `SIG_HEAVY`,
+    `LOW_COMPLEXITY_PAYOFF`).
+  - **Foreign-Language Idiom & Unverified Linter Duplication**: Never recommend
+    `kConstantName` (instead of `lowerCamelCase`), explicit `break;` inside Dart
+    3 `switch` cases, `sprintf`/string builders for single-expression string
+    interpolation, or manual null checks where null-aware operators (`?.`, `??`,
+    `??=`) or pattern matching (`if (x case final y?)`) already apply; do not
+    flag unused imports, dead variables, or formatting issues already enforced
+    by `dart analyze` and `dart format` unless corroborated by static analysis
+    tools (`undead --suggest-private`, `dedupe`, `cognitive_complexity`).
+
+<!-- END_SPOT_DEF: dart-inquisitor-dismissal-filters -->
+
 ## Testing & Verification
+
+<!-- SPOT_DEF: dart-test-hermeticity -->
 
 - **Test Seam Discipline (Package Integration vs. `lib/src/` Unit Tests)**:
   - **Package-Level & Integration Tests**: Import `package:<pkg>/<pkg>.dart`
@@ -127,6 +171,28 @@
     machines, data models, or algorithms with simple interfaces and rich
     internal behavior—to unit-test edge cases directly; test thin single-caller
     helpers through their owning module's entrypoint.
+- **Real Implementations & First-Party Fakes ("Tests That Can Fail")**: Exercise
+  real dependencies and first-party fakes so tests fail when production
+  contracts break—use `package:test_descriptor` (`d.sandbox`, `d.dir`, `d.file`)
+  or `Directory.systemTemp.createTempSync()` (always registered with
+  `addTearDown(() => tempDir.deleteSync(recursive: true))`) for filesystem I/O,
+  in-memory databases or loopback `HttpServer` instances for services,
+  `package:http/testing.dart` (`MockClient`) for HTTP, hand-written fakes/stubs
+  for custom interfaces, and `@TestOn('browser')` for DOM and JS/Wasm interop.
+- **Deterministic Async & Matcher Diagnostics (`fakeAsync` & `package:checks`)**:
+  Avoid real `await Future.delayed(...)` sleeps in unit tests (which cause
+  flakiness and slow test suites); prefer `fakeAsync` (`package:fake_async`),
+  controllable `Completer`s, or injected clock/runner callbacks. Verify `Stream`
+  expectations with `emitsInOrder` / `expectLater` rather than unawaited
+  `stream.listen(expectAsync1(...))` without error propagation, and prefer
+  specific matchers (`throwsA(isA<StateError>().having((e) => e.message, 'message', contains('...')))`,
+  `completion(...)`, `unorderedEquals(...)`) over `expect(x == y, isTrue)` or
+  manual `try { ...; fail('...'); } catch (e) {}` blocks.
+
+<!-- END_SPOT_DEF: dart-test-hermeticity -->
+
+<!-- SPOT_DEF: dart-test-no-change-detectors -->
+
 - **Behavioral, Structural & Relational Assertions (No Change-Detector Tests)**:
   - **Test Consumer Behavior on Synthetic Inputs**: Assert observable outputs,
     state transitions, and boundary conditions of the code that _consumes_
@@ -156,13 +222,8 @@
   (`readAsStringSync()`) specifically for static documentation drift
   (`README.md` `--help` blocks), build/package metadata sync (`BUILD`,
   `pubspec.yaml`), and code-generator input/output fixtures.
-- **Real Implementations & First-Party Fakes ("Tests That Can Fail")**: Exercise
-  real dependencies and first-party fakes so tests fail when production
-  contracts break—use `package:test_descriptor` (`d.sandbox`, `d.dir`, `d.file`)
-  or `Directory.systemTemp.createTempSync()` for filesystem I/O, in-memory
-  databases or loopback `HttpServer` instances for services,
-  `package:http/testing.dart` (`MockClient`) for HTTP, hand-written fakes/stubs
-  for custom interfaces, and `@TestOn('browser')` for DOM and JS/Wasm interop.
+
+<!-- END_SPOT_DEF: dart-test-no-change-detectors -->
 
 ## Dart & CLI Design Defaults
 
