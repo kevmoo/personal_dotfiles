@@ -13,7 +13,7 @@ if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! [[ -S "$SSH_AUTH_SOCK" ]]; then
 fi
 
 # Ensure tmux uses a safe, user-owned directory for sockets on Linux to avoid UID collisions in /tmp
-if [[ "$(uname)" == "Linux" ]]; then
+if [[ "$OSTYPE" == linux* ]]; then
   export TMUX_TMPDIR="${XDG_RUNTIME_DIR:-/run/user/$UID}"
 fi
 
@@ -21,7 +21,7 @@ if [[ -f "$HOME/.cargo/env" ]]; then
   . "$HOME/.cargo/env"
 fi
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ "$OSTYPE" == darwin* ]]; then
   export ELAN_HOME="$HOME/.local/share/elan"
   if [[ -f "$ELAN_HOME/env" ]]; then
     . "$ELAN_HOME/env"
@@ -30,7 +30,7 @@ fi
 
 # Ensure Dart install binaries, ~/.local/bin, and mise shims are always at the front of PATH
 # (placed after cargo/elan env so ~/.cargo/env does not prepend ahead of _user_path and defeat the prefix guard)
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ "$OSTYPE" == darwin* ]]; then
   _dart_install_bin="$HOME/Library/Application Support/Dart/install/bin"
 else
   _dart_install_bin="$HOME/.local/state/Dart/install/bin"

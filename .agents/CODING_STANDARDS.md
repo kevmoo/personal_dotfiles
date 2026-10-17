@@ -225,12 +225,26 @@
 
 <!-- END_SPOT_DEF: dart-test-no-change-detectors -->
 
+- **Base-Class / Shared-Helper Blast Radius**: When modifying a base class,
+  mixin, or shared helper, run package-wide `dart analyze` plus subclass/caller
+  `rg` across the repository—never restrict verification to `git diff` files.
+- **Multi-Platform Web/Wasm Validation (`-p chrome,wasm`)**: Run
+  `dart test -p chrome,wasm` whenever a package supports web/wasm or a change
+  touches numeric operations, `typed_data`, `js_interop`, or conditional
+  imports.
+- **Min-SDK Lower-Bound Gating (`Feature.<name>.releaseVersion`)**: Gate tests
+  for new language features on `Feature.<name>.releaseVersion`, never raw
+  `Platform.version` string matching.
+
 ## Dart & CLI Design Defaults
 
 - **Zero-Alias CLI Design & Scope**: Never add `package:args` `aliases` or
   speculative CLI flags not requested by the spec; register non-canonical verbs
   in `CommonMistakes` (`FuzzyCommandRunner`) to fail fast with a prescriptive
   hint.
+- **CLI Option Descriptor Migration Parity**: When migrating CLI options,
+  compare before/after `argParser.options` keys, defaults, and help text for
+  parity, and derive boolean getters via `hasOption(descriptor)`.
 - **Pattern Matching & Multi-Field Destructuring
   (`dart-use-pattern-matching`)**: Prefer `Uri.tryParse` with object/list
   patterns on `uri.host` and `uri.pathSegments` over multi-group URL regexes,
