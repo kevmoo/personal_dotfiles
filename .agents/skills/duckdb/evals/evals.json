@@ -19,6 +19,16 @@
       ],
       "expected_repo_state": ["No files are modified."],
       "agent_config": "bare-agent"
+    },
+    {
+      "id": "duckdb_task_3_code_diff_macros",
+      "prompt": "Using the duckdb skill, how can I query a raw git diff pipeline with SQL to find added lines matching a pattern and their 1-indexed file line numbers?",
+      "expected_chat_output": [
+        "References loading 'scripts/diff_macros.sql' via '-init'.",
+        "Mentions 'read_diff_lines' or 'read_diff_hunks' for raw unified diffs (such as '/dev/stdin')."
+      ],
+      "expected_repo_state": ["No files are modified."],
+      "agent_config": "bare-agent"
     }
   ]
 }

@@ -433,3 +433,48 @@ SET preserve_insertion_order = false;
 SELECT count(*) FROM 'massive_dataset/*.parquet';
 "
 ```
+
+---
+
+## 8. Querying Large Code Diffs
+
+Use [`../scripts/diff_macros.sql`](../scripts/diff_macros.sql) to query unified
+diffs with SQL. Use `rg` for single-pattern text searches in a working tree, and
+use DuckDB for multi-condition filters and aggregations across diff lines and
+hunks.
+
+### Recipe 8.1: Query Raw Unified Diffs via Standard Input
+
+Pipe `git diff` or `gh pr diff` directly into `read_diff_lines('/dev/stdin')` or
+`read_diff_hunks('/dev/stdin')`:
+
+```bash
+git diff main...HEAD | duckdb -batch -dark-mode -box \
+  -init skills/duckdb/scripts/diff_macros.sql -c "
+SELECT file_path, new_line, content
+FROM read_diff_lines('/dev/stdin')
+WHERE op = '+'
+  AND regexp_matches(content, 'TODO|FIXME|console\.log')
+  AND file_path NOT LIKE '%test%';
+"
+```
+
+### Recipe 8.2: Summarize Hunk Churn Across Files (`read_diff_hunks`)
+
+Aggregate hunk counts, added lines, and deleted lines per file or function
+context header across a branch diff:
+
+```bash
+git diff main...HEAD | duckdb -batch -dark-mode -box \
+  -init skills/duckdb/scripts/diff_macros.sql -c "
+SELECT
+  file_path,
+  count(*) AS hunks,
+  sum(added_lines) AS lines_added,
+  sum(deleted_lines) AS lines_deleted
+FROM read_diff_hunks('/dev/stdin')
+GROUP BY file_path
+ORDER BY (sum(added_lines) + sum(deleted_lines)) DESC
+LIMIT 15;
+"
+```
