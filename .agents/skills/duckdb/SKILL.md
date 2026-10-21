@@ -2,29 +2,30 @@
 name: duckdb
 description: >-
   Queries, inspects, transforms, and converts local structured and
-  semi-structured data files (JSON, JSONL, NDJSON, CSV, TSV, Parquet, SQLite)
-  and unified code diffs on Linux and macOS using DuckDB SQL. Use when querying
-  local JSON/CSV dumps, benchmark JSON artifacts (e.g. bench_press), or large
-  code diffs, inspecting schemas and row counts, mining agent conversation
-  transcripts (transcript.jsonl), joining local files across formats, converting
-  large JSON/CSV datasets to Parquet, querying local SQLite (.db) files, or
-  streaming shell pipelines via stdin. Prefer over ad-hoc Python scripts
-  (json/csv) or jq for filtering, grouping, aggregating, and joining local
-  datasets. Don't use for remote cloud data warehouses (e.g. BigQuery,
-  Snowflake, Spanner).
+  semi-structured data files (JSON, JSONL, NDJSON, CSV, TSV, Parquet, SQLite),
+  unified code diffs, and Markdown documents on Linux and macOS with DuckDB SQL.
+  Use when querying local JSON, CSV, or SQLite files, benchmark artifacts, large
+  code diffs, or Markdown corpora, inspecting schemas and row counts, searching
+  and joining JSONL log globs with SQLite index databases (such as
+  transcript.jsonl and conversation_summaries.db), joining files across formats,
+  converting datasets to Parquet, or filtering stdin pipelines. Prefer it over
+  ad hoc Python or jq for filtering, grouping, and joining local data. Don't use
+  for remote cloud data warehouses (BigQuery, Snowflake, Spanner) or PLx
+  dashboards.
 key_features:
   - Non-interactive subshell flag safety (-batch -dark-mode)
   - Fast JSONL, CSV, Parquet, and SQLite querying
   - Explicit schema projection & multi-file globbing
   - Cross-format SQL joins & Parquet materialization
   - Relational code diff querying (scripts/diff_macros.sql)
+  - Relational Markdown indexing (scripts/markdown_macros.sql)
 ---
 
 # DuckDB CLI Analytics
 
 Fast analytical SQL engine for querying, analyzing, and converting local data
-files (JSON, JSONL, CSV, TSV, Parquet, SQLite) and unified code diffs directly
-from the shell without database servers or external imports.
+files (JSON, JSONL, CSV, TSV, Parquet, SQLite), unified code diffs, and Markdown
+documents directly from the shell without database servers or external imports.
 
 ## Quick Start & Execution Setup
 
@@ -177,20 +178,28 @@ SELECT * FROM db.my_table LIMIT 10;
 
 ## SQL Cookbook & Advanced Recipes
 
-Read [`references/recipes.md`](references/recipes.md) and
-[`scripts/diff_macros.sql`](scripts/diff_macros.sql) for detailed SQL cookbook
-patterns:
+Read [`references/recipes.md`](references/recipes.md),
+[`scripts/diff_macros.sql`](scripts/diff_macros.sql), and
+[`scripts/markdown_macros.sql`](scripts/markdown_macros.sql) for detailed SQL
+cookbook patterns:
 
-- **Agent Conversation Transcript Mining**: Fast-path `columns={...}` projection
-  across `~/.gemini/*/brain/*/.system_generated/logs/transcript.jsonl` and
-  `~/.claude/projects/**/*.jsonl`, tool usage/error audits, and stripping
-  `EPHEMERAL_MESSAGE` `<memory>` echoes.
+- **Agent Conversation Transcript Mining & SQLite Index Joins**: Fast-path
+  `columns={...}` projection across
+  `~/.gemini/*/brain/*/.system_generated/logs/transcript.jsonl` and
+  `~/.claude/projects/**/*.jsonl`, searching and joining JSONL log globs with
+  SQLite index databases (`ATTACH ... (TYPE SQLITE, READ_ONLY)`, such as joining
+  `transcript.jsonl` with `conversation_summaries.db`), tool usage/error audits,
+  and stripping `EPHEMERAL_MESSAGE` `<memory>` echoes.
 - **Format Conversions & Parquet Materialization**: Converting JSONL/CSV logs to
   ZSTD Parquet (`COPY ... TO`), Hive-partitioned reads/writes, and cross-format
-  SQL joins (JSON + CSV + Parquet).
+  SQL joins (JSON + CSV + Parquet + SQLite).
 - **Benchmark JSON & Log Extraction**: Piping `<<<BENCH_PRESS_JSON_START>>>` log
   blocks into DuckDB, pivoting multi-target (`aot` / `jit` / `wasm`) benchmark
   JSON artifacts, and tuning memory/thread limits for `>10GB` datasets.
 - **Relational Code Diff Querying**: Querying unified code diffs
   (`read_diff_lines`, `read_diff_hunks`) with
   [`scripts/diff_macros.sql`](scripts/diff_macros.sql).
+- **Relational Markdown Indexing**: Indexing Markdown section hierarchies and
+  fenced code blocks (`read_md_sections`, `read_md_code_blocks`) across large
+  documents (`>= 350` lines) and multi-file corpora (`10+` files) with
+  [`scripts/markdown_macros.sql`](scripts/markdown_macros.sql).

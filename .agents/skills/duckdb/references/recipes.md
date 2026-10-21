@@ -279,11 +279,78 @@ LIMIT 15;
 "
 ```
 
+### Recipe 1.6: Searching & Joining JSONL Log Globs with a SQLite Index
+
+When a directory of JSONL files (such as session transcripts, event logs, or
+trace shards) is paired with a local SQLite metadata or index database, attach
+the SQLite file with `ATTACH '...' AS db (TYPE SQLITE, READ_ONLY)` and join it
+against `read_json(..., filename=true)` via a path-extracted key in a single
+query.
+
+For example, to search agent transcripts (`transcript.jsonl`) for any topic,
+error, command, symbol, file, CL, or PR and join the hits with
+`~/.gemini/jetski/conversation_summaries.db` (~3.5 seconds):
+
+- Extract the join key from each file path with
+  `regexp_extract(filename, 'brain/([^/]+)/', 1)`.
+- Search both `content` (prompts, responses, and tool outputs) and
+  `CAST(tool_calls AS VARCHAR)` (commands, file paths, and tool arguments) using
+  `ILIKE`, `LIKE`, or `regexp_matches(...)`.
+- Exclude `EPHEMERAL_MESSAGE` rows so ambient `<memory>` injections do not
+  produce false matches.
+- Count `matching_steps` to separate primary sessions from 1-step incidental
+  mentions, and filter out subagent rows via `parent_conversation_id` and
+  `nesting_depth`.
+- Columns with SQLite `TIMESTAMP` affinity (such as `last_modified_time`) must
+  be formatted with `strftime(col, '%Y-%m-%d %H:%M:%S')` rather than
+  `substr(col, ...)`.
+- Unlike `read_json('~/...')`, DuckDB's SQLite extension passes the `ATTACH`
+  path directly to `sqlite3_open_v2` without `~` expansion. Use `$HOME` inside
+  the double-quoted `-c "..."` string.
+- The query sits inside a double-quoted shell string. In `<search_term>`, escape
+  `\`, `$`, `` ` ``, and `"` with a backslash, and double any `'`.
+- `CAST(tool_calls AS VARCHAR)` is serialized JSON that escapes `"` and `\` as
+  `\"` and `\\`, so terms containing either match `content` only. `ILIKE` also
+  treats `%` and `_` as wildcards.
+
+```bash
+duckdb -batch -dark-mode -box -c "
+ATTACH '$HOME/.gemini/jetski/conversation_summaries.db' AS db (TYPE SQLITE, READ_ONLY);
+WITH hits AS (
+  SELECT
+    regexp_extract(filename, 'brain/([^/]+)/', 1) AS conversation_id,
+    count(*) AS matching_steps
+  FROM read_json(
+    '~/.gemini/jetski/brain/*/.system_generated/logs/transcript.jsonl',
+    columns={'type': 'VARCHAR', 'content': 'VARCHAR', 'tool_calls': 'JSON'},
+    ignore_errors=true,
+    filename=true
+  )
+  WHERE coalesce(type, '') != 'EPHEMERAL_MESSAGE'
+    AND (content ILIKE '%<search_term>%' OR CAST(tool_calls AS VARCHAR) ILIKE '%<search_term>%')
+  GROUP BY 1
+)
+SELECT
+  s.conversation_id,
+  s.title,
+  s.step_count,
+  h.matching_steps,
+  strftime(s.last_modified_time, '%Y-%m-%d %H:%M:%S') AS modified
+FROM hits h
+JOIN db.conversation_summaries s USING (conversation_id)
+WHERE coalesce(s.parent_conversation_id, '') = ''
+  AND coalesce(s.nesting_depth, 0) = 0
+ORDER BY s.last_modified_time DESC
+LIMIT 15;
+"
+```
+
 ---
 
 ## 2. Cross-Format Joins
 
-DuckDB allows joins across heterogeneous file formats in a single SQL statement:
+DuckDB allows joins across heterogeneous file formats (JSONL, CSV, Parquet, and
+attached SQLite databases; see also Recipe 1.6) in a single SQL statement:
 
 ```bash
 duckdb -batch -dark-mode -box -c "
@@ -476,5 +543,78 @@ FROM read_diff_hunks('/dev/stdin')
 GROUP BY file_path
 ORDER BY (sum(added_lines) + sum(deleted_lines)) DESC
 LIMIT 15;
+"
+```
+
+---
+
+## 9. Querying Large Markdown Files & Documentation Corpora
+
+Use [`../scripts/markdown_macros.sql`](../scripts/markdown_macros.sql) to index
+Markdown sections and fenced code blocks with SQL.
+
+### Tool Selection Thresholds
+
+- Below 350 lines (`< 15 KB`): Read the file directly with `read_file`. One call
+  loads the entire file in 1,500 to 3,500 tokens.
+- Single-line pattern search: Use `rg -n` when heading hierarchy and code-fence
+  state do not matter.
+- Single file of 350+ lines (`15+ KB`) or above the 800-line `read_file` cap:
+  Query `read_md_sections` (`~70 ms`) to get the section outline and
+  `line_start..subtree_line_end` span, then pass those bounds to `read_file`.
+- Multi-file corpus (`10+` files): Query `read_md_sections('**/*.md')` or
+  `read_md_code_blocks('**/*.md')`. The macro indexes ATX (`#`) headings only
+  and tracks fenced code blocks per CommonMark (closing a fence only on a bare
+  line of the same backtick or tilde character with at least the opener's
+  length), so `#` comments and nested fences inside code blocks stay out of the
+  outline.
+- Encoding: The macros read files with `read_text`, which accepts only UTF-8.
+  One non-UTF-8 file aborts the whole query and names the file in the error;
+  re-encode it, or pass a narrower glob or a list of paths such as
+  `read_md_sections(['docs/a.md', 'docs/b.md'])`.
+
+### Recipe 9.1: Section Outline and Subtree Line Spans (`read_md_sections`)
+
+List top-level sections with both their own intro line range
+(`line_start..line_end`) and full subtree line range
+(`line_start..subtree_line_end`) before calling `read_file`:
+
+```bash
+duckdb -batch -dark-mode -box \
+  -init skills/duckdb/scripts/markdown_macros.sql -c "
+SELECT
+  section_id,
+  level,
+  heading,
+  line_start,
+  line_end,
+  subtree_line_end,
+  own_lines,
+  subtree_lines
+FROM read_md_sections('skills/duckdb/references/recipes.md')
+WHERE level <= 2;
+"
+```
+
+### Recipe 9.2: Audit Fenced Code Blocks Across a Glob (`read_md_code_blocks`)
+
+Extract fenced code blocks by language tag or enclosing section across an entire
+repository. A non-matching glob returns zero rows with exit code 0, and any
+non-UTF-8 file aborts the scan, so verify `read_md_sections` is non-empty first:
+
+```bash
+duckdb -batch -dark-mode -box \
+  -init skills/duckdb/scripts/markdown_macros.sql -c "
+SELECT
+  regexp_extract(file_path, '[^/]+/[^/]+$') AS skill_file,
+  block_id,
+  section_heading,
+  lang,
+  line_start,
+  line_end
+FROM read_md_code_blocks('skills/**/*.md')
+WHERE lang IN ('bash', 'sh')
+  AND contains(code, 'duckdb')
+  AND NOT contains(code, '-dark-mode');
 "
 ```

@@ -13,4 +13,7 @@ if [[ ! -t 0 || ! -t 1 || "${PAGER:-}" == "cat" || -n "${CLAUDECODE:-}" || -n "$
     set -- -dark-mode "$@"
   fi
 fi
+if [[ -x "$HOME/.local/share/mise/installs/duckdb/latest/duckdb" ]]; then
+  exec "$HOME/.local/share/mise/installs/duckdb/latest/duckdb" "$@"
+fi
 exec "$HOME/.local/share/mise/shims/duckdb" "$@"
