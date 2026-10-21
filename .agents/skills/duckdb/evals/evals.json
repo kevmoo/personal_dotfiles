@@ -29,6 +29,26 @@
       ],
       "expected_repo_state": ["No files are modified."],
       "agent_config": "bare-agent"
+    },
+    {
+      "id": "duckdb_task_4_markdown_macros",
+      "prompt": "Using the duckdb skill, how can I index a large Markdown file (>350 lines) with SQL to get its section outline and full subtree line ranges before calling read_file?",
+      "expected_chat_output": [
+        "References loading 'scripts/markdown_macros.sql' via '-init'.",
+        "Mentions 'read_md_sections' and using 'line_start' and 'subtree_line_end' (or 'line_end') to slice sections."
+      ],
+      "expected_repo_state": ["No files are modified."],
+      "agent_config": "bare-agent"
+    },
+    {
+      "id": "duckdb_task_5_sqlite_jsonl_join_search",
+      "prompt": "Using the duckdb skill, how do I search across a glob of JSONL log files (such as transcript.jsonl) and join the matches against a local SQLite index database (such as conversation_summaries.db) in a single query?",
+      "expected_chat_output": [
+        "Uses 'ATTACH ... (TYPE SQLITE, READ_ONLY)' on the SQLite database and joins it with 'read_json(..., filename=true)' over the JSONL glob.",
+        "Extracts the join key from 'filename' (e.g. via 'regexp_extract') and filters or aggregates matching rows."
+      ],
+      "expected_repo_state": ["No files are modified."],
+      "agent_config": "bare-agent"
     }
   ]
 }
