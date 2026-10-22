@@ -45,6 +45,16 @@ if [[ -d "$HOME/github/depot_tools" && ":$PATH:" != *":$HOME/github/depot_tools:
 fi
 unset _user_path _dart_install_bin
 
+# Dart SDK Siso build defaults (RBE enabled on macOS and corp Linux; offline Siso elsewhere)
+export DART_SISO="${DART_SISO:-1}"
+if [[ "$OSTYPE" == darwin* ]]; then
+  export DART_RBE="${DART_RBE:-1}"
+  export SISO_LIMITS="${SISO_LIMITS:-fastlocal=$(sysctl -n hw.logicalcpu)}"
+elif [[ -d /google/src ]]; then
+  export DART_RBE="${DART_RBE:-1}"
+  export SISO_LIMITS="${SISO_LIMITS:-fastlocal=8}"
+fi
+
 # Disable formatting/styling, paging, and interactive prompts for non-interactive/agent shells
 if [[ "$TERM" == "dumb" || ! -o interactive ]]; then
   export NO_COLOR=1
