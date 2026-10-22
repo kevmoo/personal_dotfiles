@@ -1,13 +1,16 @@
-#!/usr/bin/env bash
-if [[ -n "${ANTIGRAVITY_AGENT:-}${CLAUDECODE:-}${GEMINI_CLI:-}${CURSOR_AGENT:-}" ]]; then
+#!/bin/sh
+set -eu
+if [ -n "${ANTIGRAVITY_AGENT:-}${CLAUDECODE:-}${GEMINI_CLI:-}${CURSOR_AGENT:-}" ]; then
   export AI_AGENT=1
   set -- -batch -dark-mode "$@"
-elif [[ ! -t 0 || ! -t 1 || "${PAGER:-}" == "cat" ]]; then
+elif [ ! -t 0 ] || [ ! -t 1 ] || [ "${PAGER:-}" = "cat" ]; then
   set -- -dark-mode "$@"
 fi
 for bin in \
   "$HOME/.local/share/mise/installs/github-duckdb-duckdb/2/duckdb" \
   "$HOME/.local/share/mise/installs/duckdb/latest/duckdb"; do
-  [[ -x "$bin" ]] && exec "$bin" "$@"
+  if [ -x "$bin" ]; then
+    exec "$bin" "$@"
+  fi
 done
 exec "$HOME/.local/share/mise/shims/duckdb" "$@"
