@@ -12,6 +12,8 @@ if [ ! -t 0 ] || [ ! -t 1 ] || [ "${PAGER:-}" = "cat" ] || [ "$is_agent" -eq 1 ]
 fi
 
 has_theme=0
+has_batch_or_interactive=0
+has_manual=0
 has_mode_or_utility=0
 skip_next=0
 for arg in "$@"; do
@@ -26,18 +28,34 @@ for arg in "$@"; do
     -dark-mode|--dark-mode|-light-mode|--light-mode)
       has_theme=1
       ;;
+    -batch|--batch)
+      has_batch_or_interactive=1
+      ;;
+    -interactive|--interactive)
+      has_batch_or_interactive=1
+      has_mode_or_utility=1
+      ;;
     -cmd|--cmd|-c|--c|-f|--f|-init|--init|-newline|--newline|-nullvalue|--nullvalue|-s|--s|-separator|--separator|-storage-version|--storage-version)
       skip_next=1
       ;;
-    -format-file|--format-file|-manual|--manual)
+    -manual|--manual)
+      has_manual=1
       has_mode_or_utility=1
       skip_next=1
       ;;
-    -ascii|--ascii|-box|--box|-column|--column|-csv|--csv|-html|--html|-json|--json|-jsonlines|--jsonlines|-line|--line|-list|--list|-markdown|--markdown|-quote|--quote|-table|--table|-agent|--agent|-no-agent|--no-agent|-h|--h|-help|--help|-version|--version|-format|--format|-ui|--ui|-serve|--serve|-connect|--connect|-interactive|--interactive)
+    -format-file|--format-file)
+      has_mode_or_utility=1
+      skip_next=1
+      ;;
+    -ascii|--ascii|-box|--box|-column|--column|-csv|--csv|-html|--html|-json|--json|-jsonlines|--jsonlines|-line|--line|-list|--list|-markdown|--markdown|-quote|--quote|-table|--table|-agent|--agent|-no-agent|--no-agent|-h|--h|-help|--help|-version|--version|-format|--format|-ui|--ui|-serve|--serve|-connect|--connect)
       has_mode_or_utility=1
       ;;
   esac
 done
+
+if [ "$needs_theme" -eq 1 ] && [ "$has_manual" -eq 1 ] && [ "$has_batch_or_interactive" -eq 0 ]; then
+  set -- -batch "$@"
+fi
 
 if [ "$needs_theme" -eq 1 ] && [ "$has_theme" -eq 0 ]; then
   if [ "$#" -gt 0 ]; then
