@@ -1,5 +1,9 @@
 #!/bin/sh
 set -eu
+# TODO(https://github.com/duckdb/duckdb/issues/27700): DuckDB v2.0 stalls 5s
+# probing OSC 11 + DA1 in headless PTYs on --version, -json, -agent, and
+# -manual. Even after #27700 lands, keep -dark-mode for agent PTYs unless -agent
+# is passed (default DuckBox output on TTY stdout still probes terminal colors).
 if [ -n "${ANTIGRAVITY_AGENT:-}${CLAUDECODE:-}${GEMINI_CLI:-}${CURSOR_AGENT:-}" ]; then
   export AI_AGENT=1
   set -- -batch -dark-mode "$@"
