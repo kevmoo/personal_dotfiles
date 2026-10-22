@@ -1,19 +1,16 @@
-#!/usr/bin/env bash
-if [[ ! -t 0 || ! -t 1 || "${PAGER:-}" == "cat" || -n "${CLAUDECODE:-}" || -n "${GEMINI_CLI:-}" ]]; then
-  has_theme=0
-  for arg in "$@"; do
-    case "$arg" in
-      -dark-mode|--dark-mode|-light-mode|--light-mode)
-        has_theme=1
-        break
-        ;;
-    esac
-  done
-  if [[ $has_theme -eq 0 ]]; then
-    set -- -dark-mode "$@"
+#!/bin/sh
+set -eu
+if [ -n "${ANTIGRAVITY_AGENT:-}${CLAUDECODE:-}${GEMINI_CLI:-}${CURSOR_AGENT:-}" ]; then
+  export AI_AGENT=1
+  set -- -batch -dark-mode "$@"
+elif [ ! -t 0 ] || [ ! -t 1 ] || [ "${PAGER:-}" = "cat" ]; then
+  set -- -dark-mode "$@"
+fi
+for bin in \
+  "$HOME/.local/share/mise/installs/github-duckdb-duckdb/2/duckdb" \
+  "$HOME/.local/share/mise/installs/duckdb/latest/duckdb"; do
+  if [ -x "$bin" ]; then
+    exec "$bin" "$@"
   fi
-fi
-if [[ -x "$HOME/.local/share/mise/installs/duckdb/latest/duckdb" ]]; then
-  exec "$HOME/.local/share/mise/installs/duckdb/latest/duckdb" "$@"
-fi
+done
 exec "$HOME/.local/share/mise/shims/duckdb" "$@"
