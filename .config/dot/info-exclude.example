@@ -139,6 +139,7 @@
 !.agents/skills/slice-and-dice/**
 !.agents/skills/upkeep/
 !.agents/skills/upkeep/**
+!.agents/skills/wynette
 .agents/skills/**/.dart_tool/
 .agents/skills/**/pubspec.lock
 !.config/environment.d/
