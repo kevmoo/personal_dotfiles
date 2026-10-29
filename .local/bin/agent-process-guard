@@ -154,6 +154,90 @@ def _unwrap_tokens(tokens: list[str]) -> list[str]:
 _JJ_NEW_CHAIN_RE = re.compile(
     r"\bjj\s+new\s+(?:main|trunk|master)\s+(?!-|[&;|><]|$)"
 )
+_GREP_ARG_FLAGS = frozenset({
+    "-e",
+    "-f",
+    "-m",
+    "-A",
+    "-B",
+    "-C",
+    "-d",
+    "-D",
+    "--regexp",
+    "--file",
+    "--max-count",
+    "--after-context",
+    "--before-context",
+    "--context",
+    "--devices",
+    "--directories",
+    "--binary-files",
+    "--color",
+    "--colour",
+    "--include",
+    "--exclude",
+    "--exclude-from",
+    "--exclude-dir",
+    "--label",
+})
+
+
+def _is_recursive_grep(rest: list[str]) -> bool:
+  """Returns True when `grep` arguments enable recursive directory walking."""
+  skip_next = False
+  for tok in rest:
+    if skip_next:
+      skip_next = False
+      continue
+    if tok == "--":
+      break
+    if tok in _GREP_ARG_FLAGS:
+      skip_next = True
+      continue
+    if tok in (
+        "--recursive",
+        "--dereference-recursive",
+        "--directories=recurse",
+    ):
+      return True
+    if tok.startswith("-") and not tok.startswith("--") and len(tok) > 1:
+      short = tok[1:]
+      if "r" in short or "R" in short:
+        return True
+      if short[-1] in "efmABCdD":
+        skip_next = True
+  return False
+
+
+def _is_unbounded_find(rest: list[str]) -> bool:
+  """Returns True when `find` walks `/` or `$HOME` without `-maxdepth`."""
+  if "-maxdepth" in rest:
+    return False
+  paths: list[str] = []
+  skip_next = False
+  for tok in rest:
+    if skip_next:
+      skip_next = False
+      continue
+    if tok in ("-H", "-L", "-P") or tok.startswith("-O"):
+      continue
+    if tok == "-D":
+      skip_next = True
+      continue
+    if tok.startswith("-") or tok in ("(", ")", "!", ","):
+      break
+    paths.append(tok)
+  if not paths:
+    paths = ["."]
+  home = os.path.abspath(os.path.expanduser("~"))
+  cwd = os.path.abspath(os.getcwd())
+  for p in paths:
+    norm = p.rstrip("/") or "/"
+    if norm in ("/", "~", "$HOME", "${HOME}", home):
+      return True
+    if p in (".", "./") and cwd in ("/", home):
+      return True
+  return False
 _FILE_MD_LINK_RE = re.compile(
     r"\[(?:[^\[\]]|\[[^\]]*\])*\]\(file:///[^\)\s]+\)"
 )
@@ -174,7 +258,11 @@ def _check_run_command(args: dict) -> tuple[bool, str]:
       or ""
   )
   if not isinstance(cmd, str) or (
-      "pkill" not in cmd and "killall" not in cmd and "jj" not in cmd
+      "pkill" not in cmd
+      and "killall" not in cmd
+      and "jj" not in cmd
+      and "grep" not in cmd
+      and "find" not in cmd
   ):
     return True, ""
 
@@ -197,6 +285,35 @@ def _check_run_command(args: dict) -> tuple[bool, str]:
           if not ok:
             return False, reason
           break
+      continue
+
+    if exe == "grep" and "GREP_WRAPPER_RAW=1" not in raw_tokens:
+      if _is_recursive_grep(rest):
+        return (
+            False,
+            (
+                "🛑 Blocked recursive `grep -r`/`-R` in shell command.\n"
+                "Recursive `grep` walks `.git/`, `.dart_tool/`,"
+                " `node_modules/`, and virtual filesystems (and hangs"
+                " `| head -n N` when matches < N).\nUse `rg <pattern> <path>`"
+                " (ripgrep) for fast `.gitignore`-aware local search, or use"
+                " your workspace's indexed code search tool."
+            ),
+        )
+      continue
+
+    if exe == "find" and "FIND_WRAPPER_RAW=1" not in raw_tokens:
+      if _is_unbounded_find(rest):
+        return (
+            False,
+            (
+                "🛑 Blocked unbounded `find` over `/` or `$HOME` without"
+                " `-maxdepth`.\nUse `rg --files <subdir>` (or"
+                " `rg --files -g '*.ext' <subdir>`), scope `find` to a"
+                " specific subdirectory (`find ~/github/<repo> ...`), or pass"
+                " `-maxdepth 2`."
+            ),
+        )
       continue
 
     if exe == "jj":

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Smart self-compiling runner for sidequest CLI tool
+set -euo pipefail
+
+SKILL_DIR="${HOME}/github/kevmoo/kevmoo_skills/skills/sidequest"
+if [[ ! -d "${SKILL_DIR}" ]]; then
+  SKILL_DIR="${HOME}/.agents/skills/sidequest"
+fi
+
+if [[ ! -f "${SKILL_DIR}/bin/sidequest.dart" ]]; then
+  echo "[ERROR] Cannot locate sidequest.dart under ${SKILL_DIR}" >&2
+  exit 1
+fi
+
+CACHE_DIR="${HOME}/.cache/sidequest"
+CACHE_BIN="${CACHE_DIR}/sidequest_bin"
+LAST_BUILD="${CACHE_DIR}/.last_build"
+
+# Recompile if binary is missing, last_build marker is missing, or any .dart file is newer.
+# Compile with CWD set to CACHE_DIR so invoking sidequest from a workspace that forbids
+# standalone Dart commands never trips working-directory guards.
+if [[ ! -x "${CACHE_BIN}" || ! -f "${LAST_BUILD}" || \
+      -n $(find "${SKILL_DIR}" -type f -name "*.dart" -newer "${LAST_BUILD}" -print -quit 2>/dev/null) ]]; then
+  mkdir -p "${CACHE_DIR}"
+  (
+    cd "${CACHE_DIR}"
+    dart compile exe "${SKILL_DIR}/bin/sidequest.dart" -o "${CACHE_BIN}" >/dev/null
+  )
+  touch "${LAST_BUILD}"
+fi
+
+exec "${CACHE_BIN}" "$@"

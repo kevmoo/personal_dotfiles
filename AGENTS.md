@@ -1,15 +1,13 @@
 # Global Agent Instructions
 
-Shared by all coding agents (Claude Code, Gemini CLI, IDE agents) via `~/AGENTS.md`.
-Hard boundaries first; working style after.
+Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
 
 ## Version Control & Outward Boundaries
 
 - **Staging & Worktrees (Autonomous)**: Auto-run branching, `git commit`,
   `git push [remote] <feature-branch>`, formatters, and
   `~/fog/dash-okf/scripts/okf_tripwire.sh`. Use `new-worktree`
-  (`_[repo]-[branch]`) in mixed doc/code repos (`private_life`) to keep `main`
-  clean.
+  (`_[repo]-[branch]`) in mixed repos (`private_life`) to keep `main` clean.
 - **Trunk Rules**: NEVER push code/scripts/configs/tests directly to
   `main`/`master`/`trunk`. Always use feature branch + PR (`gh pr create`) +
   green CI; if asked to push to `main`, gate via `ask_question` with
@@ -33,27 +31,26 @@ Hard boundaries first; working style after.
 ## Interaction & Formatting
 
 - **Structured Questions (`ask_question`) & Artifacts**: Use for 1-word
-  confirmations (`(Recommended) Yes, ...` + `No, cancel/pause`). Emit a `3–8`
-  bullet visible context summary + clickable links in the **same** step as
-  `ask_question` (prevents collapsed `"Worked for Xs"` modals), and embed
-  clickable `[report.md](file:///...)` / `[#N](https://...)` links inside
-  `ask_question`. Set `RequestFeedback: false` on `*_report.md` and
+  confirmations (`(Recommended) Yes, ...` + `No, cancel/pause`). Emit `3–8`
+  visible context bullets + clickable links in the **same** step as
+  `ask_question`, and link `[report.md](file:///...)` / `[#N](https://...)`
+  inside `ask_question`. Set `RequestFeedback: false` on `*_report.md` and
   `*_brainstorm.md`. No modal traps on open menus; honor declined bounds.
 - **Output & Links**: State intent in 1 sentence before multi-step work; skip
   tool narration and filler. Format all `file://`, `https://`, CLs, and PRs as
   clickable links (`[src/main.dart](file:///...)`, including in `ask_question`);
   never wrap URLs in backticks, and keep `**`/`` ` `` inside `[...]`.
-- **Conclusion-First Bullets (Chat & Artifacts)**: Start every top-level bullet
-  with a bold declarative human takeaway sentence with **no parentheticals** or
-  raw metric labels (`**Agents read both Markdown and JSON, which is redundant.**`,
-  never `**1:1 Dual-Read Tax (153 vs. 151):**`). Nest exact data, ratios, links,
-  parentheticals, and causal mechanics (`...because X`) in sub-bullets.
+- **Conclusion-First Bullets (Chat & Artifacts)**: Start top-level bullets with
+  a bold declarative takeaway with **no parentheticals** or metric labels
+  (`**Agents read both Markdown and JSON, which is redundant.**`, never
+  `**1:1 Dual-Read Tax (153 vs. 151):**`). Nest metrics, links, parentheticals,
+  and causal mechanics (`...because X`) in sub-bullets.
 - **Tables & Platform Formatting**: One table row per physical line.
   - **GitHub (`~/github`, Prettier `mdf`)**: Separate `> [!NOTE]` headers from
     body with an empty `>` line; never emit `<!-- mdformat off/on -->` or
     `[TOC]` in `~/github` or `--markdown` outputs.
-  - **Piper (`mdformat`)**: Wrap tables >80 cols in
-    `<!-- mdformat off -->` ... `<!-- mdformat on -->`.
+  - **Piper (`mdformat`)**: Wrap tables >80 cols in `<!-- mdformat off -->` ...
+    `<!-- mdformat on -->`.
 - **CLI & Heredocs**: Pass `--yes`, `PAGER=cat`, `GIT_EDITOR=true`,
   `EDITOR=true`, and timeouts (`timeout -k 5s 45s`, `gtimeout`,
   `dart test --timeout 30s`), avoiding short OS timeouts on mutating VCS
@@ -80,13 +77,11 @@ Hard boundaries first; working style after.
   imports/variables from your change only.
 - **Empirical Dogfooding**: Always `view_file` local state in the active session
   before editing (including pinned `<user_rules>` like `preferences.md`).
-  1. **Auto-Run Trivial Read-Only Checks (`~0 Risk` & `<= 15s`)**: Auto-run
-     `--help`, `--dry-run`, `status`, `list`, `view`, `readonly`, `scan`,
-     `SELECT`, or `~/.local/bin/` shims after formatters/`jj fix`, citing
-     command + output.
-  2. **Offer Non-Trivial Read-Only Checks (`~0 Risk` & `> 15s` or Live Sweep)**:
-     Offer `evalin run --dry-run`, multi-repo sweeps, or browser matrix probes
-     via `ask_question` before landing.
+  1. **Auto-Run (`~0 Risk`, `<= 15s`)**: Run `--help`, `--dry-run`, `status`,
+     `list`, `view`, `readonly`, `scan`, `SELECT`, or `~/.local/bin/` shims
+     after formatters/`jj fix`, citing command + output.
+  2. **Offer (`~0 Risk`, `> 15s` or Live Sweep)**: Offer `evalin run --dry-run`,
+     multi-repo sweeps, or browser matrix probes via `ask_question` pre-landing.
 - **Benchmarks ("Before vs. After First")**: Capture unmodified baseline first.
   Lead with target delta (`Pre-Change`, `Post-Change`, `Absolute Delta`,
   `Delta (%)`, `Speedup Multiplier`), then competitor tables; highlight
@@ -97,17 +92,16 @@ Hard boundaries first; working style after.
 
 ## Epistemic Grounding
 
-- **Three-Bucket Separation (Natural Tense/Structure, No Literal `[...]` Tags in
-  Docs)**:
-  1. **Shipped / Verified Fact** (`shipped`, `landed`, `measured`): Requires
+- **Three-Bucket Separation (Natural Tense, No Literal `[...]` Tags in Docs)**:
+  1. **Shipped / Verified** (`shipped`, `landed`, `measured`): Requires
      `*submitted*` CL, `MERGED` PR, published doc, or empirical benchmark.
-  2. **Committed Plan / In-Flight** (`in review`, `staging`, `targeting Q4`):
+  2. **Committed / In-Flight** (`in review`, `staging`, `targeting Q4`):
      Requires open handle (`#XXXX` in personal notes; `b/`, `*pending*` CL, or
      open PR in shared docs).
   3. **Speculation / Proposal** (`proposed`, `projected`, `option to`): Isolate
      in `Proposals & Open Questions` or a brain artifact.
 - **Verb/Author Binding**: Verify `*submitted*`/`MERGED` state and provenance
-  before using accomplishment verbs (`shipped`, `built`, `authored`, `resolved`,
+  before accomplishment verbs (`shipped`, `built`, `authored`, `resolved`,
   `drove`, `spearheaded`): `[YOUR_WORK]` (authored/driven by `kevmoo`),
   `[TEAM_CONTRIB]` (reviewed/guided/unblocked by `kevmoo`), `[ECOSYSTEM_REF]`
   (teammate/external, never claim as user deliverable).
@@ -115,19 +109,20 @@ Hard boundaries first; working style after.
   `SCORECARD.md`, `pm-orient`, and open Dolt tasks as plans unless backed by a
   `CLOSED` task + `*submitted*`/`MERGED` artifact; exclude
   `experimental/users/kevmoo/` PM-OS bookkeeping from impact reports. Keep
-  `~/memory/default/projects/*.md` `<= 25 lines` and `<= 2,500 bytes` (`<= 200
-chars/line`): store only Piper/Dolt pointers, `OPEN`/`DRAFT` items prefixed
-  with `[YOUR_WORK]`/`[TEAM_CONTRIB]`/`[ECOSYSTEM_REF]`, and durable gotchas
-  (never landed CL/PR changelogs).
+  `~/memory/default/projects/*.md` `<= 25 lines` and `<= 2,500 bytes`
+  (`<= 200 chars/line`): store only Piper/Dolt pointers, `OPEN`/`DRAFT` items
+  prefixed with `[YOUR_WORK]`/`[TEAM_CONTRIB]`/`[ECOSYSTEM_REF]`, and durable
+  gotchas.
 
 ## GitHub PRs & Workspace
 
 - **Pre-PR CI Parity (`pr-check`) & Push Hygiene**: Run `kscripts pr-check`
-  before `gh pr create` in `~/github/kevmoo/*` (`gh pr create -f` on
-  single-commit branches: imperative subject `<=70 chars`, bulleted body,
-  `Fixes #123`). Present a `<= 50`-line pre-flight summary before PR/CL
-  creation. Run `dart format` before `--no-verify` commits. If a push dismisses
-  an `APPROVED` review, check
+  before `gh pr create` in `~/github/kevmoo/*` (`gh pr create -f` on 1-commit
+  branches: imperative subject `<=70 chars`, bulleted body, `Fixes #123`). In
+  upstream repos with `.github/PULL_REQUEST_TEMPLATE.md`, preserve template
+  checklist items (AI disclosure, issue links) verbatim. Present a `<= 50`-line
+  pre-flight summary before PR/CL creation, and run `dart format` before
+  `--no-verify` commits. If a push dismisses an `APPROVED` review, check
   `gh pr view --json reviewDecision,latestReviews,reviewRequests` and offer
   `kscripts pr-triage re-request <login>`.
 - **Outbound Artifacts (issues, PRs, CLs, bugs, chat, email)**: Write for the

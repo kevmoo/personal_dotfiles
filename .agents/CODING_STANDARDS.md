@@ -60,6 +60,16 @@
    (omit `--target` when attaching a GitHub Release to an already-pushed tag).
    `gh release create` atomically creates both the formatted GitHub Release and
    the remote tag that triggers `publish.yaml`.
+6. **Structured `CHANGELOG.md` Edits, Sibling Constraints & Pre-Publish
+   Dry-Run**: Edit `CHANGELOG.md` strictly with structured file-edit tools
+   (never `sed` or `awk`, which corrupt blank-line spacing around `##` headings
+   and bullets) and run `mdf`. In monorepo workspaces, keep sibling package
+   dependency bounds at the lowest compatible `^min` rather than bumping to an
+   unreleased sibling version (which forces workspace-wide
+   `dependency_overrides:` and breaks standalone resolution). Before opening a
+   release PR or updating migration/golden `.expect` fixtures, verify fixture
+   `analysis_options.yaml` lint parity and run `dart pub publish --dry-run`
+   (plus `kscripts pr-check` in personal repos).
 
 ## Architecture: "Deep Externally, Pure Internally"
 
@@ -129,6 +139,13 @@
 
 <!-- END_SPOT_DEF: dart-load-bearing-boundaries -->
 
+- **Transitive Public API Reachability (`lib/src/` Pruning)**: Before deleting,
+  renaming, or privatizing a declaration in `lib/src/` (especially in packages
+  without `api.txt`), trace transitive return types, parameter types, type
+  bounds, and superinterfaces of all exported `lib/` APIs—a `lib/src/` type
+  exposed by a public getter or method signature is part of the public consumer
+  surface even without a direct `export` directive.
+
 <!-- SPOT_DEF: dart-inquisitor-dismissal-filters -->
 
 - **Dart Inquisitorial Review Dismissal Filters (`[DISMISSED: DART_THEATER]`)**:
@@ -146,6 +163,12 @@
     record/tuple of mutated local state, or would be flagged by
     `cognitive_complexity:shallow` (`SAFE_INLINE`, `MICRO_HELPER`, `SIG_HEAVY`,
     `LOW_COMPLEXITY_PAYOFF`).
+  - **Modern Dart 3.14+ Syntax (Primary Constructors)**: Never flag valid Dart
+    `3.14+` primary constructor declarations (`class Foo(this.x)`,
+    `final class _Foo(final T x)`, `final class const _Bar()`,
+    `enum Kind(this.label)`) or `new(...)` / `const new(...)` constructor heads
+    as syntax errors when the package SDK constraint is `>= 3.14.0` (or the
+    `primary-constructors` experiment is enabled).
   - **Foreign-Language Idiom & Unverified Linter Duplication**: Never recommend
     `kConstantName` (instead of `lowerCamelCase`), explicit `break;` inside Dart
     3 `switch` cases, `sprintf`/string builders for single-expression string
@@ -178,13 +201,14 @@
   in-memory databases or loopback `HttpServer` instances for services,
   `package:http/testing.dart` (`MockClient`) for HTTP, hand-written fakes/stubs
   for custom interfaces, and `@TestOn('browser')` for DOM and JS/Wasm interop.
-- **Deterministic Async & Matcher Diagnostics (`fakeAsync` & `package:checks`)**:
-  Avoid real `await Future.delayed(...)` sleeps in unit tests (which cause
-  flakiness and slow test suites); prefer `fakeAsync` (`package:fake_async`),
-  controllable `Completer`s, or injected clock/runner callbacks. Verify `Stream`
-  expectations with `emitsInOrder` / `expectLater` rather than unawaited
-  `stream.listen(expectAsync1(...))` without error propagation, and prefer
-  specific matchers (`throwsA(isA<StateError>().having((e) => e.message, 'message', contains('...')))`,
+- **Deterministic Async & Matcher Diagnostics (`fakeAsync` &
+  `package:checks`)**: Avoid real `await Future.delayed(...)` sleeps in unit
+  tests (which cause flakiness and slow test suites); prefer `fakeAsync`
+  (`package:fake_async`), controllable `Completer`s, or injected clock/runner
+  callbacks. Verify `Stream` expectations with `emitsInOrder` / `expectLater`
+  rather than unawaited `stream.listen(expectAsync1(...))` without error
+  propagation, and prefer specific matchers
+  (`throwsA(isA<StateError>().having((e) => e.message, 'message', contains('...')))`,
   `completion(...)`, `unorderedEquals(...)`) over `expect(x == y, isTrue)` or
   manual `try { ...; fail('...'); } catch (e) {}` blocks.
 
@@ -234,6 +258,19 @@
 - **Min-SDK Lower-Bound Gating (`Feature.<name>.releaseVersion`)**: Gate tests
   for new language features on `Feature.<name>.releaseVersion`, never raw
   `Platform.version` string matching.
+- **Red-on-Base Regression Verification**: For bug fixes and fuzzer regressions,
+  run the new regression test against the unpatched base code (via `git stash`
+  or before applying the production fix) to verify it actually fails on the
+  buggy code path before confirming it passes with the fix.
+- **Value Equality (`==` / `hashCode`) Symmetry & Clean Test Descriptions**:
+  When implementing or testing custom `==` across subtypes or wrappers (such as
+  `SourceSpan` / `FileSpan`), assert symmetric equality (`a == b` and `b == a`),
+  `a.hashCode == b.hashCode`, and explicit field values that base `==` may
+  ignore. Never embed internal task, ticket, or bookmark IDs in test names.
+- **Post-Merge Batch Verification**: After landing multiple or stacked PRs
+  (especially touching `CHANGELOG.md` or shared modules), verify every PR
+  reached `state == MERGED`, fast-forward local `main`/`master`, and run the
+  full `dart test` suite on merged trunk before starting release prep.
 
 ## Dart & CLI Design Defaults
 
@@ -256,9 +293,24 @@
   (`HttpServer.bind`, `ServerSocket`, temp directory), wrap any post-bind setup
   in `try` / `catch` (`await server.close(force: true); rethrow;`) or `try` /
   `finally` so setup exceptions never leak open sockets or hang the test runner.
+  When tearing down a `StreamController` alongside an upstream
+  `StreamSubscription`, chain or await cancellation before closing
+  (`subscription.cancel().catchError(controller.addError).whenComplete(controller.close)`).
   Flush and close open file streams (`await sink.flush(); await sink.close();`)
   before calling `dart:io` `exit(code)`, which terminates the VM immediately
   without draining buffered async writes.
+- **Analyzer Ignore Scope & Setter/Getter Hygiene**: Use per-line
+  `// ignore: <lint>` for `1–3` occurrences in a file so exemptions stay
+  auditable at each call site, and `// ignore_for_file: <lint>` when a file has
+  `10+` occurrences. Never add `// ignore: avoid_setters_without_getters` when
+  removing a getter—convert the orphaned setter to a method or keep/fix the
+  getter.
+- **Branch-Tail Hoisting & Multi-Line `if` Formatting**: Hoist identical
+  trailing side effects (such as `file.writeAsStringSync(...)`) out of `if` /
+  `else` branches, cache repeated platform/environment map lookups in local
+  `final` variables, and place explanatory comments **above** multi-line
+  `if (...)` statements rather than mid-condition where `dart format` unindents
+  them.
 - **Public OSS Dartdoc & Comment Hygiene**: Omit internal corporate shortlinks
   (`b/`, `cl/`, `go/`) and local task handles (`#XXXX`) from public OSS dartdoc,
   comments, and commit messages—internal links are dead text to external
