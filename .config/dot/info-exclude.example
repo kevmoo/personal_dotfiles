@@ -61,6 +61,7 @@
 !.local/bin/relay-gh
 !.local/bin/relay-whoami
 !.local/bin/repo-align
+!.local/bin/sidequest
 !.local/bin/tighten
 !.local/bin/upkeep
 !.claude/

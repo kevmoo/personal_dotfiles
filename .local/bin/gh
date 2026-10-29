@@ -6,8 +6,11 @@
 #   3. Prescriptive FuzzyCommandRunner-style hints on common agent mistakes
 #   4. Normalizes `gh pr checks` Exit Code 8 (pending) -> Exit 0 with explicit status & next-step guidance
 #   5. Bounds interactive `--watch` / `-w` and `gh run watch` to 180s across Linux and macOS
+#   6. Defaults `GH_PAGER=cat` so non-TTY/agent invocations never block on interactive pagers
 
 set -uo pipefail
+
+export GH_PAGER="${GH_PAGER:-cat}"
 
 # Resolve real gh binary on PATH (excluding this wrapper via inode identity -ef)
 REAL_GH="${GH_WRAPPER_REAL_GH:-}"
@@ -30,9 +33,33 @@ if [[ "${GH_WRAPPER_RAW:-0}" == "1" ]]; then
   exec "$REAL_GH" "$@"
 fi
 
-# Helper: resolve GitHub <owner>/<repo> from git origin remote if inside a git repo
+# Normalize [HOST/]OWNER/REPO or GitHub remote URL into <owner>/<repo>
+normalize_repo_slug() {
+  local raw="${1%.git}"
+  raw="${raw#https://github.com/}"
+  raw="${raw#http://github.com/}"
+  raw="${raw#ssh://git@github.com/}"
+  raw="${raw#git@github.com:}"
+  raw="${raw#github.com/}"
+  echo "$raw"
+}
+
+# Helper: resolve default GitHub <owner>/<repo> (GH_REPO -> gh-resolved base remote -> origin)
 resolve_github_repo() {
-  local origin_url
+  if [[ -n "${GH_REPO:-}" ]]; then
+    normalize_repo_slug "$GH_REPO"
+    return
+  fi
+  local resolved_key remote_name remote_url origin_url
+  resolved_key=$(git config --local --get-regexp '^remote\..*\.gh-resolved$' '^base$' 2>/dev/null | awk 'NR==1 {print $1}' || true)
+  if [[ "$resolved_key" =~ ^remote\.(.+)\.gh-resolved$ ]]; then
+    remote_name="${BASH_REMATCH[1]}"
+    remote_url=$(git remote get-url "$remote_name" 2>/dev/null || true)
+    if [[ "$remote_url" =~ github\.com[:/]([^/]+/[^/]+)$ ]]; then
+      echo "${BASH_REMATCH[1]%.git}"
+      return
+    fi
+  fi
   origin_url=$(git remote get-url origin 2>/dev/null || true)
   if [[ "$origin_url" =~ github\.com[:/]([^/]+/[^/]+)$ ]]; then
     local slug="${BASH_REMATCH[1]}"
@@ -40,27 +67,42 @@ resolve_github_repo() {
   fi
 }
 
-# Extract positional subcommands (skipping global flags like -R/--repo/-H/--hostname)
+# Extract positional subcommands and explicit -R/--repo target (stopping option scan at --)
 sub1=""
 sub2=""
-skip_next=0
+explicit_repo=""
+expect_arg=""
+end_of_opts=0
 for arg in "$@"; do
-  if [[ "$skip_next" -eq 1 ]]; then
-    skip_next=0
+  if [[ -n "$expect_arg" ]]; then
+    if [[ "$expect_arg" == "repo" ]]; then
+      explicit_repo="$(normalize_repo_slug "$arg")"
+    fi
+    expect_arg=""
     continue
   fi
-  case "$arg" in
-    -R|--repo|-H|--hostname) skip_next=1; continue ;;
-    -*) continue ;;
-    *)
-      if [[ -z "$sub1" ]]; then
-        sub1="$arg"
-      elif [[ -z "$sub2" ]]; then
-        sub2="$arg"
-        break
-      fi
-      ;;
-  esac
+  if [[ "$end_of_opts" -eq 0 ]]; then
+    case "$arg" in
+      --) end_of_opts=1; continue ;;
+      -R|--repo) expect_arg="repo"; continue ;;
+      -R=*|--repo=*) explicit_repo="$(normalize_repo_slug "${arg#*=}")"; continue ;;
+      -R?*) explicit_repo="$(normalize_repo_slug "${arg#-R}")"; continue ;;
+      --hostname) expect_arg="skip"; continue ;;
+      --hostname=*) continue ;;
+      -b|--body|-F|--body-file|-t|--title|-B|--base|-H|--head|-l|--label|-a|--assignee|-r|--reviewer|-p|--project|-m|--milestone|-T|--template)
+        if [[ -n "$sub1" ]]; then
+          expect_arg="skip"
+        fi
+        continue
+        ;;
+      -*) continue ;;
+    esac
+  fi
+  if [[ -z "$sub1" ]]; then
+    sub1="$arg"
+  elif [[ -z "$sub2" ]]; then
+    sub2="$arg"
+  fi
 done
 
 # Bound interactive `--watch` / `pr checks -w` and `run watch` invocations to 180s
@@ -101,7 +143,7 @@ fi
 
 # Deterministic pre-PR local CI parity gate (`pr-check`) for `gh pr create` in `kevmoo/*` repos
 if [[ "$sub1" == "pr" && "$sub2" == "create" && "${GH_SKIP_PR_CHECK:-0}" != "1" ]]; then
-  repo_slug="$(resolve_github_repo)"
+  repo_slug="${explicit_repo:-$(resolve_github_repo)}"
   if [[ "$repo_slug" == kevmoo/* && "$repo_slug" != "kevmoo/personal_dotfiles" && "$repo_slug" != "kevmoo/agent-relay" ]]; then
     PR_CHECK_BIN="$(command -v pr-check 2>/dev/null || echo "$HOME/.local/bin/pr-check")"
     if [[ -x "$PR_CHECK_BIN" ]]; then
