@@ -32,6 +32,19 @@ Audit what was deleted:
   dropped?
 - Were fallback branches removed prematurely before downstream consumers
   migrated?
+- **Reflection-Based Drift & Sync Tests (`dart:mirrors` Removal)**: When a diff
+  removes `dart:mirrors` reflection tests that guard against API or
+  reserved-name drift (such as checking newly added `Object` or SDK mixin
+  members), prefer migrating the check to static `package:analyzer`
+  (`AnalysisContextCollection`) inspection whenever `analyzer` is already in the
+  transitive dev dependency graph (for example via `dart_style` or `build_test`)
+  rather than deleting coverage outright.
+- **Shared Contract Helpers Across Delegating / Wrapper Subtypes**: When
+  replacing reflection-based test harnesses or refactoring collection wrapper
+  tests, verify that shared contract-helper calls (such as `testIterable()`)
+  remain wired up on every concrete delegating subtype (`DelegatingList`,
+  `DelegatingSet`, `DelegatingQueue`) rather than assuming private base-class
+  inheritance covers them.
 
 ### 3. Cross-File Tracer
 
@@ -187,6 +200,17 @@ as `[SUGGESTION]`:
   only the happy path?
 - Does every bug fix include a deterministic regression test reproducing the
   original issue?
+- **Flutter Web Test Bundling vs. `@TestOn('vm')`**: Unlike
+  `dart test -p chrome`, `flutter test --platform=chrome` compiles all
+  discovered `*_test.dart` files into a single synthetic web entrypoint before
+  `package:test` evaluates `@TestOn('vm')`. Verify that Flutter package tests
+  importing `dart:io` or `dart:ffi` are isolated by directory or explicit CLI
+  target paths (such as `test/vm/` vs. `test/web/`) or conditional imports
+  rather than relying on `@TestOn('vm')` alone.
+- **Fixture Variable Shadowing in Refactored Suites**: When moving or
+  consolidating test blocks, check for local declarations (`final server = ...`,
+  `var client = ...`) that shadow suite-level `setUp` variables and leave
+  `tearDown` cleaning up an uninitialized or stale handle.
 
 ### 8. Reuse
 
@@ -229,20 +253,19 @@ The subtractive lens (eliminate over-engineering):
 - **Internal Decomposition & Shallow-Helper Guardrail (`lib/src/`)**: **Stop
   rule:** only declarations above `cognitive_complexity` 15 (production) or 40
   (`_test.dart`) are work items; stop once the max is `<= 15` (Target Zone
-  `8–15`, not `0`). When decomposing, forbid stateful `_Populator` / `_Runner`
-  helper classes that mutate caller maps/sets in-place; require **file-private
-  pure functions (`_computeX(input) -> output`)** with zero out-parameters and
-  `<= 4` parameters (`<= 3` preferred, `sliceScoreAtRoot >= 3`). Flag
-  single-caller (`FanIn == 1`, `TestFanIn == 0`) pass-through helpers
-  (`cognitive_complexity:shallow`: high-arity `>= 5` parameters, micro-helpers
-  `< 5` body lines and `CC <= 1`, `SignatureLines >= BodyLines`, or
-  `CROSS_FILE_SINGLE_CALLER`): re-inline a `SAFE_INLINE` helper when
-  `CallerCCAfter <= 15` and it is a pass-through with no same-shape siblings and
-  no meaningful domain contract; when `CallerCCAfter > 15` and `HelperCC <= 4`
-  (`FLATTEN_AND_INLINE`), flatten the caller in place instead of
-  bucket-brigading local variables across helper signatures. Benchmark hot
-  per-element loops before splitting them; prefer a per-declaration
-  `// cognitive_complexity:ignore` with a reason comment. Details: the
+  `8–15`, not `0`). On borderline functions (`CC 16–22`), exhaust in-place and
+  cross-method simplifications first (shared `FanIn >= 2` helpers, promoting
+  multi-branch nested closures, coalescing identical-return branches, folding
+  twin blocks into 2-element loops, hoisting outer-scope loop invariants) and
+  never extract single-caller helpers at `callNestingDepth == 0` (`0` net file
+  CC saved) or asymmetrically extract one arm of a peer dispatch. When
+  decomposing, forbid stateful `_Populator` / `_Runner` classes that mutate
+  caller collections in-place; require **file-private pure functions
+  (`_computeX(input) -> output`)** with zero out-parameters and `<= 4`
+  parameters (`<= 3` preferred, `sliceScoreAtRoot >= 3`). Treat
+  `cognitive_complexity:shallow` findings as advisory; benchmark hot per-element
+  inner loops (2D matrix/grid, pixel, byte, token kernels) and keep them inline
+  with `// cognitive_complexity:ignore <reason>`. Details: the
   `dart-cognitive-complexity` skill.
 
 <!-- END SPOT: dart-complexity-and-helpers -->
@@ -350,6 +373,12 @@ Filter every candidate finding against these five pathologies:
     record/tuple of mutated local state, or would be flagged by
     `cognitive_complexity:shallow` (`SAFE_INLINE`, `MICRO_HELPER`, `SIG_HEAVY`,
     `LOW_COMPLEXITY_PAYOFF`).
+  - **Modern Dart 3.14+ Syntax (Primary Constructors)**: Never flag valid Dart
+    `3.14+` primary constructor declarations (`class Foo(this.x)`,
+    `final class _Foo(final T x)`, `final class const _Bar()`,
+    `enum Kind(this.label)`) or `new(...)` / `const new(...)` constructor heads
+    as syntax errors when the package SDK constraint is `>= 3.14.0` (or the
+    `primary-constructors` experiment is enabled).
   - **Foreign-Language Idiom & Unverified Linter Duplication**: Never recommend
     `kConstantName` (instead of `lowerCamelCase`), explicit `break;` inside Dart
     3 `switch` cases, `sprintf`/string builders for single-expression string
