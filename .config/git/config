@@ -16,4 +16,5 @@
 	helper = 
 	helper = !gh auth git-credential
 [init]
-	defaultRefFormat = files
+	# Git 3.0 default; depot_tools git_cache pins its own mirrors since a3b8ad62a.
+	defaultRefFormat = reftable
