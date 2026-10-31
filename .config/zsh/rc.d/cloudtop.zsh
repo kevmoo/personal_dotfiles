@@ -23,5 +23,4 @@ fi
 # 4. depot_tools Shared Git Cache
 # ---------------------------------------------------------
 export GIT_CACHE_PATH="$HOME/.cache/git_cache"
-export GIT_DEFAULT_REF_FORMAT=files
 
