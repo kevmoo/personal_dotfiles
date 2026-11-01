@@ -1,10 +1,10 @@
 # Agent skills (vendored / synced)
 
 The skill folders under [`skills/`](./skills/) are **not authored here**. They
-are vendored copies **synced from upstream repositories** by the [`skills`
-CLI](https://www.npmjs.com/package/skills) (`npx skills`). This directory is
-tracked in the personal dotfiles repo so the same set of skills follows me to
-every machine.
+are vendored copies **synced from upstream repositories** by the
+[`skills` CLI](https://www.npmjs.com/package/skills) (`npx skills`). This
+directory is tracked in the personal dotfiles repo so the same set of skills
+follows me to every machine.
 
 ## Source of truth: `.skill-lock.json`
 
@@ -33,6 +33,7 @@ npx skills update -g  # pull upstream updates
 it as a probe.
 
 > [!WARNING]
+>
 > **Do not hand-edit anything under `skills/`.** Those files are managed copies
 > and will be **overwritten on the next sync**. To change a skill, edit its
 > **upstream** repo (see `.skill-lock.json` for the source), then re-sync.
