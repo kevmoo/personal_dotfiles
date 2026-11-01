@@ -121,6 +121,32 @@ class DotfilesUpkeeper implements Upkeeper {
     );
   }
 
+  /// Whether every locally modified file already matches upstream, as happens
+  /// when another machine pushed the same skills sync.
+  ///
+  /// Only then is `--autostash` safe: on a real conflict it exits 0 and leaves
+  /// conflict markers in `$HOME`, so other local edits must stop the pull.
+  Future<bool> _localChangesMatchUpstream() async {
+    final home = _homeDir();
+    Future<ProcessResult> git(List<String> args) => Process.run('git', [
+      '--git-dir=${_gitDir()}',
+      '--work-tree=$home',
+      ...args,
+    ], workingDirectory: home);
+
+    await git(['fetch']);
+    final changed = await git(['diff', '--name-only', 'HEAD']);
+    final paths = changed.stdout
+        .toString()
+        .split('\n')
+        .where((path) => path.isNotEmpty)
+        .toList();
+    if (changed.exitCode != 0 || paths.isEmpty) return false;
+
+    final upstreamDiff = await git(['diff', '--quiet', '@{u}', '--', ...paths]);
+    return upstreamDiff.exitCode == 0;
+  }
+
   @override
   Future<UpkeepResult> update({bool verbose = false}) async {
     try {
@@ -133,7 +159,8 @@ class DotfilesUpkeeper implements Upkeeper {
         '--work-tree=$home',
         'pull',
         '--rebase',
-      ]);
+        if (await _localChangesMatchUpstream()) '--autostash',
+      ], workingDirectory: home);
 
       if (pullProc.exitCode != 0) {
         return UpkeepResult(
