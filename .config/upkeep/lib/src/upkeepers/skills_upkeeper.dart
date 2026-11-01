@@ -9,8 +9,10 @@ import 'upkeeper.dart';
 
 class SkillsUpkeeper implements Upkeeper {
   final String? homeDirOverride;
+  final ProcessRunner _processRunner;
 
-  SkillsUpkeeper({this.homeDirOverride});
+  SkillsUpkeeper({this.homeDirOverride, ProcessRunner? processRunner})
+    : _processRunner = processRunner ?? Process.run;
 
   @override
   String get id => 'skills';
@@ -40,58 +42,25 @@ class SkillsUpkeeper implements Upkeeper {
   Future<UpkeepStatus> check() async {
     try {
       final home = _homeDir();
-      final result = await Process.run('npx', ['skills', 'check']);
-      final dirty = await uncommittedSkillFiles(home);
-
-      if (result.exitCode != 0) {
-        // Fallback: check if .agents directory exists
-        final agentsDir = Directory(p.join(home, '.agents'));
-        if (!agentsDir.existsSync()) {
-          return UpkeepStatus(
-            upkeeperId: id,
-            displayName: displayName,
-            state: UpkeepState.skipped,
-            summary: 'No .agents directory found',
-          );
-        }
-
-        if (needsReconciliation(home)) {
-          return UpkeepStatus(
-            upkeeperId: id,
-            displayName: displayName,
-            state: UpkeepState.outdated,
-            summary: 'Agent skills symlinks need reconciliation',
-          );
-        }
-
-        if (dirty.isNotEmpty) {
-          return UpkeepStatus(
-            upkeeperId: id,
-            displayName: displayName,
-            state: UpkeepState.needsTriage,
-            summary:
-                'Agent skills have uncommitted changes in ~/.dotfiles (${dirty.length} file(s))',
-            details: dirty,
-            actionHint: 'dot status',
-          );
-        }
-
+      if (!Directory(p.join(home, '.agents')).existsSync()) {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
-          state: UpkeepState.upToDate,
-          summary: 'Agent skills present (check skipped)',
+          state: UpkeepState.skipped,
+          summary: 'No .agents directory found',
         );
       }
 
-      final output = result.stdout.toString().trim();
-      if (output.contains('outdated') || output.contains('update available')) {
+      final stale = await staleSkills(home);
+      final dirty = await uncommittedSkillFiles(home);
+
+      if (stale != null && stale.isNotEmpty) {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.outdated,
           summary: 'Agent skills have updates available',
-          details: [output, ...dirty],
+          details: [...stale, ...dirty],
         );
       }
 
@@ -121,7 +90,9 @@ class SkillsUpkeeper implements Upkeeper {
         upkeeperId: id,
         displayName: displayName,
         state: UpkeepState.upToDate,
-        summary: 'Agent skills up to date',
+        summary: stale == null
+            ? 'Agent skills present (check skipped)'
+            : 'Agent skills up to date',
       );
     } catch (e) {
       return UpkeepStatus(
@@ -190,6 +161,63 @@ class SkillsUpkeeper implements Upkeeper {
         errorMessage: e.toString(),
       );
     }
+  }
+
+  /// Lists GitHub-sourced skills whose `.skill-lock.json` hash differs from
+  /// the skill folder's tree SHA on the source repo's default branch.
+  ///
+  /// Returns `null` when the lock file is absent or a source can't be
+  /// verified. This deliberately avoids `npx skills check`, which is an alias
+  /// of `update` and so can install skills during a read-only audit.
+  @visibleForTesting
+  Future<List<String>?> staleSkills(String home) async {
+    final lockFile = File(p.join(home, '.agents', '.skill-lock.json'));
+    if (!lockFile.existsSync()) return null;
+
+    final lock =
+        jsonDecode(lockFile.readAsStringSync()) as Map<String, dynamic>;
+    final skills = lock['skills'] as Map<String, dynamic>;
+    final treesBySource = <String, Map<String, String>>{};
+    final stale = <String>[];
+
+    for (final MapEntry(key: name, value: entry) in skills.entries) {
+      final skill = entry as Map<String, dynamic>;
+      if (skill['sourceType'] != 'github') continue;
+
+      final source = skill['source'] as String;
+      final trees = treesBySource[source] ?? await _fetchTreeShas(source);
+      if (trees == null) return null;
+      treesBySource[source] = trees;
+
+      final folder = p.posix.dirname(skill['skillPath'] as String);
+      final upstreamHash = trees[folder];
+      if (upstreamHash == null) {
+        stale.add('$name: missing from $source at $folder');
+      } else if (upstreamHash != skill['skillFolderHash']) {
+        stale.add('$name: update available from $source');
+      }
+    }
+    return stale;
+  }
+
+  /// Maps directory paths to tree SHAs at the default branch of [source], or
+  /// returns `null` when GitHub can't provide the complete tree.
+  Future<Map<String, String>?> _fetchTreeShas(String source) async {
+    final result = await _processRunner('gh', [
+      'api',
+      'repos/$source/git/trees/HEAD?recursive=1',
+    ]);
+    if (result.exitCode != 0) return null;
+
+    final response =
+        jsonDecode(result.stdout.toString()) as Map<String, dynamic>;
+    if (response['truncated'] == true) return null;
+
+    return {
+      for (final node in response['tree'] as List<dynamic>)
+        if ((node as Map<String, dynamic>)['type'] == 'tree')
+          node['path'] as String: node['sha'] as String,
+    };
   }
 
   /// Pins `updatedAt` to `installedAt` for every entry in

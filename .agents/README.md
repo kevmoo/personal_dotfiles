@@ -1,10 +1,10 @@
 # Agent skills (vendored / synced)
 
 The skill folders under [`skills/`](./skills/) are **not authored here**. They
-are vendored copies **synced from upstream repositories** by the [`skills`
-CLI](https://www.npmjs.com/package/skills) (`npx skills`). This directory is
-tracked in the personal dotfiles repo so the same set of skills follows me to
-every machine.
+are vendored copies **synced from upstream repositories** by the
+[`skills` CLI](https://www.npmjs.com/package/skills) (`npx skills`). This
+directory is tracked in the personal dotfiles repo so the same set of skills
+follows me to every machine.
 
 ## Source of truth: `.skill-lock.json`
 
@@ -25,11 +25,15 @@ Use the `skills` CLI as usual to list, add, update, check, or remove skills:
 
 ```bash
 npx skills            # list / help
-npx skills check      # what's out of date
+upkeep check skills   # what's out of date (read-only)
 npx skills update -g  # pull upstream updates
 ```
 
+`npx skills check` is an alias of `update` and can install skills, so don't use
+it as a probe.
+
 > [!WARNING]
+>
 > **Do not hand-edit anything under `skills/`.** Those files are managed copies
 > and will be **overwritten on the next sync**. To change a skill, edit its
 > **upstream** repo (see `.skill-lock.json` for the source), then re-sync.
