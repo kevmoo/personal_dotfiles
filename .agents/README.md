@@ -25,9 +25,12 @@ Use the `skills` CLI as usual to list, add, update, check, or remove skills:
 
 ```bash
 npx skills            # list / help
-npx skills check      # what's out of date
+upkeep check skills   # what's out of date (read-only)
 npx skills update -g  # pull upstream updates
 ```
+
+`npx skills check` is an alias of `update` and can install skills, so don't use
+it as a probe.
 
 > [!WARNING]
 > **Do not hand-edit anything under `skills/`.** Those files are managed copies

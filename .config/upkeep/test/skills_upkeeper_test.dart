@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:checks/checks.dart';
@@ -23,6 +24,132 @@ void main() {
       final upkeeper = SkillsUpkeeper(homeDirOverride: tempHome.path);
 
       check(await upkeeper.isSupported()).isFalse();
+    });
+  });
+
+  group('SkillsUpkeeper.staleSkills', () {
+    late Directory tempHome;
+    late String home;
+    late List<List<String>> calls;
+
+    void writeLock(Map<String, Object> skills) {
+      File(p.join(home, '.agents', '.skill-lock.json'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync(jsonEncode({'version': 3, 'skills': skills}));
+    }
+
+    Map<String, Object> entry(
+      String source,
+      String hash, {
+      String sourceType = 'github',
+    }) => {
+      'source': source,
+      'sourceType': sourceType,
+      'skillPath': 'skills/alpha/SKILL.md',
+      'skillFolderHash': hash,
+    };
+
+    SkillsUpkeeper upkeeperWith(ProcessResult Function(String source) reply) =>
+        SkillsUpkeeper(
+          homeDirOverride: home,
+          processRunner: (executable, arguments) async {
+            calls.add([executable, ...arguments]);
+            return reply(arguments[1].split('/').sublist(1, 3).join('/'));
+          },
+        );
+
+    ProcessResult tree(Map<String, String> folders, {bool truncated = false}) =>
+        ProcessResult(
+          0,
+          0,
+          jsonEncode({
+            'truncated': truncated,
+            'tree': [
+              for (final MapEntry(key: path, value: sha) in folders.entries)
+                {'path': path, 'type': 'tree', 'sha': sha},
+              {'path': 'README.md', 'type': 'blob', 'sha': 'blob'},
+            ],
+          }),
+          '',
+        );
+
+    setUp(() async {
+      tempHome = await Directory.systemTemp.createTemp('skills_stale_test_');
+      home = tempHome.path;
+      calls = [];
+    });
+
+    tearDown(() async {
+      await tempHome.delete(recursive: true);
+    });
+
+    test('reports a skill whose hash differs from the source tree', () async {
+      writeLock({'alpha': entry('kevmoo/repo', 'old')});
+      final upkeeper = upkeeperWith((_) => tree({'skills/alpha': 'new'}));
+
+      final status = await upkeeper.check();
+
+      check(status.state).equals(UpkeepState.outdated);
+      check(status.details.single)
+          .equals('alpha: update available from kevmoo/repo');
+    });
+
+    test('never invokes npx, because skills check applies updates', () async {
+      writeLock({'alpha': entry('kevmoo/repo', 'same')});
+      final upkeeper = upkeeperWith((_) => tree({'skills/alpha': 'same'}));
+
+      final status = await upkeeper.check();
+
+      check(status.state).equals(UpkeepState.upToDate);
+      check(status.summary).equals('Agent skills up to date');
+      check(calls.single.first).equals('gh');
+    });
+
+    test('fetches each source once', () async {
+      writeLock({
+        'alpha': entry('kevmoo/repo', 'same'),
+        'beta': entry('kevmoo/repo', 'same'),
+      });
+      final upkeeper = upkeeperWith((_) => tree({'skills/alpha': 'same'}));
+
+      check(await upkeeper.staleSkills(home)).isNotNull().isEmpty();
+      check(calls).length.equals(1);
+    });
+
+    test('reports a skill missing from its source', () async {
+      writeLock({'alpha': entry('kevmoo/repo', 'same')});
+      final upkeeper = upkeeperWith((_) => tree({}));
+
+      check(await upkeeper.staleSkills(home))
+          .isNotNull()
+          .deepEquals(['alpha: missing from kevmoo/repo at skills/alpha']);
+    });
+
+    test('ignores non-GitHub sources', () async {
+      writeLock({'alpha': entry('local', 'x', sourceType: 'local')});
+      final upkeeper = upkeeperWith((_) => tree({}));
+
+      check(await upkeeper.staleSkills(home)).isNotNull().isEmpty();
+      check(calls).isEmpty();
+    });
+
+    test('skips the check when gh fails', () async {
+      writeLock({'alpha': entry('kevmoo/repo', 'same')});
+      final upkeeper = upkeeperWith((_) => ProcessResult(0, 1, '', 'nope'));
+
+      final status = await upkeeper.check();
+
+      check(status.state).equals(UpkeepState.upToDate);
+      check(status.summary).equals('Agent skills present (check skipped)');
+    });
+
+    test('skips the check when the tree is truncated', () async {
+      writeLock({'alpha': entry('kevmoo/repo', 'same')});
+      final upkeeper = upkeeperWith(
+        (_) => tree({'skills/alpha': 'same'}, truncated: true),
+      );
+
+      check(await upkeeper.staleSkills(home)).isNull();
     });
   });
 
