@@ -58,7 +58,7 @@ flowchart TD
     C --> C4[skills]
     C --> C5[dart_install]
     C --> C6[os]
-    C --> C7[beads / guacamole / vscode]
+    C --> C7[dolt / guacamole / vscode]
 ```
 
 | ID             | Purpose                                                                                                                                                                                                                         |
@@ -71,14 +71,14 @@ flowchart TD
 | `skills`       | Compares `.skill-lock.json` hashes to source repo trees via `gh api`; on update, runs `npx skills update -g` + local sync and reconciles skill symlinks. |
 | `dart_install` | Audits `dart install` app bundles (hosted / git / path) against pub.dev, `git ls-remote`, or the local checkout, and reinstalls outdated ones. This is what keeps `kscripts` current.                                           |
 | `os`           | OS updates — e.g. `ujust update` on home Linux (`ostree`); on gLinux/cloudtop checks `gcertstatus`, `/var/run/reboot-required`, and `apt list --upgradable` (`~0.76s`), updating via `sudo apt-get upgrade -y`; no-op on macOS. |
-| `beads`        | `beads` / Dolt-backed issue store upkeep (`bd` / `dolt`). On cloudtop, dynamically bypasses Homebrew checks and installs/upgrades directly via `go install`.                                                                    |
+| `dolt`         | Dolt binary upkeep (`~/go/bin/dolt`). On cloudtop, dynamically bypasses Homebrew checks and installs/upgrades directly via `go install`.                                                                                        |
 | `guacamole`    | Apache Guacamole (personal Linux host).                                                                                                                                                                                         |
 | `vscode`       | VS Code extension and settings symlink updates (automatically skipped on cloudtop).                                                                                                                                             |
 
-> Several upkeepers (`guacamole`, `beads`, `os`, `skills`, `vscode`) are
+> Several upkeepers (`guacamole`, `dolt`, `os`, `skills`, `vscode`) are
 > specific to this author's setup. `isSupported()` dynamically hides them on
 > hosts where they don't apply (for example, `brew`, `brewfile`, and `vscode`
-> skip when running on cloudtop/gLinux, while `beads` adapts to use `go install`
+> skip when running on cloudtop/gLinux, while `dolt` adapts to use `go install`
 > directly).
 
 ---
@@ -187,7 +187,7 @@ upkeep list                  # registered upkeepers + support status
 │           ├── skills_upkeeper.dart
 │           ├── dart_install_upkeeper.dart
 │           ├── os_upkeeper.dart
-│           ├── beads_dolt_upkeeper.dart
+│           ├── dolt_upkeeper.dart
 │           ├── guacamole_upkeeper.dart
 │           └── vscode_upkeeper.dart
 └── test/

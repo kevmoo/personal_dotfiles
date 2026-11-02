@@ -5,11 +5,11 @@ import 'package:test/test.dart';
 import 'package:upkeep/upkeep.dart';
 
 void main() {
-  group('BeadsDoltUpkeeper', () {
+  group('DoltUpkeeper', () {
     late Directory tempHome;
 
     setUp(() async {
-      tempHome = await Directory.systemTemp.createTemp('beads_upkeep_test_');
+      tempHome = await Directory.systemTemp.createTemp('dolt_upkeep_test_');
     });
 
     tearDown(() async {
@@ -21,7 +21,7 @@ void main() {
     test('detects outdated Dolt when warning is present', () async {
       final dummyDolt = File('${tempHome.path}/dolt')
         ..createSync(recursive: true);
-      final upkeeper = BeadsDoltUpkeeper(
+      final upkeeper = DoltUpkeeper(
         doltPathOverride: dummyDolt.path,
         processRunner: (executable, args) async {
           if (args.contains('version')) {
@@ -46,7 +46,7 @@ void main() {
       () async {
         final dummyDolt = File('${tempHome.path}/dolt')
           ..createSync(recursive: true);
-        final upkeeper = BeadsDoltUpkeeper(
+        final upkeeper = DoltUpkeeper(
           doltPathOverride: dummyDolt.path,
           isCloudtopOverride: false,
           processRunner: (executable, args) async {
@@ -67,7 +67,7 @@ void main() {
       () async {
         final dummyDolt = File('${tempHome.path}/dolt')
           ..createSync(recursive: true);
-        final upkeeper = BeadsDoltUpkeeper(
+        final upkeeper = DoltUpkeeper(
           doltPathOverride: dummyDolt.path,
           isCloudtopOverride: true,
           processRunner: (executable, args) async {
@@ -83,25 +83,21 @@ void main() {
       },
     );
 
-    test(
-      'check returns outdated on cloudtop when binaries are missing',
-      () async {
-        final upkeeper = BeadsDoltUpkeeper(
-          doltPathOverride: '${tempHome.path}/nonexistent_dolt',
-          bdPathOverride: '${tempHome.path}/nonexistent_bd',
-          isCloudtopOverride: true,
-        );
+    test('check returns outdated on cloudtop when binary is missing', () async {
+      final upkeeper = DoltUpkeeper(
+        doltPathOverride: '${tempHome.path}/nonexistent_dolt',
+        isCloudtopOverride: true,
+      );
 
-        final status = await upkeeper.check();
-        check(status.state).equals(UpkeepState.outdated);
-        check(status.summary).contains('Beads and Dolt binaries not installed');
-      },
-    );
+      final status = await upkeeper.check();
+      check(status.state).equals(UpkeepState.outdated);
+      check(status.summary).contains('Dolt binary not installed');
+    });
 
     test('detects up to date Dolt when no warning is present', () async {
       final dummyDolt = File('${tempHome.path}/dolt')
         ..createSync(recursive: true);
-      final upkeeper = BeadsDoltUpkeeper(
+      final upkeeper = DoltUpkeeper(
         doltPathOverride: dummyDolt.path,
         processRunner: (executable, args) async {
           if (args.contains('version')) {
@@ -113,7 +109,7 @@ void main() {
 
       final status = await upkeeper.check();
       check(status.state).equals(UpkeepState.upToDate);
-      check(status.summary).contains('Beads & Dolt binaries are up to date');
+      check(status.summary).contains('Dolt binary is up to date');
     });
   });
 }
