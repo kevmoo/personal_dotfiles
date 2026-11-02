@@ -1,4 +1,4 @@
-export 'beads_dolt_upkeeper.dart';
+export 'dolt_upkeeper.dart';
 export 'brew_upkeeper.dart';
 export 'brewfile_upkeeper.dart';
 export 'dart_install_upkeeper.dart';

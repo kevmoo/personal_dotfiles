@@ -25,7 +25,7 @@ class UpkeepRunner {
             DartPubGlobalUpkeeper(),
             FlutterRepoUpkeeper(),
             OsUpkeeper(),
-            BeadsDoltUpkeeper(),
+            DoltUpkeeper(),
             VscodeUpkeeper(),
           ];
 
