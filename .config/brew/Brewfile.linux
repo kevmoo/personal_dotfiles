@@ -2,7 +2,6 @@
 
 tap "sinelaw/fresh"
 brew "fresh-editor"
-brew "gastownhall/gascity/gascity"
 
 
 # Newly added Linux-specific tools
