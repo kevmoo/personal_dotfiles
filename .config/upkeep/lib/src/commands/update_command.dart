@@ -88,10 +88,12 @@ class UpdateCommand extends Command<int> {
     print(
       '\n🚀 Applying updates for selected subsystems: ${toUpdate.join(', ')}...\n',
     );
+    final explicitSkills = targets.any((t) => t.toLowerCase() == 'skills');
     final updateResults = await upkeepRunner.updateSelected(
       toUpdate,
       verbose: verbose,
       cleanup: cleanup,
+      syncUpstreamSkills: explicitSkills,
     );
 
     print('\n═══ Update Execution Results ═══\n');
@@ -105,7 +107,10 @@ class UpdateCommand extends Command<int> {
       }
     }
 
-    _printTriageFooter(needsTriage);
+    final remainingTriage = needsTriage
+        .where((s) => !toUpdate.contains(s.upkeeperId))
+        .toList();
+    _printTriageFooter(remainingTriage);
     print('\n✨ System upkeep run completed.');
     return hadErrors ? 1 : 0;
   }

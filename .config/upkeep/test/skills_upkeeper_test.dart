@@ -83,15 +83,77 @@ void main() {
       await tempHome.delete(recursive: true);
     });
 
-    test('reports a skill whose hash differs from the source tree', () async {
+    test(
+      'reports a skill whose hash differs from the source tree as needsTriage',
+      () async {
+        writeLock({'alpha': entry('kevmoo/repo', 'old')});
+        final upkeeper = upkeeperWith((_) => tree({'skills/alpha': 'new'}));
+
+        final status = await upkeeper.check();
+
+        check(status.state).equals(UpkeepState.needsTriage);
+        check(status.actionHint).equals('upkeep update skills');
+        check(status.details.single)
+            .equals('alpha: update available from kevmoo/repo');
+      },
+    );
+
+    test('reports outdated when symlinks need reconciliation even if upstream is ahead', () async {
       writeLock({'alpha': entry('kevmoo/repo', 'old')});
+      Directory(p.join(home, '.agents', 'skills', 'alpha'))
+          .createSync(recursive: true);
+      Directory(p.join(home, '.claude', 'skills')).createSync(recursive: true);
       final upkeeper = upkeeperWith((_) => tree({'skills/alpha': 'new'}));
 
       final status = await upkeeper.check();
 
       check(status.state).equals(UpkeepState.outdated);
-      check(status.details.single)
-          .equals('alpha: update available from kevmoo/repo');
+      check(status.summary).equals('Agent skills symlinks need reconciliation');
+      check(status.details)
+          .contains('alpha: update available from kevmoo/repo');
+    });
+
+    test('routine update reconciles symlinks without invoking npx', () async {
+      Directory(p.join(home, '.agents', 'skills', 'alpha'))
+          .createSync(recursive: true);
+      Directory(p.join(home, '.claude', 'skills')).createSync(recursive: true);
+      final upkeeper = SkillsUpkeeper(
+        homeDirOverride: home,
+        processRunner: (executable, arguments) async {
+          calls.add([executable, ...arguments]);
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final result = await upkeeper.update();
+
+      check(result.success).isTrue();
+      check(calls).isEmpty();
+      check(Link(p.join(home, '.claude', 'skills', 'alpha')).existsSync())
+          .isTrue();
+    });
+
+    test('explicit syncUpstream update invokes npx skills update', () async {
+      Directory(p.join(home, '.agents', 'skills', 'alpha'))
+          .createSync(recursive: true);
+      Directory(p.join(home, '.claude', 'skills')).createSync(recursive: true);
+      final upkeeper = SkillsUpkeeper(
+        homeDirOverride: home,
+        processRunner: (executable, arguments) async {
+          calls.add([executable, ...arguments]);
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+
+      final result = await upkeeper.update(syncUpstream: true);
+
+      check(result.success).isTrue();
+      check(calls).deepEquals([
+        ['npx', 'skills', 'update', '-g'],
+        ['npx', 'skills', 'update'],
+      ]);
+      check(Link(p.join(home, '.claude', 'skills', 'alpha')).existsSync())
+          .isTrue();
     });
 
     test('never invokes npx, because skills check applies updates', () async {

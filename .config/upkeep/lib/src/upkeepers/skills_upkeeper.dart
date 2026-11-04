@@ -9,10 +9,18 @@ import 'upkeeper.dart';
 
 class SkillsUpkeeper implements Upkeeper {
   final String? homeDirOverride;
-  final ProcessRunner _processRunner;
+  final ProcessRunner? _customRunner;
 
   SkillsUpkeeper({this.homeDirOverride, ProcessRunner? processRunner})
-    : _processRunner = processRunner ?? Process.run;
+    : _customRunner = processRunner;
+
+  Future<ProcessResult> _run(
+    String executable,
+    List<String> arguments, {
+    String? workingDirectory,
+  }) => _customRunner != null
+      ? _customRunner(executable, arguments)
+      : Process.run(executable, arguments, workingDirectory: workingDirectory);
 
   @override
   String get id => 'skills';
@@ -54,36 +62,18 @@ class SkillsUpkeeper implements Upkeeper {
       final stale = await staleSkills(home);
       final dirty = await uncommittedSkillFiles(home);
 
-      if (stale != null && stale.isNotEmpty) {
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: UpkeepState.outdated,
-          summary: 'Agent skills have updates available',
-          details: [...stale, ...dirty],
-        );
-      }
-
       if (needsReconciliation(home)) {
         return UpkeepStatus(
           upkeeperId: id,
           displayName: displayName,
           state: UpkeepState.outdated,
           summary: 'Agent skills symlinks need reconciliation',
-          details: dirty,
+          details: [...?stale, ...dirty],
         );
       }
 
-      if (dirty.isNotEmpty) {
-        return UpkeepStatus(
-          upkeeperId: id,
-          displayName: displayName,
-          state: UpkeepState.needsTriage,
-          summary:
-              'Agent skills have uncommitted changes in ~/.dotfiles (${dirty.length} file(s))',
-          details: dirty,
-          actionHint: 'dot status',
-        );
+      if ((stale != null && stale.isNotEmpty) || dirty.isNotEmpty) {
+        return _buildTriageStatus(stale ?? const [], dirty);
       }
 
       return UpkeepStatus(
@@ -105,18 +95,62 @@ class SkillsUpkeeper implements Upkeeper {
     }
   }
 
+  UpkeepStatus _buildTriageStatus(List<String> stale, List<String> dirty) {
+    final hasStale = stale.isNotEmpty;
+    final hasDirty = dirty.isNotEmpty;
+    final summary = switch ((hasStale, hasDirty)) {
+      (true, true) =>
+        'Agent skills have upstream updates and uncommitted changes '
+            '(${dirty.length} file(s))',
+      (true, false) => 'Agent skills have upstream updates available',
+      (false, _) =>
+        'Agent skills have uncommitted changes in ~/.dotfiles '
+            '(${dirty.length} file(s))',
+    };
+    final actionHint = switch ((hasStale, hasDirty)) {
+      (true, true) => 'dot status / upkeep update skills',
+      (true, false) => 'upkeep update skills',
+      (false, _) => 'dot status',
+    };
+    return UpkeepStatus(
+      upkeeperId: id,
+      displayName: displayName,
+      state: UpkeepState.needsTriage,
+      summary: summary,
+      details: [...stale, ...dirty],
+      actionHint: actionHint,
+    );
+  }
+
   @override
-  Future<UpkeepResult> update({bool verbose = false}) async {
+  Future<UpkeepResult> update({
+    bool verbose = false,
+    bool syncUpstream = false,
+  }) async {
     try {
+      final home = _homeDir();
+      if (!syncUpstream) {
+        reconcileSymlinks(home);
+        final dirty = await uncommittedSkillFiles(home);
+        final dirtySuffix = dirty.isNotEmpty
+            ? ' (${dirty.length} uncommitted/untracked file(s) in ~/.agents/)'
+            : '';
+        return UpkeepResult(
+          upkeeperId: id,
+          displayName: displayName,
+          success: true,
+          message: 'Reconciled agent skill symlinks$dirtySuffix',
+        );
+      }
+
       // 1. Run global skills update (npx skills update -g)
-      final globalProc = await Process.run('npx', ['skills', 'update', '-g']);
+      final globalProc = await _run('npx', ['skills', 'update', '-g']);
       final globalSuccess = globalProc.exitCode == 0;
 
       // 2. Run local skills update if .agents directory exists
-      final home = _homeDir();
-      bool localSuccess = true;
+      var localSuccess = true;
       if (Directory(p.join(home, '.agents')).existsSync()) {
-        final localProc = await Process.run('npx', [
+        final localProc = await _run('npx', [
           'skills',
           'update',
         ], workingDirectory: home);
@@ -126,7 +160,7 @@ class SkillsUpkeeper implements Upkeeper {
       // 3. Normalize .agents/.skill-lock.json (pin updatedAt -> installedAt)
       normalizeSkillLock(home);
 
-      // 4. Reconcile symlinks in ~/.claude/skills/
+      // 4. Reconcile symlinks in ~/.claude/skills/ and ~/.gemini/
       reconcileSymlinks(home);
 
       // 5. Report any uncommitted/untracked files under .agents in ~/.dotfiles
@@ -203,7 +237,7 @@ class SkillsUpkeeper implements Upkeeper {
   /// Maps directory paths to tree SHAs at the default branch of [source], or
   /// returns `null` when GitHub can't provide the complete tree.
   Future<Map<String, String>?> _fetchTreeShas(String source) async {
-    final result = await _processRunner('gh', [
+    final result = await _run('gh', [
       'api',
       'repos/$source/git/trees/HEAD?recursive=1',
     ]);
@@ -298,9 +332,8 @@ class SkillsUpkeeper implements Upkeeper {
     return claudeNeeds || _geminiNeedsReconciliation(home, agentsSkillsDir);
   }
 
-  /// Creates missing skill links and prunes dangling ones for every
-  /// agent-integration target. Exposed for testing; drive with a temp home.
-  @visibleForTesting
+  /// Creates missing skill links and prunes dangling ones across Claude and
+  /// Gemini agent integration targets under [home].
   void reconcileSymlinks(String home) {
     final agentsSkillsDir = Directory(p.join(home, '.agents', 'skills'));
     if (!agentsSkillsDir.existsSync()) return;

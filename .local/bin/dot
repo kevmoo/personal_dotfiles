@@ -1,2 +1,97 @@
 #!/bin/sh
-exec /usr/bin/git --git-dir="$HOME/.dotfiles/" --work-tree="$HOME" "$@"
+set -eu
+
+readonly home_dir="${HOME:?HOME must be set}"
+readonly git_dir="${home_dir}/.dotfiles/"
+
+dot_git() {
+  git --git-dir="$git_dir" --work-tree="$home_dir" "$@"
+}
+
+# Scan leading git global flags up to the subcommand; stop at `--`.
+subcmd=""
+after_pull=0
+has_strategy=0
+has_autostash=0
+has_help=0
+has_refspec=0
+skip_next=0
+for arg in "$@"; do
+  if [ "$skip_next" -eq 1 ]; then
+    skip_next=0
+    continue
+  fi
+  if [ "$after_pull" -eq 0 ]; then
+    case "$arg" in
+      --) break ;;
+      -c|-C|--git-dir|--work-tree|--namespace|--config-env|--exec-path) skip_next=1 ;;
+      -*) ;;
+      *) subcmd="$arg"; [ "$subcmd" = "pull" ] || break; after_pull=1 ;;
+    esac
+  else
+    case "$arg" in
+      --) break ;;
+      -h|--help) has_help=1 ;;
+      -r|--rebase|--rebase=*|--no-rebase|--ff-only|--ff|--no-ff) has_strategy=1 ;;
+      --autostash|--no-autostash) has_autostash=1 ;;
+      -s|--strategy|--depth|--negotiation-tip|-X|--strategy-option|--upload-pack) skip_next=1 ;;
+      -*) ;;
+      *) has_refspec=1 ;;
+    esac
+  fi
+done
+
+if [ "$subcmd" != "pull" ] || [ "$has_help" -eq 1 ]; then
+  exec git --git-dir="$git_dir" --work-tree="$home_dir" "$@"
+fi
+
+ensure_link() {
+  if [ ! -e "$1" ] && [ ! -L "$1" ]; then
+    ln -s "$2" "$1"
+  fi
+}
+
+sync_link_dir() {
+  [ -d "$1" ] || return 0
+  for skill_dir in "$agents_skills"/*; do
+    [ -d "$skill_dir" ] || continue
+    name="${skill_dir##*/}"
+    if [ "$2" = "rel" ]; then
+      ensure_link "$1/$name" "../../.agents/skills/$name"
+    else
+      ensure_link "$1/$name" "$skill_dir"
+    fi
+  done
+  for link in "$1"/*; do
+    if [ -L "$link" ] && [ ! -e "$link" ]; then
+      case "$2:${link##*/}" in
+        rel:core.gc-*) ;;
+        *) rm -f "$link" ;;
+      esac
+    fi
+  done
+}
+
+if [ "$has_refspec" -eq 0 ] && dot_git fetch -q 2>/dev/null; then
+  changed="$(dot_git diff --name-only HEAD 2>/dev/null || true)"
+  if [ -n "$changed" ] && [ "$has_autostash" -eq 0 ] &&
+     dot_git diff -z --name-only HEAD | xargs -0 git --git-dir="$git_dir" --work-tree="$home_dir" diff --quiet '@{u}' -- 2>/dev/null; then
+    if [ "$has_strategy" -eq 1 ]; then set -- "$@" --autostash; else set -- "$@" --rebase --autostash; fi
+  elif [ "$has_strategy" -eq 0 ]; then
+    ahead="$(dot_git rev-list --count '@{u}..HEAD' 2>/dev/null || true)"
+    if [ "$ahead" = "0" ]; then set -- "$@" --ff-only; else set -- "$@" --rebase; fi
+  fi
+fi
+
+dot_git "$@"
+
+agents_skills="$home_dir/.agents/skills"
+if [ -d "$agents_skills" ]; then
+  sync_link_dir "$home_dir/.claude/skills" rel
+  sync_link_dir "$home_dir/.gemini/config/plugins/user-plugin/skills" abs
+  if [ -d "$home_dir/.gemini/antigravity-ide" ] && [ -d "$home_dir/.gemini/config/plugins/user-plugin" ]; then
+    ensure_link "$home_dir/.gemini/antigravity-ide/skills" "$home_dir/.gemini/config/plugins/user-plugin/skills"
+    mkdir -p "$home_dir/.gemini/antigravity-ide/plugins"
+    ensure_link "$home_dir/.gemini/antigravity-ide/plugins/user-plugin" "$home_dir/.gemini/config/plugins/user-plugin"
+  fi
+fi

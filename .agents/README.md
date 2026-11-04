@@ -55,5 +55,7 @@ dot push
 (the `-f` is required because `$HOME` is ignored-by-default under the
 "Anti-Universe" bare-repo setup).
 
-`upkeep check` will surface pending skill updates, and `upkeep update` runs the
-sync for you — but the commit/push above is still the step to remember.
+`upkeep check` will surface pending skill updates as `needsTriage` without
+dirtying `.agents/` during routine `upkeep update` runs, and explicit
+`upkeep update skills` runs the upstream sync for you — then commit/PR the
+changes into `personal_dotfiles`.
