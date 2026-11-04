@@ -34,8 +34,12 @@ export NODE_REPL_HISTORY="$HOME/.local/state/node/history"
 export PYTHON_HISTORY="$HOME/.local/state/python/history"
 export LESSHISTFILE="$HOME/.local/state/less/history"
 
-# 4. Aliases (Shared between platforms)
-alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+# 4. Aliases & Completions (Shared between platforms)
+# `dot` lives at ~/.local/bin/dot so interactive and non-interactive shells
+# share `dot pull` autostash + skill symlink reconciliation.
+if [[ -t 1 ]] && (( $+functions[compdef] )); then
+  compdef dot=git
+fi
 alias dot-lazy='lazygit --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
 alias ..='cd ..'
 alias ...='cd ../..'

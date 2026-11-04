@@ -10,11 +10,8 @@ Unlike a standard repository, a bare repo doesn't have a default working
 directory. We manually point its "working tree" to `$HOME` using a simple shell
 alias.
 
-### The Magic Alias & Shell Modularity
-Add this to your `.zshrc`:
-```bash
-alias dot='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
-```
+### The `dot` Wrapper & Shell Modularity
+[`~/.local/bin/dot`](.local/bin/dot) wraps `/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME`, adding matching-upstream `--autostash`, `--ff-only` fast-forwarding, and skill symlink reconciliation on `dot pull` (with `compdef dot=git` in `.zshrc` for interactive tab completion).
 The shell automatically sources all `*.zsh` files in `~/.zshrc.d/`. Modular configurations include:
 *   **`shell-power.zsh`**: (Tracked) Common interactive enhancements (fzf, zoxide, eza).
 *   **`mac-local.zsh`**: (Tracked) Mac-specific PATH and environment overrides.
@@ -98,25 +95,23 @@ Because the working tree is your entire `$HOME` directory, a standard `git statu
     ```bash
     dot-check-ignores
     ```
-6.  **Wire Up Agent Skills**: `upkeep update skills` links every skill in
-    `~/.agents/skills` into `~/.claude/skills` (Gemini reads
-    `~/.agents/skills` directly).
+6.  **Wire Up Agent Skills**: `upkeep update` (or `dot pull`) links every skill
+    in `~/.agents/skills` into `~/.claude/skills` and `~/.gemini` without
+    pulling un-vendored upstream skill commits.
 
 ### Syncing an Existing Machine
-1.  **Check for local changes**: `dot fetch && dot status -sb --untracked=no`. If only
-    `.agents/` files are modified, a local `npx skills update` re-synced
-    skills another machine already pushed. Confirm the lock hashes match
-    (`dot diff @{u} -- .agents/.skill-lock.json` shows only `updatedAt` or
-    added/removed skills), then discard: `dot checkout -- .agents`.
-2.  **Pull**: `dot pull --ff-only`.
-3.  **Exclude rules**: `dot-check-ignores`. If out of sync, restore with
+1.  **Pull & Reconcile Symlinks**: `dot pull` (or `upkeep update dotfiles`).
+    Both automatically absorb re-synced `.agents/` files that already match
+    `origin/main`, fast-forward past unrelated local edits when `HEAD` has no
+    local commits, and reconcile `~/.claude/skills` and `~/.gemini` symlinks
+    (pruning retired ones).
+2.  **Exclude rules**: `dot-check-ignores`. If out of sync, restore with
     `cp ~/.config/dot/info-exclude.example ~/.dotfiles/info/exclude`.
-4.  **Skills**: `upkeep update skills` re-links new skills into
-    `~/.claude/skills` and prunes dangling links for retired ones (a plain
-    `dot pull` does not). It also runs `npx skills update`; if that changes
-    anything under `.agents/`, commit and push it right away (see
-    [`.agents/README.md`](.agents/README.md)) so other machines don't
-    diverge.
+3.  **Pulling Upstream Skill Updates (Intentional Sync)**: Routine `upkeep`
+    surfaces pending upstream GitHub skill updates as `needsTriage` without
+    dirtying `.agents/`. When you want to pull upstream skill changes and cut a
+    sync PR, run `upkeep update skills`, then commit and open a PR (see
+    [`.agents/README.md`](.agents/README.md)).
 
 ---
 

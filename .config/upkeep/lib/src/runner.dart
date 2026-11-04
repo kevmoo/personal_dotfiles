@@ -55,6 +55,7 @@ class UpkeepRunner {
     List<String> targetIds, {
     bool verbose = false,
     bool cleanup = false,
+    bool syncUpstreamSkills = false,
   }) async {
     final results = <UpkeepResult>[];
     final selected = upkeepers.where(
@@ -62,9 +63,17 @@ class UpkeepRunner {
     );
 
     for (final u in selected) {
-      final res = u is BrewfileUpkeeper
-          ? await u.update(verbose: verbose, cleanup: cleanup)
-          : await u.update(verbose: verbose);
+      final res = switch (u) {
+        final BrewfileUpkeeper b => await b.update(
+          verbose: verbose,
+          cleanup: cleanup,
+        ),
+        final SkillsUpkeeper s => await s.update(
+          verbose: verbose,
+          syncUpstream: syncUpstreamSkills,
+        ),
+        _ => await u.update(verbose: verbose),
+      };
       results.add(res);
     }
 

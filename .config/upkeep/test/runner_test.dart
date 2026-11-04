@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:checks/checks.dart';
 import 'package:test/test.dart';
 import 'package:upkeep/upkeep.dart';
@@ -153,6 +155,25 @@ void main() {
       check(updateResults.length).equals(1);
       check(updateResults.first.success).isTrue();
       check(updateResults.first.upkeeperId).equals('sub1');
+    });
+    test('Runner forwards syncUpstreamSkills to SkillsUpkeeper', () async {
+      final calls = <List<String>>[];
+      final skills = SkillsUpkeeper(
+        homeDirOverride: '/nonexistent-home-dir-for-runner-test',
+        processRunner: (exe, args) async {
+          calls.add([exe, ...args]);
+          return ProcessResult(0, 0, '', '');
+        },
+      );
+      final runner = UpkeepRunner(upkeepers: [skills]);
+
+      await runner.updateSelected(['skills']);
+      check(calls).isEmpty();
+
+      await runner.updateSelected(['skills'], syncUpstreamSkills: true);
+      check(calls).deepEquals([
+        ['npx', 'skills', 'update', '-g'],
+      ]);
     });
   });
 

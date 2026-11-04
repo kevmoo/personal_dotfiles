@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../models.dart';
+import 'skills_upkeeper.dart';
 import 'upkeeper.dart';
 
 class DotfilesUpkeeper implements Upkeeper {
@@ -121,56 +122,66 @@ class DotfilesUpkeeper implements Upkeeper {
     );
   }
 
-  /// Whether every locally modified file already matches upstream, as happens
-  /// when another machine pushed the same skills sync.
-  ///
-  /// Only then is `--autostash` safe: on a real conflict it exits 0 and leaves
-  /// conflict markers in `$HOME`, so other local edits must stop the pull.
-  Future<bool> _localChangesMatchUpstream() async {
-    final home = _homeDir();
-    Future<ProcessResult> git(List<String> args) => Process.run('git', [
-      '--git-dir=${_gitDir()}',
-      '--work-tree=$home',
-      ...args,
-    ], workingDirectory: home);
+  Future<ProcessResult> _git(String home, List<String> args) => Process.run(
+    'git',
+    ['--git-dir=${_gitDir()}', '--work-tree=$home', ...args],
+    workingDirectory: home,
+  );
 
-    await git(['fetch']);
-    final changed = await git(['diff', '--name-only', 'HEAD']);
+  /// Chooses `git pull` arguments based on local working-tree and commit state:
+  /// - `--rebase --autostash` only when every locally modified file already
+  ///   matches `@{u}` (e.g., another machine pushed the same skills sync),
+  ///   since on a real conflict `--autostash` exits 0 with markers in `$HOME`.
+  /// - `--ff-only` when there are zero local commits ahead of `@{u}`, allowing
+  ///   unrelated upstream commits to advance cleanly even when `.agents/` has
+  ///   un-vendored skill edits.
+  /// - `--rebase` when local commits exist ahead of `@{u}`.
+  Future<List<String>> _pullArgs(String home) async {
+    await _git(home, ['fetch']);
+    final changed = await _git(home, ['diff', '--name-only', 'HEAD']);
     final paths = changed.stdout
         .toString()
         .split('\n')
         .where((path) => path.isNotEmpty)
         .toList();
-    if (changed.exitCode != 0 || paths.isEmpty) return false;
+    if (changed.exitCode == 0 && paths.isNotEmpty) {
+      final upstreamDiff = await _git(home, [
+        'diff',
+        '--quiet',
+        '@{u}',
+        '--',
+        ...paths,
+      ]);
+      if (upstreamDiff.exitCode == 0) {
+        return const ['pull', '--rebase', '--autostash'];
+      }
+    }
 
-    final upstreamDiff = await git(['diff', '--quiet', '@{u}', '--', ...paths]);
-    return upstreamDiff.exitCode == 0;
+    final ahead = await _git(home, ['rev-list', '--count', '@{u}..HEAD']);
+    if (ahead.exitCode == 0 && ahead.stdout.toString().trim() == '0') {
+      return const ['pull', '--ff-only'];
+    }
+    return const ['pull', '--rebase'];
   }
 
   @override
   Future<UpkeepResult> update({bool verbose = false}) async {
     try {
       final home = _homeDir();
-      final gitDir = _gitDir();
-
-      // Pull rebase
-      final pullProc = await Process.run('git', [
-        '--git-dir=$gitDir',
-        '--work-tree=$home',
-        'pull',
-        '--rebase',
-        if (await _localChangesMatchUpstream()) '--autostash',
-      ], workingDirectory: home);
+      final pullArgs = await _pullArgs(home);
+      final pullProc = await _git(home, pullArgs);
 
       if (pullProc.exitCode != 0) {
         return UpkeepResult(
           upkeeperId: id,
           displayName: displayName,
           success: false,
-          message: 'git pull --rebase failed',
+          message: 'git ${pullArgs.join(' ')} failed',
           errorMessage: pullProc.stderr.toString(),
         );
       }
+
+      SkillsUpkeeper(homeDirOverride: home).reconcileSymlinks(home);
 
       final upkeepPkgDir = p.join(home, '.config', 'upkeep');
       if (Directory(upkeepPkgDir).existsSync()) {

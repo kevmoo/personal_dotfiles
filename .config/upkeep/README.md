@@ -18,16 +18,12 @@ check the status of core dev tools in parallel and interactively apply updates.
 
 ## Install
 
-Today `upkeep` runs from source via a small shim on `PATH`:
+`upkeep` is installed as a local app bundle via `dart install` (and kept fresh
+by its own `dart_install` upkeeper):
 
 ```bash
-# ~/.local/bin/upkeep
-#!/bin/bash
-exec dart "$HOME/.config/upkeep/bin/upkeep.dart" "$@"
+dart install "$HOME/.config/upkeep"
 ```
-
-This requires the Dart SDK to be installed. (Shipping a `pub global activate`
-install and, later, standalone native binaries are tracked as follow-up issues.)
 
 ---
 
@@ -66,9 +62,9 @@ flowchart TD
 | `brew`         | Homebrew packages — audits installed vs. expected, runs `brew upgrade` / `brew cleanup` (automatically skipped on cloudtop).                                                                                                    |
 | `brewfile`     | Reconciles `~/.config/brew/Brewfile.shared` + `Brewfile.mac` / `Brewfile.linux` (automatically skipped on cloudtop).                                                                                                            |
 | `mise`         | Checks `mise outdated --json`; runs `mise upgrade`.                                                                                                                                                                             |
-| `dotfiles`     | `git fetch` on the `personal_dotfiles` repo; reports/pulls when behind.                                                                                                                                                         |
+| `dotfiles`     | `git fetch` on `personal_dotfiles`; pulls (`--ff-only` when not ahead, `--rebase --autostash` when local edits match `@{u}`) and reconciles skill symlinks.                                                                     |
 | `local_bin`    | Audits `~/.local/bin` for untracked scripts/binaries and broken symlinks against `~/.dotfiles`, `~/.dotfiles-corp`, and `~/.config/upkeep/local_bin_allowlist*`.                                                                |
-| `skills`       | Compares `.skill-lock.json` hashes to source repo trees via `gh api`; on update, runs `npx skills update -g` + local sync and reconciles skill symlinks. |
+| `skills`       | Compares `.skill-lock.json` hashes to source repo trees via `gh api` (`needsTriage`); routine `update` reconciles symlinks only, while explicit `upkeep update skills` runs `npx skills update`.                                |
 | `dart_install` | Audits `dart install` app bundles (hosted / git / path) against pub.dev, `git ls-remote`, or the local checkout, and reinstalls outdated ones. This is what keeps `kscripts` current.                                           |
 | `os`           | OS updates — e.g. `ujust update` on home Linux (`ostree`); on gLinux/cloudtop checks `gcertstatus`, `/var/run/reboot-required`, and `apt list --upgradable` (`~0.76s`), updating via `sudo apt-get upgrade -y`; no-op on macOS. |
 | `dolt`         | Dolt binary upkeep (`~/go/bin/dolt`). On cloudtop, dynamically bypasses Homebrew checks and installs/upgrades directly via `go install`.                                                                                        |

@@ -61,9 +61,11 @@ exceptions. You MUST use one of the two solutions below to track new files:
 
 ### 🔄 Syncing Another Machine
 
-Follow "Syncing an Existing Machine" in `~/README.md`: discard re-synced
-`.agents/` changes if blocking, `dot pull --ff-only`, `dot-check-ignores`, then
-`upkeep update skills` to link new skills into `~/.claude/skills`.
+Follow "Syncing an Existing Machine" in `~/README.md`: run `dot pull` (which
+absorbs matching-upstream `.agents/` changes, fast-forwards when not ahead, and
+reconciles `~/.claude/skills` and `~/.gemini` symlinks), then
+`dot-check-ignores`. Only run `upkeep update skills` when intentionally pulling
+upstream skill commits to open a `personal_dotfiles` sync PR.
 
 ### 🌌 Repository Architecture: Bare Dotfiles + Gitdir Proxy
 

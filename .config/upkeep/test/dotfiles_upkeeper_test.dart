@@ -98,13 +98,41 @@ void main() {
       check(readConfig()).equals('local edit');
     });
 
-    test('pulls normally with a clean tree', () async {
+    test(
+      'pulls normally with a clean tree and reconciles skill symlinks',
+      () async {
+        Directory(p.join(home, '.agents', 'skills', 'alpha'))
+            .createSync(recursive: true);
+        Directory(p.join(home, '.claude', 'skills'))
+            .createSync(recursive: true);
+        await publish('v2');
+
+        final result = await DotfilesUpkeeper(homeDirOverride: home).update();
+
+        check(result.success).isTrue();
+        check(readConfig()).equals('v2');
+        check(Link(p.join(home, '.claude', 'skills', 'alpha')).existsSync())
+            .isTrue();
+      },
+    );
+
+    test('fast-forwards unrelated upstream changes when another tracked file is dirty', () async {
+      File(p.join(publisher, 'skills_doc')).writeAsStringSync('s1');
+      await git(publisher, ['add', 'skills_doc']);
+      await git(publisher, ['commit', '-m', 'add skills_doc']);
+      await git(publisher, ['push', 'origin', 'main']);
+      await DotfilesUpkeeper(homeDirOverride: home).update();
+
+      // Simulate dirty `.agents/` file on disk while upstream advances `config`.
+      File(p.join(home, 'skills_doc')).writeAsStringSync('local skill sync');
       await publish('v2');
 
       final result = await DotfilesUpkeeper(homeDirOverride: home).update();
 
       check(result.success).isTrue();
       check(readConfig()).equals('v2');
+      check(File(p.join(home, 'skills_doc')).readAsStringSync())
+          .equals('local skill sync');
     });
   });
 }
