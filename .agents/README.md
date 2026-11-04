@@ -46,14 +46,16 @@ machines until it's committed and pushed into the dotfiles repo.** So after any
 skills change:
 
 ```bash
-dot add -f ~/.agents/.skill-lock.json ~/.agents/skills
-dot commit -m "skills: sync"
-dot push
+dot switch -c sync-skills
+dot add -u ~/.agents               # stage updates/removals to tracked skills
+dot add -f ~/.agents/skills/<name> # only when adding a brand-new skill
+dot commit -m "Sync global skills"
+dot push -u origin sync-skills
 ```
 
-`dot` is the dotfiles alias: `git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME`
-(the `-f` is required because `$HOME` is ignored-by-default under the
-"Anti-Universe" bare-repo setup).
+`dot` (`~/.local/bin/dot`) wraps `git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME`.
+Avoid `dot add -f ~/.agents/skills` on the whole directory, which bypasses
+`info/exclude` and stages `.DS_Store` and ignored local skill symlinks.
 
 `upkeep check` will surface pending skill updates as `needsTriage` without
 dirtying `.agents/` during routine `upkeep update` runs, and explicit
