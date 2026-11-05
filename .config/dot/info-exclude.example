@@ -88,6 +88,8 @@
 !.agents/skills/
 .agents/skills/*
 !.agents/skills/AGENTS.md
+!.agents/skills/book-lookup/
+!.agents/skills/book-lookup/**
 !.agents/skills/clarify-confirm-continue/
 !.agents/skills/clarify-confirm-continue/**
 !.agents/skills/cold-read/
@@ -108,6 +110,8 @@
 !.agents/skills/gws-calendar/**
 !.agents/skills/just-brainstorm/
 !.agents/skills/just-brainstorm/**
+!.agents/skills/lit-review/
+!.agents/skills/lit-review/**
 !.agents/skills/markdown-long-lines/
 !.agents/skills/markdown-long-lines/**
 !.agents/skills/new-worktree/
