@@ -47,19 +47,25 @@ skills change:
 
 ```bash
 dot switch -c sync-skills
-dot add -u ~/.agents               # stage updates/removals to tracked skills
-dot add -f ~/.agents/skills/<name> # only when adding a brand-new skill
+dot status -u ~/.agents            # inspect modified, deleted, and new files
+dot add ~/.agents                  # stage all changes in allowlisted skills
 dot commit -m "Sync global skills"
 dot push -u origin sync-skills
 ```
 
 `dot` (`~/.local/bin/dot`) wraps
-`git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME`. Avoid
+`git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME`. Because
+`status.showUntrackedFiles` is `no`, pass `-u` (`dot status -u ~/.agents`) to
+see newly added files (e.g. `references/*.md`). Plain `dot add ~/.agents`
+stages modified, deleted, and new files inside skills allowlisted in
+`.config/dot/info-exclude.example` while ignoring `.DS_Store`, local `dash-okf*`
+symlinks, and corp-only skills.
+
+When adding a **brand-new** public skill, add `!.agents/skills/<name>/` and
+`!.agents/skills/<name>/**` to `.config/dot/info-exclude.example` (and copy it
+to `~/.dotfiles/info/exclude`), then stage both with `dot add`. Avoid
 `dot add -f ~/.agents/skills` on the whole directory, which bypasses
-`info/exclude` and stages `.DS_Store` and ignored local skill symlinks.
-`dot add -u` skips new files inside existing skills (e.g. a new
-`references/*.md`), so check `dot status ~/.agents/skills` and `dot add -f` any
-new files before committing.
+`info/exclude`.
 
 `upkeep check` will surface pending skill updates as `needsTriage` without
 dirtying `.agents/` during routine `upkeep update` runs, and explicit
