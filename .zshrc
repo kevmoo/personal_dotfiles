@@ -19,6 +19,11 @@ if [[ -t 1 ]]; then
   export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 fi
 
+# Agent shells (Claude Code sets CLAUDECODE): pass unmatched globs through
+# literally like bash, so `ls foo*` or an unquoted `?` in a URL doesn't abort
+# the whole command line. NO_NULL_GLOB stays, so `rm -rf $d/*` never collapses.
+[[ -n $CLAUDECODE ]] && setopt NO_NOMATCH
+
 
 # 2. Path Management (Zsh specific: $path array automatically syncs with $PATH)
 typeset -U path # Keep path array unique
