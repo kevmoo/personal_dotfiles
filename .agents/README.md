@@ -53,9 +53,13 @@ dot commit -m "Sync global skills"
 dot push -u origin sync-skills
 ```
 
-`dot` (`~/.local/bin/dot`) wraps `git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME`.
-Avoid `dot add -f ~/.agents/skills` on the whole directory, which bypasses
+`dot` (`~/.local/bin/dot`) wraps
+`git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME`. Avoid
+`dot add -f ~/.agents/skills` on the whole directory, which bypasses
 `info/exclude` and stages `.DS_Store` and ignored local skill symlinks.
+`dot add -u` skips new files inside existing skills (e.g. a new
+`references/*.md`), so check `dot status ~/.agents/skills` and `dot add -f` any
+new files before committing.
 
 `upkeep check` will surface pending skill updates as `needsTriage` without
 dirtying `.agents/` during routine `upkeep update` runs, and explicit
