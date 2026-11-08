@@ -14,7 +14,9 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
   `(Recommended) Create a feature branch and open a PR` first.
 - **Approval Gates (`ask_question`, single-action scope)**:
   - **Per-Action**: Pushing pure docs to trunk, `gh pr merge`/close, auto-merge
-    (`--auto`, `autosubmit`), `gh release create`, and all GitHub writes.
+    (`--auto`, `autosubmit`), `gh release create`, and all GitHub writes. In
+    Claude Code, `permissions.ask` already prompts for `gh` writes; skip the
+    extra `AskUserQuestion` unless the action is outside the user's request.
   - **Merge-on-Green (`github.com/kevmoo/*` Only)**: Prompt to merge on green CI
     ONLY in `github.com/kevmoo/*`; leave `dart-lang/*`, `flutter/*`, `google/*`
     PRs open for peer review unless maintainer-approved or asked.
