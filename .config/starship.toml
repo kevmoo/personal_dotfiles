@@ -9,6 +9,7 @@ $git_status\
 $character"""
 
 add_newline = false
+command_timeout = 2000
 
 [directory]
 truncation_length = 2
