@@ -21,11 +21,11 @@
       "Bash(gh pr diff:*)",
       "Bash(gh repo view:*)",
       "Bash(relay-whoami:*)",
-      "Bash(~/.local/bin/relay-whoami:*)"
+      "Bash(~/.local/bin/relay-whoami:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "ask": [
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
       "Bash(git reset:*)",
       "Bash(git rebase:*)",
       "Bash(gh pr create:*)",
@@ -38,6 +38,12 @@
       "Bash(gh issue comment:*)",
       "Bash(gh issue close:*)",
       "Bash(gh release:*)"
+    ],
+    "deny": [
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)"
     ]
   },
   "effortLevel": "high",
