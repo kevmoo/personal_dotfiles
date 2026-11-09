@@ -2,10 +2,25 @@
 # If SSH_AUTH_SOCK is empty, or points to a non-existent/invalid socket file,
 # try to recover by finding a living socket in ~/.ssh/agent/
 if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! [[ -S "$SSH_AUTH_SOCK" ]]; then
+  _timeout_bin=""
+  if command -v timeout >/dev/null 2>&1; then
+    _timeout_bin="timeout"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    _timeout_bin="gtimeout"
+  elif [[ -x /opt/homebrew/bin/gtimeout ]]; then
+    _timeout_bin="/opt/homebrew/bin/gtimeout"
+  fi
   while IFS= read -r _sock_name; do
     [[ "$_sock_name" == s.* ]] || continue
     _sock="$HOME/.ssh/agent/$_sock_name"
-    if SSH_AUTH_SOCK="$_sock" ssh-add -l >/dev/null 2>&1 || [[ $? -eq 1 ]]; then
+    [[ -S "$_sock" ]] || continue
+    _ssh_rc=0
+    if [[ -n "$_timeout_bin" ]]; then
+      SSH_AUTH_SOCK="$_sock" "$_timeout_bin" 0.5s ssh-add -l >/dev/null 2>&1 || _ssh_rc=$?
+    else
+      SSH_AUTH_SOCK="$_sock" ssh-add -l >/dev/null 2>&1 || _ssh_rc=$?
+    fi
+    if [[ $_ssh_rc -eq 0 || $_ssh_rc -eq 1 ]]; then
       mkdir -p "$HOME/.ssh"
       ln -sf "$_sock" "$HOME/.ssh/ssh_auth_sock"
       export SSH_AUTH_SOCK="$HOME/.ssh/ssh_auth_sock"
@@ -14,7 +29,7 @@ if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! [[ -S "$SSH_AUTH_SOCK" ]]; then
   done <<EOF
 $(ls -1t "$HOME/.ssh/agent" 2>/dev/null)
 EOF
-  unset _sock_name _sock
+  unset _timeout_bin _sock_name _sock _ssh_rc
 fi
 
 # Ensure tmux uses a safe, user-owned directory for sockets on Linux to avoid UID collisions in /tmp
