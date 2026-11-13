@@ -15,6 +15,8 @@
 
 !.config/kevmoo-fyi/
 !.config/kevmoo-fyi/**
+!.config/kscripts/
+!.config/kscripts/repos.yaml
 !.config/mise/
 !.config/mise/**
 .config/mise/config.corp.toml
