@@ -32,8 +32,6 @@ brew "direnv"       # Directory-based environment variable loader
 brew "tealdeer"     # Fast implementation of tldr (simplified man pages)
 brew "fd"           # User-friendly alternative to find
 brew "yq"           # Portable command-line YAML processor
-brew "bazelisk"     # User-friendly launcher for Bazel
-brew "buildozer"    # Rewrite bazel BUILD files using standard commands
 brew "dolt"         # Git-for-data SQL database (PM-OS task storage)
 brew "tmux"         # Terminal multiplexer
 brew "wasm-tools"   # Low-level tooling for WebAssembly
