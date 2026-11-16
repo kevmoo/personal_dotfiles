@@ -85,13 +85,13 @@ class DotfilesCorpUpkeeper implements Upkeeper {
         errorMessage: null,
       );
     }
+    // Keep hook output lines in `details` only so TableFormatter and --json do
+    // not duplicate them alongside `errorMessage`.
     return (
       isOutdated: false,
       isError: true,
       details: lines,
-      errorMessage: output.isEmpty
-          ? 'Hook exited with code ${proc.exitCode}'
-          : output,
+      errorMessage: 'Hook exited with code ${proc.exitCode}',
     );
   }
 

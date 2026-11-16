@@ -162,9 +162,9 @@ void main() {
       final errorStatus = await upkeeper.check();
       check(errorStatus.state).equals(UpkeepState.error);
       check(errorStatus.summary).contains('hook check failed');
-      check(errorStatus.errorMessage)
-          .isNotNull()
-          .contains('ANCHOR_CONFLICT: SKILL.md missing anchor');
+      check(errorStatus.details)
+          .deepEquals(['ANCHOR_CONFLICT: SKILL.md missing anchor']);
+      check(errorStatus.errorMessage).equals('Hook exited with code 20');
 
       // 3. Exit 0 -> UpkeepState.upToDate
       hookCheckExit = 0;
@@ -202,6 +202,126 @@ void main() {
         check(invoked).contains('${hookFile.path} update');
       },
     );
+
+    group('hook check failure reporting', () {
+      late File hookFile;
+
+      setUp(() {
+        dotfilesCorpDir.createSync(recursive: true);
+        hookFile = File('${tempHome.path}/.local/bin/dotcorp-upkeep-hook')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('#!/bin/sh\n');
+      });
+
+      Future<UpkeepStatus> runFailedHook({
+        required int exitCode,
+        String stdout = '',
+        String stderr = '',
+      }) {
+        final upkeeper = DotfilesCorpUpkeeper(
+          isCloudtopOverride: true,
+          homeDirOverride: () => tempHome.path,
+          processRunner: _fakeProcessRunner(
+            hookPath: hookFile.path,
+            hookCheckExit: () => exitCode,
+            hookCheckStdout: () => stdout,
+            hookCheckStderr: () => stderr,
+          ),
+        );
+        return upkeeper.check();
+      }
+
+      test('single-line output is not duplicated in table or json', () async {
+        const line = 'ANCHOR_CONFLICT: SKILL.md missing anchor';
+        final status = await runFailedHook(exitCode: 20, stdout: '$line\n');
+
+        check(status.state).equals(UpkeepState.error);
+        check(status.summary).equals('Private dotfiles hook check failed');
+        check(status.details).deepEquals([line]);
+        check(status.errorMessage).equals('Hook exited with code 20');
+
+        final json = status.toJson();
+        check(json['details']).isA<List<String>>().deepEquals([line]);
+        check(json['error']).equals('Hook exited with code 20');
+
+        final table = TableFormatter.formatStatusTable([status]);
+        check(RegExp(RegExp.escape(line)).allMatches(table)).length.equals(1);
+        check(table).contains('• $line');
+        check(table).contains('❌ Error: Hook exited with code 20');
+      });
+
+      test(
+        'multi-line mixed OK and error output appears once per line',
+        () async {
+          const expectedLines = [
+            'OK: rules/style.md',
+            'ANCHOR_CONFLICT: rules/lint.md missing anchor',
+            'ANCHOR_CONFLICT: SKILL.md missing anchor',
+            'ERR: 2 conflicts found',
+          ];
+          final status = await runFailedHook(
+            exitCode: 20,
+            stdout:
+                '  OK: rules/style.md  \n'
+                '\n'
+                'ANCHOR_CONFLICT: rules/lint.md missing anchor\n'
+                'ANCHOR_CONFLICT: SKILL.md missing anchor\n',
+            stderr: '\nERR: 2 conflicts found\n',
+          );
+
+          check(status.state).equals(UpkeepState.error);
+          check(status.details).deepEquals(expectedLines);
+          check(status.errorMessage).equals('Hook exited with code 20');
+
+          final json = status.toJson();
+          check(json['details']).isA<List<String>>().deepEquals(expectedLines);
+          check(json['error']).equals('Hook exited with code 20');
+
+          final table = TableFormatter.formatStatusTable([status]);
+          for (final line in expectedLines) {
+            check(RegExp(RegExp.escape(line)).allMatches(table)).length
+                .equals(1);
+            check(table).contains('• $line');
+          }
+          check(table).contains('❌ Error: Hook exited with code 20');
+          check(table).not((c) => c.contains('❌ Error: OK:'));
+        },
+      );
+
+      test('empty or whitespace-only output reports exit code only', () async {
+        final status = await runFailedHook(
+          exitCode: 1,
+          stdout: '   \n\t\n',
+          stderr: '\n',
+        );
+
+        check(status.state).equals(UpkeepState.error);
+        check(status.details).isEmpty();
+        check(status.errorMessage).equals('Hook exited with code 1');
+
+        final json = status.toJson();
+        check(json['details']).isA<List<String>>().isEmpty();
+        check(json['error']).equals('Hook exited with code 1');
+
+        final table = TableFormatter.formatStatusTable([status]);
+        check(table).not((c) => c.contains('• '));
+        check(table).contains('❌ Error: Hook exited with code 1');
+      });
+
+      test('stderr-only output appears once in details', () async {
+        const line = 'hook script permission denied';
+        final status = await runFailedHook(exitCode: 126, stderr: '$line\n');
+
+        check(status.state).equals(UpkeepState.error);
+        check(status.details).deepEquals([line]);
+        check(status.errorMessage).equals('Hook exited with code 126');
+
+        final table = TableFormatter.formatStatusTable([status]);
+        check(RegExp(RegExp.escape(line)).allMatches(table)).length.equals(1);
+        check(table).contains('• $line');
+        check(table).contains('❌ Error: Hook exited with code 126');
+      });
+    });
   });
 }
 
@@ -216,6 +336,7 @@ Future<ProcessResult> Function(String, List<String>) _fakeProcessRunner({
   String? hookPath,
   int Function()? hookCheckExit,
   String Function()? hookCheckStdout,
+  String Function()? hookCheckStderr,
 }) {
   return (executable, args) async {
     commands?.add('$executable ${args.join(' ')}');
@@ -225,7 +346,7 @@ Future<ProcessResult> Function(String, List<String>) _fakeProcessRunner({
           0,
           hookCheckExit?.call() ?? 0,
           hookCheckStdout?.call() ?? '',
-          '',
+          hookCheckStderr?.call() ?? '',
         );
       }
       return ProcessResult(0, 0, 'APPLIED\n', '');
