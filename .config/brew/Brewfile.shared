@@ -20,7 +20,6 @@ brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 brew "sem-cli"
 brew "lazygit"
-brew "buildifier"
 
 # Newly added shared tools
 tap "valkyrie00/bbrew"
