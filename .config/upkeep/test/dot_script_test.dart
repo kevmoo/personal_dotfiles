@@ -102,7 +102,7 @@ void main() {
         check(pull2.exitCode, because: '${pull2.stderr}').equals(0);
 
         final status = await runDot(['status', '--porcelain', '-uno']);
-        check(status.stdout.toString().trim()).isEmpty();
+        check(status.stdout.toString().trim()).isEmpty;
       },
     );
 
@@ -127,9 +127,9 @@ void main() {
             .readAsStringSync(),
       ).equals('local un-vendored edit');
       check(Link(p.join(home, '.claude', 'skills', 'alpha')).existsSync())
-          .isTrue();
+          .isTrue;
       check(Link(p.join(home, '.claude', 'skills', 'beta')).existsSync())
-          .isTrue();
+          .isTrue;
       check(
         FileSystemEntity.typeSync(
           p.join(home, '.claude', 'skills', 'stale'),
@@ -149,7 +149,7 @@ void main() {
       File(p.join(home, 'config')).writeAsStringSync('conflicting local edit');
 
       final pullRes = await runDot(['pull']);
-      check(pullRes.exitCode).not((it) => it.equals(0));
+      check(pullRes.exitCode).not(.it()..equals(0));
       check(File(p.join(home, 'config')).readAsStringSync())
           .equals('conflicting local edit');
     });

@@ -23,13 +23,13 @@ void main() {
 
     test('isSupported is true when ~/.local/bin exists', () async {
       final upkeeper = LocalBinUpkeeper(homeDirOverride: () => tempHome.path);
-      check(await upkeeper.isSupported()).isTrue();
+      check(await upkeeper.isSupported()).isTrue;
     });
 
     test('isSupported is false when ~/.local/bin is absent', () async {
       binDir.deleteSync(recursive: true);
       final upkeeper = LocalBinUpkeeper(homeDirOverride: () => tempHome.path);
-      check(await upkeeper.isSupported()).isFalse();
+      check(await upkeeper.isSupported()).isFalse;
     });
 
     test(
@@ -79,15 +79,15 @@ void main() {
       check(status.state).equals(UpkeepState.needsTriage);
       check(status.actionHint).isNotNull().contains('dot add -f');
       check(status.summary).contains('1 untracked, 1 broken symlink(s)');
-      check(status.details).any((d) => d.contains('mystery-script'));
+      check(status.details).any(.it()..contains('mystery-script'));
       check(status.details).any(
-        (d) => d
+        .it()
           ..contains('broken-link')
           ..contains('broken symlink'),
       );
 
       final updateRes = await upkeeper.update();
-      check(updateRes.success).isFalse();
+      check(updateRes.success).isFalse;
       check(updateRes.message).contains('Manual triage required');
     });
   });

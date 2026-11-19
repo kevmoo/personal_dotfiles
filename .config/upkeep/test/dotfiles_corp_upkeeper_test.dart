@@ -22,12 +22,12 @@ void main() {
 
     test('isSupported is true on Cloudtop', () async {
       final upkeeper = DotfilesCorpUpkeeper(isCloudtopOverride: true);
-      check(await upkeeper.isSupported()).isTrue();
+      check(await upkeeper.isSupported()).isTrue;
     });
 
     test('isSupported is false on non-Cloudtop', () async {
       final upkeeper = DotfilesCorpUpkeeper(isCloudtopOverride: false);
-      check(await upkeeper.isSupported()).isFalse();
+      check(await upkeeper.isSupported()).isFalse;
     });
 
     test('check returns error when directory does not exist', () async {
@@ -104,7 +104,7 @@ void main() {
       );
 
       final result = await upkeeper.update();
-      check(result.success).isFalse();
+      check(result.success).isFalse;
       check(result.message).contains('uncommitted changes');
     });
 
@@ -118,7 +118,7 @@ void main() {
       );
 
       final result = await upkeeper.update();
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(commands).contains(
         'git --git-dir=${dotfilesCorpDir.path} --work-tree=${tempHome.path} pull --rebase',
       );
@@ -174,7 +174,7 @@ void main() {
 
       // 4. Update runs hook update
       final updateRes = await upkeeper.update();
-      check(updateRes.success).isTrue();
+      check(updateRes.success).isTrue;
       check(invoked).contains('${hookFile.path} update');
     });
 
@@ -197,7 +197,7 @@ void main() {
         );
 
         final result = await upkeeper.update();
-        check(result.success).isTrue();
+        check(result.success).isTrue;
         check(result.message).contains('hook updated');
         check(invoked).contains('${hookFile.path} update');
       },
@@ -284,7 +284,7 @@ void main() {
             check(table).contains('• $line');
           }
           check(table).contains('❌ Error: Hook exited with code 20');
-          check(table).not((c) => c.contains('❌ Error: OK:'));
+          check(table).not(.it()..contains('❌ Error: OK:'));
         },
       );
 
@@ -296,15 +296,15 @@ void main() {
         );
 
         check(status.state).equals(UpkeepState.error);
-        check(status.details).isEmpty();
+        check(status.details).isEmpty;
         check(status.errorMessage).equals('Hook exited with code 1');
 
         final json = status.toJson();
-        check(json['details']).isA<List<String>>().isEmpty();
+        check(json['details']).isA<List<String>>().isEmpty;
         check(json['error']).equals('Hook exited with code 1');
 
         final table = TableFormatter.formatStatusTable([status]);
-        check(table).not((c) => c.contains('• '));
+        check(table).not(.it()..contains('• '));
         check(table).contains('❌ Error: Hook exited with code 1');
       });
 

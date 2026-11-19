@@ -58,7 +58,7 @@ void main() {
         );
 
         final supported = await upkeeper.isSupported();
-        check(supported).isFalse();
+        check(supported).isFalse;
       },
     );
 
@@ -79,7 +79,7 @@ void main() {
         );
 
         final supported = await upkeeper.isSupported();
-        check(supported).isTrue();
+        check(supported).isTrue;
       },
     );
 

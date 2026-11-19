@@ -34,7 +34,7 @@ void main() {
         );
 
         final table = TableFormatter.formatStatusTable([status]);
-        check(table).not((c) => c.contains('Command: upkeep update'));
+        check(table).not(.it()..contains('Command: upkeep update'));
       },
     );
 
@@ -56,7 +56,7 @@ void main() {
           check(table).contains('🔵 Homebrew Brewfile Sync');
           check(table).contains('FYI / Needs Triage');
           check(table).contains('Action:  $expectedHint');
-          check(table).not((c) => c.contains('Command:'));
+          check(table).not(.it()..contains('Command:'));
         });
       },
     );

@@ -23,7 +23,7 @@ void main() {
     test('isSupported is false when no skills setup exists', () async {
       final upkeeper = SkillsUpkeeper(homeDirOverride: tempHome.path);
 
-      check(await upkeeper.isSupported()).isFalse();
+      check(await upkeeper.isSupported()).isFalse;
     });
   });
 
@@ -127,10 +127,10 @@ void main() {
 
       final result = await upkeeper.update();
 
-      check(result.success).isTrue();
-      check(calls).isEmpty();
+      check(result.success).isTrue;
+      check(calls).isEmpty;
       check(Link(p.join(home, '.claude', 'skills', 'alpha')).existsSync())
-          .isTrue();
+          .isTrue;
     });
 
     test('explicit syncUpstream update invokes npx skills update', () async {
@@ -147,13 +147,13 @@ void main() {
 
       final result = await upkeeper.update(syncUpstream: true);
 
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(calls).deepEquals([
         ['npx', 'skills', 'update', '-g'],
         ['npx', 'skills', 'update'],
       ]);
       check(Link(p.join(home, '.claude', 'skills', 'alpha')).existsSync())
-          .isTrue();
+          .isTrue;
     });
 
     test('never invokes npx, because skills check applies updates', () async {
@@ -174,7 +174,7 @@ void main() {
       });
       final upkeeper = upkeeperWith((_) => tree({'skills/alpha': 'same'}));
 
-      check(await upkeeper.staleSkills(home)).isNotNull().isEmpty();
+      check(await upkeeper.staleSkills(home)).isNotNull().isEmpty;
       check(calls).length.equals(1);
     });
 
@@ -191,8 +191,8 @@ void main() {
       writeLock({'alpha': entry('local', 'x', sourceType: 'local')});
       final upkeeper = upkeeperWith((_) => tree({}));
 
-      check(await upkeeper.staleSkills(home)).isNotNull().isEmpty();
-      check(calls).isEmpty();
+      check(await upkeeper.staleSkills(home)).isNotNull().isEmpty;
+      check(calls).isEmpty;
     });
 
     test('skips the check when gh fails', () async {
@@ -211,7 +211,7 @@ void main() {
         (_) => tree({'skills/alpha': 'same'}, truncated: true),
       );
 
-      check(await upkeeper.staleSkills(home)).isNull();
+      check(await upkeeper.staleSkills(home)).isNull;
     });
   });
 
@@ -240,25 +240,25 @@ void main() {
 
     test('no-op when .agents/skills is absent', () {
       final bare = Directory(p.join(home, 'other'))..createSync();
-      check(upkeeper.needsReconciliation(bare.path)).isFalse();
+      check(upkeeper.needsReconciliation(bare.path)).isFalse;
       upkeeper.reconcileSymlinks(bare.path); // must not throw
     });
 
     test('clean home with no integration targets needs nothing', () {
-      check(upkeeper.needsReconciliation(home)).isFalse();
+      check(upkeeper.needsReconciliation(home)).isFalse;
     });
 
     test('creates missing relative links for claude skills', () {
       Directory(path(['.claude', 'skills'])).createSync(recursive: true);
 
-      check(upkeeper.needsReconciliation(home)).isTrue();
+      check(upkeeper.needsReconciliation(home)).isTrue;
       upkeeper.reconcileSymlinks(home);
-      check(upkeeper.needsReconciliation(home)).isFalse();
+      check(upkeeper.needsReconciliation(home)).isFalse;
 
       final link = Link(path(['.claude', 'skills', 'alpha']));
-      check(link.existsSync()).isTrue();
+      check(link.existsSync()).isTrue;
       check(link.targetSync()).equals('../../.agents/skills/alpha');
-      check(Link(path(['.claude', 'skills', 'beta'])).existsSync()).isTrue();
+      check(Link(path(['.claude', 'skills', 'beta'])).existsSync()).isTrue;
     });
 
     test('prunes dangling claude links but preserves core.gc- links', () {
@@ -268,9 +268,9 @@ void main() {
       Link(path(['.claude', 'skills', 'core.gc-managed']))
           .createSync('../../.agents/skills/also-gone');
 
-      check(upkeeper.needsReconciliation(home)).isTrue();
+      check(upkeeper.needsReconciliation(home)).isTrue;
       upkeeper.reconcileSymlinks(home);
-      check(upkeeper.needsReconciliation(home)).isFalse();
+      check(upkeeper.needsReconciliation(home)).isFalse;
 
       check(
         FileSystemEntity.typeSync(
@@ -293,9 +293,9 @@ void main() {
       Directory(path(['.gemini', 'antigravity-ide']))
           .createSync(recursive: true);
 
-      check(upkeeper.needsReconciliation(home)).isTrue();
+      check(upkeeper.needsReconciliation(home)).isTrue;
       upkeeper.reconcileSymlinks(home);
-      check(upkeeper.needsReconciliation(home)).isFalse();
+      check(upkeeper.needsReconciliation(home)).isFalse;
 
       final skillLink = Link(
         path([
@@ -307,7 +307,7 @@ void main() {
           'alpha',
         ]),
       );
-      check(skillLink.existsSync()).isTrue();
+      check(skillLink.existsSync()).isTrue;
       check(skillLink.targetSync())
           .equals(path(['.agents', 'skills', 'alpha']));
 
@@ -327,7 +327,7 @@ void main() {
 
       upkeeper.reconcileSymlinks(home);
       upkeeper.reconcileSymlinks(home); // second run must not throw
-      check(upkeeper.needsReconciliation(home)).isFalse();
+      check(upkeeper.needsReconciliation(home)).isFalse;
     });
 
     test('uncommittedSkillFiles detects untracked files even when status.showUntrackedFiles is no', () async {
@@ -350,7 +350,7 @@ void main() {
             ..writeAsStringSync('{}');
 
       final dirty = await upkeeper.uncommittedSkillFiles(home);
-      check(dirty).isNotEmpty();
+      check(dirty).isNotEmpty;
       check(dirty.single).contains('evals/evals.json');
 
       final dotfilesUpkeeper = DotfilesUpkeeper(homeDirOverride: home);
@@ -414,10 +414,10 @@ void main() {
         upkeeper.normalizeSkillLock(home);
 
         final dirty = await upkeeper.uncommittedSkillFiles(home);
-        check(dirty).isEmpty();
+        check(dirty).isEmpty;
         check(lockFile.readAsStringSync())
             .contains('"updatedAt": "2026-06-05T01:21:48.061Z"');
-        check(lockFile.readAsStringSync().endsWith('\n')).isFalse();
+        check(lockFile.readAsStringSync().endsWith('\n')).isFalse;
       },
     );
   });

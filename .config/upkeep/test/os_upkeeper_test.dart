@@ -91,7 +91,7 @@ void main() {
       );
 
       final result = await strategy.update('os', 'OS System Updates');
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(commandsRun).deepEquals(['gcert', 'sudo glinux-updater -vF']);
       check(result.message).contains('WARNING: System reboot required');
     });

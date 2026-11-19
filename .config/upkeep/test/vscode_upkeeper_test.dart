@@ -31,7 +31,7 @@ void main() {
       check(status.summary).equals('TODO - implement the list');
 
       final result = await upkeeper.update();
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(result.message).equals('TODO - implement the list');
     });
 
@@ -77,22 +77,22 @@ void main() {
 
       // Run update() to reconcile
       final result = await upkeeper.update();
-      check(result.success).isTrue();
+      check(result.success).isTrue;
 
       // Check that settings.json.bak was created and settings.json is now a symlink pointing to the shared source
       final backupSettings = File('${codeUserDir.path}/settings.json.bak');
-      check(backupSettings.existsSync()).isTrue();
+      check(backupSettings.existsSync()).isTrue;
       check(backupSettings.readAsStringSync()).equals('{"local": true}');
 
       final settingsLink = Link('${codeUserDir.path}/settings.json');
-      check(settingsLink.existsSync()).isTrue();
-      check(FileSystemEntity.isLinkSync(settingsLink.path)).isTrue();
+      check(settingsLink.existsSync()).isTrue;
+      check(FileSystemEntity.isLinkSync(settingsLink.path)).isTrue;
       check(settingsLink.targetSync())
           .equals('../../vscode-shared/settings.json');
 
       final keybindingsLink = Link('${codeUserDir.path}/keybindings.json');
-      check(keybindingsLink.existsSync()).isTrue();
-      check(FileSystemEntity.isLinkSync(keybindingsLink.path)).isTrue();
+      check(keybindingsLink.existsSync()).isTrue;
+      check(FileSystemEntity.isLinkSync(keybindingsLink.path)).isTrue;
       check(keybindingsLink.targetSync())
           .equals('../../vscode-shared/keybindings.json');
 
@@ -107,7 +107,7 @@ void main() {
         isCloudtopOverride: false,
       );
 
-      check(await upkeeper.isSupported()).isFalse();
+      check(await upkeeper.isSupported()).isFalse;
     });
 
     test('isSupported is true when shared vscode config exists', () async {
@@ -121,7 +121,7 @@ void main() {
         isCloudtopOverride: false,
       );
 
-      check(await upkeeper.isSupported()).isTrue();
+      check(await upkeeper.isSupported()).isTrue;
     });
   });
 }

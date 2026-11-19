@@ -42,8 +42,8 @@ void main() {
 
         final status = await upkeeper.check();
         check(status.state).equals(UpkeepState.needsTriage);
-        check(status.isOutdated).isFalse();
-        check(status.isNeedsTriage).isTrue();
+        check(status.isOutdated).isFalse;
+        check(status.isNeedsTriage).isTrue;
         check(status.summary).equals('1 unmanaged in Brewfile');
         check(status.actionHint).equals('upkeep triage');
         check(status.details).deepEquals(['Unmanaged formula: ffmpeg']);
@@ -117,8 +117,8 @@ void main() {
 
         // (d) 'd' -> skipped tree
         check(output.toString()).contains("Skipped 'tree'");
-        check(sharedBrewfile.readAsStringSync()).not((c) => c.contains('tree'));
-        check(macBrewfile.readAsStringSync()).not((c) => c.contains('tree'));
+        check(sharedBrewfile.readAsStringSync()).not(.it()..contains('tree'));
+        check(macBrewfile.readAsStringSync()).not(.it()..contains('tree'));
       },
     );
   });
