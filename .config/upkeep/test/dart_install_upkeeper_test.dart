@@ -26,13 +26,13 @@ void main() {
 
       final upkeeper = DartInstallUpkeeper(installDirOverride: tempInstallDir);
 
-      check(await upkeeper.isSupported()).isTrue();
+      check(await upkeeper.isSupported()).isTrue;
     });
 
     test('isSupported returns false when app-bundles does not exist', () async {
       final upkeeper = DartInstallUpkeeper(installDirOverride: tempInstallDir);
 
-      check(await upkeeper.isSupported()).isFalse();
+      check(await upkeeper.isSupported()).isFalse;
     });
 
     test('check detects up to date hosted packages', () async {
@@ -239,7 +239,7 @@ packages:
               cmd.contains('log') &&
               cmd.last == sourceRepo.path,
         ),
-      ).isTrue();
+      ).isTrue;
     });
 
     test('check detects uncommitted local changes via status --porcelain in bare ~/.dotfiles repo', () async {
@@ -309,7 +309,7 @@ packages:
       );
 
       final result = await upkeeper.update();
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(result.message)
           .contains('Successfully updated 1 Dart tool(s): dhttpd');
 
@@ -321,7 +321,7 @@ packages:
               cmd[1] == 'install' &&
               cmd[2] == 'dhttpd',
         ),
-      ).isTrue();
+      ).isTrue;
     });
 
     test('update preserves path for monorepo git packages', () async {
@@ -355,7 +355,7 @@ packages:
       );
 
       final result = await upkeeper.update();
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(
         executedArgs.any(
           (cmd) =>
@@ -364,7 +364,7 @@ packages:
               cmd[1] == 'install' &&
               cmd[2] == 'cli_readme@{git: {url: https://github.com/kevmoo/analytica.dart, path: packages/cli_readme}}',
         ),
-      ).isTrue();
+      ).isTrue;
     });
 
     test('update reports failure when dart install fails', () async {
@@ -383,7 +383,7 @@ packages:
       );
 
       final result = await upkeeper.update();
-      check(result.success).isFalse();
+      check(result.success).isFalse;
       check(result.message).contains(
         'Failed to upgrade some Dart tools: failing_pkg: Compilation failed',
       );

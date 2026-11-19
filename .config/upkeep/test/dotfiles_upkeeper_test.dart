@@ -68,7 +68,7 @@ void main() {
 
       final result = await DotfilesUpkeeper(homeDirOverride: home).update();
 
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(readConfig()).equals('v2');
       final gitDir = p.join(home, '.dotfiles');
       final status = await git(home, [
@@ -84,8 +84,8 @@ void main() {
         'stash',
         'list',
       ]);
-      check(status).isEmpty();
-      check(stashes).isEmpty();
+      check(status).isEmpty;
+      check(stashes).isEmpty;
     });
 
     test('refuses to pull over different local changes', () async {
@@ -94,7 +94,7 @@ void main() {
 
       final result = await DotfilesUpkeeper(homeDirOverride: home).update();
 
-      check(result.success).isFalse();
+      check(result.success).isFalse;
       check(readConfig()).equals('local edit');
     });
 
@@ -109,10 +109,10 @@ void main() {
 
         final result = await DotfilesUpkeeper(homeDirOverride: home).update();
 
-        check(result.success).isTrue();
+        check(result.success).isTrue;
         check(readConfig()).equals('v2');
         check(Link(p.join(home, '.claude', 'skills', 'alpha')).existsSync())
-            .isTrue();
+            .isTrue;
       },
     );
 
@@ -129,7 +129,7 @@ void main() {
 
       final result = await DotfilesUpkeeper(homeDirOverride: home).update();
 
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(readConfig()).equals('v2');
       check(File(p.join(home, 'skills_doc')).readAsStringSync())
           .equals('local skill sync');

@@ -16,7 +16,7 @@ void main() {
         },
       );
 
-      check(await upkeeper.isSupported()).isTrue();
+      check(await upkeeper.isSupported()).isTrue;
     });
 
     test('check returns upToDate when no global packages exist', () async {
@@ -74,7 +74,7 @@ void main() {
       );
 
       final result = await upkeeper.update();
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(result.message)
           .contains('Successfully deactivated 2 legacy global package(s)');
 
@@ -88,7 +88,7 @@ void main() {
               cmd[3] == 'deactivate' &&
               cmd[4] == 'pub_release',
         ),
-      ).isTrue();
+      ).isTrue;
 
       check(
         executedArgs.any(
@@ -100,7 +100,7 @@ void main() {
               cmd[3] == 'deactivate' &&
               cmd[4] == 'melos',
         ),
-      ).isTrue();
+      ).isTrue;
     });
   });
 }

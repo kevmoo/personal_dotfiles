@@ -90,13 +90,13 @@ void main() {
 
       // A `sdk: flutter` dependency line must not masquerade as the
       // environment SDK constraint.
-      check(output).not((it) => it.contains('| flutter |'));
+      check(output).not(.it()..contains('| flutter |'));
 
       // No remotes configured -> remote column renders 'None'.
       check(output).contains('| None |');
 
       // Dot-prefixed directories are skipped.
-      check(output).not((it) => it.contains('.hidden'));
+      check(output).not(.it()..contains('.hidden'));
 
       // Sort order: dirty first, then clean, then scratch.
       final dirtyIdx = output.indexOf('dirty_repo');

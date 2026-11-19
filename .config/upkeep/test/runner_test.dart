@@ -153,7 +153,7 @@ void main() {
       final updateResults = await runner.updateSelected(['sub1']);
 
       check(updateResults.length).equals(1);
-      check(updateResults.first.success).isTrue();
+      check(updateResults.first.success).isTrue;
       check(updateResults.first.upkeeperId).equals('sub1');
     });
     test('Runner forwards syncUpstreamSkills to SkillsUpkeeper', () async {
@@ -168,7 +168,7 @@ void main() {
       final runner = UpkeepRunner(upkeepers: [skills]);
 
       await runner.updateSelected(['skills']);
-      check(calls).isEmpty();
+      check(calls).isEmpty;
 
       await runner.updateSelected(['skills'], syncUpstreamSkills: true);
       check(calls).deepEquals([

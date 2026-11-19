@@ -30,8 +30,8 @@ void main() {
         actionHint: 'upkeep triage',
       );
 
-      check(status.isNeedsTriage).isTrue();
-      check(status.isOutdated).isFalse();
+      check(status.isNeedsTriage).isTrue;
+      check(status.isOutdated).isFalse;
       final json = status.toJson();
       check(json['state']).equals('needsTriage');
       check(json['actionHint']).equals('upkeep triage');

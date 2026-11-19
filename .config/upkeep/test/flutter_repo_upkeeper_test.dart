@@ -21,13 +21,13 @@ void main() {
 
     test('isSupported is false when no .git exists', () async {
       final upkeeper = FlutterRepoUpkeeper(overrideFlutterDir: flutterDir);
-      check(await upkeeper.isSupported()).isFalse();
+      check(await upkeeper.isSupported()).isFalse;
     });
 
     test('isSupported is true when .git exists', () async {
       Directory(p.join(flutterDir.path, '.git')).createSync(recursive: true);
       final upkeeper = FlutterRepoUpkeeper(overrideFlutterDir: flutterDir);
-      check(await upkeeper.isSupported()).isTrue();
+      check(await upkeeper.isSupported()).isTrue;
     });
 
     test('check returns outdated when branch is not master or main', () async {
@@ -102,7 +102,7 @@ void main() {
       );
 
       final result = await upkeeper.update();
-      check(result.success).isFalse();
+      check(result.success).isFalse;
       check(result.message).contains('uncommitted local changes exist');
     });
 
@@ -115,7 +115,7 @@ void main() {
       );
 
       final result = await upkeeper.update();
-      check(result.success).isTrue();
+      check(result.success).isTrue;
       check(result.message).contains('and ran flutter doctor');
       check(commands)
           .contains('git -C ${flutterDir.path} pull --ff-only origin master');
@@ -138,7 +138,7 @@ void main() {
       );
 
       final result = await upkeeper.update();
-      check(result.success).isFalse();
+      check(result.success).isFalse;
       check(result.message).contains('flutter doctor failed');
       check(result.errorMessage).equals('doctor tool failure');
     });
