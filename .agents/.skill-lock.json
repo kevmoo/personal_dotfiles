@@ -225,6 +225,16 @@
       "skillFolderHash": "a396f1ba1de72cfba7389fb1b41d47ac62121382",
       "installedAt": "2026-10-25T06:26:07.364Z",
       "updatedAt": "2026-10-25T06:26:07.364Z"
+    },
+    "prose-review": {
+      "source": "kevmoo/scripts.dart",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
+      "commit": "2b81b928160dee47182d758ae3ff9d5cb977714a",
+      "skillPath": "skills/prose-review/SKILL.md",
+      "skillFolderHash": "eca6400b7040fb32071ddaca6b0f9df0a2e47e79",
+      "installedAt": "2026-11-20T19:59:53.349Z",
+      "updatedAt": "2026-11-20T19:59:53.349Z"
     }
   },
   "dismissed": {

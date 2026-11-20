@@ -59,6 +59,7 @@
 !.local/bin/net-diag
 !.local/bin/pr-check
 !.local/bin/pr-triage
+!.local/bin/prose-check
 !.local/bin/puppy
 !.local/bin/relay-gh
 !.local/bin/relay-whoami
@@ -126,6 +127,8 @@
 !.agents/skills/pr-review/**
 !.agents/skills/pr-triage/
 !.agents/skills/pr-triage/**
+!.agents/skills/prose-review/
+!.agents/skills/prose-review/**
 !.agents/skills/quick-question/
 !.agents/skills/quick-question/**
 !.agents/skills/quiz-me/
