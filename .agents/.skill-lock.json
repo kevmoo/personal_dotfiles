@@ -69,9 +69,10 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/kevmoo_skills.git",
       "skillPath": "skills/sidequest/SKILL.md",
-      "skillFolderHash": "ea7125c1b1beb2ac7e0f46afe53c9aee039a7ce1",
+      "skillFolderHash": "b2befa2474837b26157397476b4d74478b235434",
       "installedAt": "2026-07-12T03:02:22.429Z",
-      "updatedAt": "2026-07-12T03:02:22.429Z"
+      "updatedAt": "2026-07-12T03:02:22.429Z",
+      "commit": "d486a0a3dc3c80abf1fe5d48fd4c120645d6406c"
     },
     "gws-calendar": {
       "source": "googleworkspace/cli",
@@ -132,9 +133,10 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/repo-align/SKILL.md",
-      "skillFolderHash": "03e6d119ae2a169529d255408031896b4e121ab7",
+      "skillFolderHash": "4668a2a68ea7609e3e362830dcddc8f409a837f8",
       "installedAt": "2026-09-22T23:18:55.710Z",
-      "updatedAt": "2026-09-22T23:18:55.710Z"
+      "updatedAt": "2026-09-22T23:18:55.710Z",
+      "commit": "a54b63d17f0b386fc47e1b569cbfe1cddd0d42f7"
     },
     "pr-review": {
       "source": "kevmoo/kevmoo_skills",
