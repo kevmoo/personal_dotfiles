@@ -136,14 +136,17 @@ void main() {
         );
 
         final status = await upkeeper.check();
-        check(status.state).equals(UpkeepState.needsTriage);
+        check(status.state).equals(UpkeepState.outdated);
         check(status.summary).contains('1 untracked, 1 stale agy backup(s)');
 
         final res = await upkeeper.update();
-        check(res.success).isFalse;
+        check(res.success).isTrue;
         check(res.message).contains('Removed 1 stale agy backup(s)');
-        check(res.message).contains('Manual triage required');
+        check(res.message).contains('manual triage still needed');
         check(stale.existsSync()).isFalse;
+
+        final after = await upkeeper.check();
+        check(after.state).equals(UpkeepState.needsTriage);
       },
     );
   });

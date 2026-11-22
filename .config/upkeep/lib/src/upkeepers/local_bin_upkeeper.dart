@@ -185,7 +185,9 @@ class LocalBinUpkeeper implements Upkeeper {
     return UpkeepStatus(
       upkeeperId: id,
       displayName: displayName,
-      state: UpkeepState.needsTriage,
+      state: staleBackups.isNotEmpty
+          ? UpkeepState.outdated
+          : UpkeepState.needsTriage,
       summary: '${parts.join(', ')} in ~/.local/bin',
       details: details,
       actionHint: 'Track via "dot add -f", allowlist in ~/.config/upkeep/local_bin_allowlist*, or remove',
@@ -235,52 +237,69 @@ class LocalBinUpkeeper implements Upkeeper {
 
   @override
   Future<UpkeepResult> update({bool verbose = false}) async {
-    final home = _homeDir();
-    final binDir = Directory(_localBinDir(home));
-    if (!binDir.existsSync()) {
-      return UpkeepResult(
-        upkeeperId: id,
-        displayName: displayName,
-        success: true,
-        message: '~/.local/bin directory not present',
-      );
-    }
-
-    final scan = await _scanBinDir(home, binDir);
-    final removed = <String>[];
-    for (final file in scan.staleBackups) {
-      if (file.existsSync()) {
-        file.deleteSync();
-        removed.add(p.basename(file.path));
+    try {
+      final home = _homeDir();
+      final binDir = Directory(_localBinDir(home));
+      if (!binDir.existsSync()) {
+        return UpkeepResult(
+          upkeeperId: id,
+          displayName: displayName,
+          success: true,
+          message: '~/.local/bin directory not present',
+        );
       }
-    }
 
-    if (scan.untracked.isEmpty && scan.brokenSymlinks.isEmpty) {
-      final message = removed.isEmpty
-          ? 'All ${scan.total} entries in ~/.local/bin are tracked or allowlisted'
-          : 'Removed ${removed.length} stale agy backup(s): ${removed.join(', ')}';
+      final scan = await _scanBinDir(home, binDir);
+      final removed = <String>[];
+      for (final file in scan.staleBackups) {
+        if (file.existsSync()) {
+          file.deleteSync();
+          removed.add(p.basename(file.path));
+        }
+      }
+
+      if (scan.untracked.isEmpty && scan.brokenSymlinks.isEmpty) {
+        final message = removed.isEmpty
+            ? 'All ${scan.total} entries in ~/.local/bin are tracked or allowlisted'
+            : 'Removed ${removed.length} stale agy backup(s): ${removed.join(', ')}';
+        return UpkeepResult(
+          upkeeperId: id,
+          displayName: displayName,
+          success: true,
+          message: message,
+        );
+      }
+
+      final status = _buildTriageStatus(
+        scan.untracked,
+        scan.brokenSymlinks,
+        const [],
+      );
+      if (removed.isNotEmpty) {
+        return UpkeepResult(
+          upkeeperId: id,
+          displayName: displayName,
+          success: true,
+          message:
+              'Removed ${removed.length} stale agy backup(s): ${removed.join(', ')} '
+              '(manual triage still needed: ${status.summary})',
+        );
+      }
       return UpkeepResult(
         upkeeperId: id,
         displayName: displayName,
-        success: true,
-        message: message,
+        success: false,
+        message: 'Manual triage required: ${status.summary}',
+        errorMessage: status.details.join('\n'),
+      );
+    } catch (e) {
+      return UpkeepResult(
+        upkeeperId: id,
+        displayName: displayName,
+        success: false,
+        message: 'Exception updating ~/.local/bin',
+        errorMessage: e.toString(),
       );
     }
-
-    final status = _buildTriageStatus(
-      scan.untracked,
-      scan.brokenSymlinks,
-      const [],
-    );
-    final prefix = removed.isEmpty
-        ? ''
-        : 'Removed ${removed.length} stale agy backup(s) (${removed.join(', ')}); ';
-    return UpkeepResult(
-      upkeeperId: id,
-      displayName: displayName,
-      success: false,
-      message: '${prefix}Manual triage required: ${status.summary}',
-      errorMessage: status.details.join('\n'),
-    );
   }
 }
