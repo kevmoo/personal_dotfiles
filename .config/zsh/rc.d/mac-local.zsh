@@ -15,6 +15,13 @@ export EDITOR="codium --wait"
 # Increase open file descriptor limit
 ulimit -n 10240
 
+# Auto-load SSH keys stored in macOS Keychain into ssh-agent asynchronously
+# (uses /usr/bin/ssh-add explicitly because /usr/local/bin or Homebrew OpenSSH
+# builds omit --apple-load-keychain).
+if [[ -o interactive && -x /usr/bin/ssh-add ]]; then
+  ( /usr/bin/ssh-add --apple-load-keychain -q >/dev/null 2>&1 &! )
+fi
+
 # Aliases
 alias corp-ssh='gcertstatus --check_remaining=1h --quiet || gcert; ssh kevmoo.c.googlers.com'
 
