@@ -90,5 +90,64 @@ void main() {
       check(updateRes.success).isFalse;
       check(updateRes.message).contains('Manual triage required');
     });
+
+    test('check reports outdated for stale agy.*.old backups and update deletes them', () async {
+      File('${binDir.path}/agy').writeAsStringSync('#!/bin/sh\n');
+      final stale1 = File('${binDir.path}/agy.1795302543087764083.old')
+        ..writeAsStringSync('old binary 1');
+      final stale2 = File('${binDir.path}/agy.12345.old')
+        ..writeAsStringSync('old binary 2');
+
+      File('${tempHome.path}/.config/upkeep/local_bin_allowlist')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('agy\n');
+
+      final upkeeper = LocalBinUpkeeper(
+        homeDirOverride: () => tempHome.path,
+        processRunner: (_, _) async => ProcessResult(0, 0, '', ''),
+      );
+
+      final before = await upkeeper.check();
+      check(before.state).equals(UpkeepState.outdated);
+      check(before.summary).contains('2 stale agy backup(s)');
+      check(before.details).any(.it()..contains('agy.1795302543087764083.old'));
+
+      final res = await upkeeper.update();
+      check(res.success).isTrue;
+      check(res.message).contains('Removed 2 stale agy backup(s)');
+      check(stale1.existsSync()).isFalse;
+      check(stale2.existsSync()).isFalse;
+      check(File('${binDir.path}/agy').existsSync()).isTrue;
+
+      final after = await upkeeper.check();
+      check(after.state).equals(UpkeepState.upToDate);
+    });
+
+    test(
+      'update still removes stale agy backups when untracked files also exist',
+      () async {
+        final stale = File('${binDir.path}/agy.999.old')
+          ..writeAsStringSync('old');
+        File('${binDir.path}/mystery-script').writeAsStringSync('#!/bin/sh\n');
+
+        final upkeeper = LocalBinUpkeeper(
+          homeDirOverride: () => tempHome.path,
+          processRunner: (_, _) async => ProcessResult(0, 0, '', ''),
+        );
+
+        final status = await upkeeper.check();
+        check(status.state).equals(UpkeepState.outdated);
+        check(status.summary).contains('1 untracked, 1 stale agy backup(s)');
+
+        final res = await upkeeper.update();
+        check(res.success).isTrue;
+        check(res.message).contains('Removed 1 stale agy backup(s)');
+        check(res.message).contains('manual triage still needed');
+        check(stale.existsSync()).isFalse;
+
+        final after = await upkeeper.check();
+        check(after.state).equals(UpkeepState.needsTriage);
+      },
+    );
   });
 }
