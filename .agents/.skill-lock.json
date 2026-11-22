@@ -152,9 +152,10 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/gh-post/SKILL.md",
-      "skillFolderHash": "528a8ce79cad548e3391d6ce6df2a2b04e1a92c0",
+      "skillFolderHash": "12009a90ee511246a996cbba3bc7716764c91b12",
       "installedAt": "2026-09-23T23:36:39.381Z",
-      "updatedAt": "2026-09-23T23:36:39.381Z"
+      "updatedAt": "2026-09-23T23:36:39.381Z",
+      "commit": "502c6a20ca8d2124a40057efef4772a30a43c638"
     },
     "pr-triage": {
       "source": "kevmoo/scripts.dart",

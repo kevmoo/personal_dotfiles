@@ -118,6 +118,14 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
 
 ## GitHub PRs & Workspace
 
+- **Target-Repo Orientation (Pre-Edit)**: Whenever working in a repository or
+  worktree outside the session's startup directory, run
+  `kscripts gh-orient --dir <checkout-root> [-p <paths>]` (or inspect
+  `<checkout-root>/{AGENTS.md,CLAUDE.md,GEMINI.md,.gemini/styleguide.md,.agents/rules/,.agents/skills/}`)
+  **before editing code or prose**—do not wait until `/gh-post` PR creation. On
+  documentation PRs in repositories with a styleguide or prose/proofreading
+  skill, run a read-only subagent pass on the changed doc files against those
+  instructions before requesting PR approval.
 - **Pre-PR CI Parity (`pr-check`) & Push Hygiene**: Run `kscripts pr-check`
   before `gh pr create` in `~/github/kevmoo/*` (`gh pr create -f` on 1-commit
   branches: imperative subject `<=70 chars`, bulleted body, `Fixes #123`). In
