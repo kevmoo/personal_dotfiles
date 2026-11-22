@@ -1,7 +1,7 @@
 [Unit]
 Description=oauth2-proxy
-After=guac-guacamole.service
-Wants=guac-guacamole.service
+After=guac-guacamole.service guac-termui-cast.service
+Wants=guac-guacamole.service guac-termui-cast.service
 
 [Container]
 ContainerName=oauth2-proxy

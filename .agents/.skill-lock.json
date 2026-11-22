@@ -162,9 +162,10 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/pr-triage/SKILL.md",
-      "skillFolderHash": "8a1b4e1073d41204be0cbc4bad3b06230c389874",
+      "skillFolderHash": "be42d5a8e1e38456add83517c29bbab19e5c6dc7",
       "installedAt": "2026-09-23T23:36:39.383Z",
-      "updatedAt": "2026-09-23T23:36:39.383Z"
+      "updatedAt": "2026-09-23T23:36:39.383Z",
+      "commit": "0084003510fb58f5ab9b12dd44b5dac5fa6138f2"
     },
     "sharpen-later": {
       "source": "kevmoo/kevmoo_skills",
