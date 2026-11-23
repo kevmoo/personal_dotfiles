@@ -133,10 +133,10 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/repo-align/SKILL.md",
-      "skillFolderHash": "4668a2a68ea7609e3e362830dcddc8f409a837f8",
+      "skillFolderHash": "a9537cb2965ac9bd919ac50edaabd11a4ed959aa",
       "installedAt": "2026-09-22T23:18:55.710Z",
       "updatedAt": "2026-09-22T23:18:55.710Z",
-      "commit": "a54b63d17f0b386fc47e1b569cbfe1cddd0d42f7"
+      "commit": "56c3547a33adb7d3bce2f46740085d605ab19e26"
     },
     "pr-review": {
       "source": "kevmoo/kevmoo_skills",
@@ -162,10 +162,10 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/kevmoo/scripts.dart.git",
       "skillPath": "skills/pr-triage/SKILL.md",
-      "skillFolderHash": "be42d5a8e1e38456add83517c29bbab19e5c6dc7",
+      "skillFolderHash": "61f784c8e9f1936850c4a9938d882cde1f7ee432",
       "installedAt": "2026-09-23T23:36:39.383Z",
       "updatedAt": "2026-09-23T23:36:39.383Z",
-      "commit": "0084003510fb58f5ab9b12dd44b5dac5fa6138f2"
+      "commit": "56c3547a33adb7d3bce2f46740085d605ab19e26"
     },
     "sharpen-later": {
       "source": "kevmoo/kevmoo_skills",
