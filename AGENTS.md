@@ -5,23 +5,22 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
 ## Version Control & Outward Boundaries
 
 - **Staging & Worktrees (Autonomous)**: Auto-run branching, `git commit`,
-  `git push [remote] <feature-branch>`, formatters, and
-  `~/fog/dash-okf/scripts/okf_tripwire.sh`. Use `new-worktree`
-  (`_[repo]-[branch]`) in mixed repos (`private_life`) to keep `main` clean.
+  `git push [remote] <feature-branch>`, formatters, and repo tripwires. Use
+  `new-worktree` (`_[repo]-[branch]`) in mixed repos (`private_life`) to keep
+  `main` clean.
 - **Trunk Rules**: NEVER push code/scripts/configs/tests directly to
   `main`/`master`/`trunk`. Always use feature branch + PR (`gh pr create`) +
   green CI; if asked to push to `main`, gate via `ask_question` with
   `(Recommended) Create a feature branch and open a PR` first.
 - **Approval Gates (`ask_question`, single-action scope)**:
   - **Per-Action**: Pushing pure docs to trunk, `gh pr merge`/close, auto-merge
-    (`--auto`, `autosubmit`), `gh release create`, and all GitHub writes. In
-    Claude Code, `permissions.ask` already prompts for `gh` writes; skip the
-    extra `AskUserQuestion` unless the action is outside the user's request.
+    (`--auto`, `autosubmit`), `gh release create`, and GitHub writes (in Claude
+    Code, `permissions.ask` covers `gh` writes unless outside user's request).
   - **Merge-on-Green (`github.com/kevmoo/*` Only)**: Prompt to merge on green CI
     ONLY in `github.com/kevmoo/*`; leave `dart-lang/*`, `flutter/*`, `google/*`
     PRs open for peer review unless maintainer-approved or asked.
   - **Relay Consent (`kevmoo/agent-relay` only)**: Gate _once_ per thread via
-    `ask_question` (comments, `ACK`/`HANDOFF`/`DONE`, branch `drops/` commits);
+    `ask_question` (comments, `ACK`/`HANDOFF`/`DONE`, `drops/` commits);
     re-prompt on `State: BLOCKED`, new threads, or external actions.
 - **Two-Tier Landing Approval**: Tier 1 (0-diff retry: CI reruns, formatters,
   clean rebases, transient lockouts) is autonomous. Tier 2 (semantic diff:
@@ -34,43 +33,40 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
 
 - **Structured Questions (`ask_question`) & Artifacts**: Use for 1-word
   confirmations (`(Recommended) Yes, ...` + `No, cancel/pause`). Emit `3–8`
-  visible context bullets + clickable links in the **same** step as
-  `ask_question`, and link `[report.md](file:///...)` / `[#N](https://...)`
-  inside `ask_question`. Set `RequestFeedback: false` on `*_report.md` and
-  `*_brainstorm.md`. No modal traps on open menus; honor declined bounds.
+  context bullets + clickable links in the **same** step, and link
+  `[report.md](file:///...)` / `[#N](https://...)` inside `ask_question`. Set
+  `RequestFeedback: false` on `*_report.md`/`*_brainstorm.md`; no modal traps on
+  open menus, and honor declined bounds.
 - **Output & Links**: State intent in 1 sentence before multi-step work; skip
-  tool narration and filler. Format all `file://`, `https://`, CLs, and PRs as
-  clickable links (`[src/main.dart](file:///...)`, including in `ask_question`);
-  never wrap URLs in backticks, and keep `**`/`` ` `` inside `[...]`.
+  narration/filler. Format all `file://`, `https://`, CLs, and PRs as clickable
+  links (`[src/main.dart](file:///...)`, including in `ask_question`); never
+  wrap URLs in backticks, keeping `**`/`` ` `` inside `[...]`.
 - **Conclusion-First Bullets (Chat & Artifacts)**: Start top-level bullets with
   a bold declarative takeaway with **no parentheticals** or metric labels
   (`**Agents read both Markdown and JSON, which is redundant.**`, never
-  `**1:1 Dual-Read Tax (153 vs. 151):**`). Nest metrics, links, parentheticals,
-  and causal mechanics (`...because X`) in sub-bullets.
+  `**1:1 Dual-Read Tax (153 vs. 151):**`); nest metrics, links, parentheticals,
+  and `...because X` mechanics in sub-bullets.
 - **Tables & Platform Formatting**: One table row per physical line.
   - **GitHub (`~/github`, Prettier `mdf`)**: Separate `> [!NOTE]` headers from
-    body with an empty `>` line; never emit `<!-- mdformat off/on -->` or
-    `[TOC]` in `~/github` or `--markdown` outputs.
-  - **Piper (`mdformat`)**: Wrap tables >80 cols in `<!-- mdformat off -->` ...
-    `<!-- mdformat on -->`.
+    body with an empty `>` line; omit `<!-- mdformat off/on -->` and `[TOC]` in
+    `~/github` or `--markdown` outputs.
+  - **Piper (`mdformat`)**: Wrap tables >80 cols in `<!-- mdformat off/on -->`.
 - **CLI & Heredocs**: Pass `--yes`, `PAGER=cat`, `GIT_EDITOR=true`,
   `EDITOR=true`, and timeouts (`timeout -k 5s 45s`, `gtimeout`,
   `dart test --timeout 30s`), avoiding short OS timeouts on mutating VCS
-  commands (`git push`, `jj ship`, `g4 submit`). Prefer
-  `git status -s --untracked=no` and `git diff --name-status`. Pass multi-line
-  or backtick text (`git commit -F -`, `gh pr create --body-file -`,
-  `agentapi send-message`) via `<< 'EOF'`, never `"..."`.
+  commands (`git push`, `gh pr merge`). Prefer `git status -s --untracked=no`
+  and `git diff --name-status`. Pass multi-line or backtick text
+  (`git commit -F -`, `gh pr create --body-file -`) via `<< 'EOF'`, never
+  `"..."`.
 - **Waiting & Kill-Before-Pivot (3-Tier)**:
-  1. **Wait**: End turn with **zero** tool calls
-     (`NotificationTimeoutSeconds: 300`); no `sleep` loops or
-     `manage_task(status)` polls.
+  1. **Wait**: End turn with **zero** tool calls (`NotificationTimeoutSeconds: 300`);
+     no `sleep` loops or `manage_task(status)` polls.
   2. **Pivot**: Call `manage_task(Action: "kill", TaskId: "<id>")` (`TaskStop`)
-     before pivoting tools; never bound `grep`/`find` with `| head -n N`.
-  3. **Daemons/Kill**: Start servers with `IsDaemon: true`
-     (`run_in_background: true`; never foreground `nohup ... & disown`). Verify
-     PID (`lsof -ti :<PORT>`) and CWD (`lsof -a -d cwd -p <PID>`) before
-     `kill <PID>`, or use `pkill -f "[/]full/path/..."` (never unscoped
-     `pkill`/`killall`).
+     before pivoting; never bound `grep`/`find` with `| head -n N`.
+  3. **Daemons/Kill**: Start servers with `IsDaemon: true` (`run_in_background: true`,
+     never `nohup ... & disown`). Verify PID/CWD (`lsof -ti :<PORT>`,
+     `lsof -a -d cwd -p <PID>`) before `kill <PID>`, or `pkill -f "[/]full/path/..."`
+     (never unscoped `pkill`/`killall`).
 
 ## Engineering Discipline
 
@@ -82,8 +78,8 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
   1. **Auto-Run (`~0 Risk`, `<= 15s`)**: Run `--help`, `--dry-run`, `status`,
      `list`, `view`, `readonly`, `scan`, `SELECT`, or `~/.local/bin/` shims
      after formatters/`jj fix`, citing command + output.
-  2. **Offer (`~0 Risk`, `> 15s` or Live Sweep)**: Offer `evalin run --dry-run`,
-     multi-repo sweeps, or browser matrix probes via `ask_question` pre-landing.
+  2. **Offer (`~0 Risk`, `> 15s` or Live Sweep)**: Offer multi-repo sweeps or
+     browser matrix probes via `ask_question` pre-landing.
 - **Benchmarks ("Before vs. After First")**: Capture unmodified baseline first.
   Lead with target delta (`Pre-Change`, `Post-Change`, `Absolute Delta`,
   `Delta (%)`, `Speedup Multiplier`), then competitor tables; highlight
@@ -104,35 +100,29 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
      in `Proposals & Open Questions` or a brain artifact.
 - **Verb/Author Binding**: Verify `*submitted*`/`MERGED` state and provenance
   before accomplishment verbs (`shipped`, `built`, `authored`, `resolved`,
-  `drove`, `spearheaded`): `[YOUR_WORK]` (authored/driven by `kevmoo`),
-  `[TEAM_CONTRIB]` (reviewed/guided/unblocked by `kevmoo`), `[ECOSYSTEM_REF]`
-  (teammate/external, never claim as user deliverable).
+  `drove`, `spearheaded`): `[YOUR_WORK]` (by `kevmoo`), `[TEAM_CONTRIB]`
+  (reviewed/guided by `kevmoo`), `[ECOSYSTEM_REF]` (external/teammate, never
+  claim as user deliverable).
 - **Aspirational Docs & Routing Stubs**: Treat `README.md`, `PRD.md`,
-  `SCORECARD.md`, `pm-orient`, and open Dolt tasks as plans unless backed by a
-  `CLOSED` task + `*submitted*`/`MERGED` artifact; exclude
-  `experimental/users/kevmoo/` PM-OS bookkeeping from impact reports. Keep
-  `~/memory/default/projects/*.md` `<= 25 lines` and `<= 2,500 bytes`
-  (`<= 200 chars/line`): store only Piper/Dolt pointers, `OPEN`/`DRAFT` items
-  prefixed with `[YOUR_WORK]`/`[TEAM_CONTRIB]`/`[ECOSYSTEM_REF]`, and durable
-  gotchas.
+  `SCORECARD.md`, `pm-orient`, and open Dolt tasks as plans unless backed by
+  `CLOSED` + `*submitted*`/`MERGED`; exclude `experimental/users/kevmoo/` PM-OS
+  bookkeeping from impact reports. Keep `~/memory/default/projects/*.md` `<= 25`
+  lines / `<= 2,500 B` (`<= 200` chars/line): Piper/Dolt pointers, `OPEN`/`DRAFT`
+  items prefixed `[YOUR_WORK]`/`[TEAM_CONTRIB]`/`[ECOSYSTEM_REF]`, and gotchas.
 
 ## GitHub PRs & Workspace
 
-- **Target-Repo Orientation (Pre-Edit)**: Whenever working in a repository or
-  worktree outside the session's startup directory, run
-  `kscripts gh-orient --dir <checkout-root> [-p <paths>]` (or inspect
-  `<checkout-root>/{AGENTS.md,CLAUDE.md,GEMINI.md,.gemini/styleguide.md,.agents/rules/,.agents/skills/}`)
-  **before editing code or prose**—do not wait until `/gh-post` PR creation. On
-  documentation PRs in repositories with a styleguide or prose/proofreading
-  skill, run a read-only subagent pass on the changed doc files against those
-  instructions before requesting PR approval.
+- **Target-Repo Orientation (Pre-Edit)**: In any repo/worktree outside the
+  startup directory, run `kscripts gh-orient --dir <root> [-p <paths>]` (or
+  read `<root>/{AGENTS.md,CLAUDE.md,GEMINI.md,.gemini/styleguide.md,.agents/*}`)
+  **before editing code or prose**. On doc PRs in repos with a styleguide or
+  prose skill, run a read-only subagent pass against those rules pre-approval.
 - **Pre-PR CI Parity (`pr-check`) & Push Hygiene**: Run `kscripts pr-check`
   before `gh pr create` in `~/github/kevmoo/*` (`gh pr create -f` on 1-commit
-  branches: imperative subject `<=70 chars`, bulleted body, `Fixes #123`). In
-  upstream repos with `.github/PULL_REQUEST_TEMPLATE.md`, preserve template
-  checklist items (AI disclosure, issue links) verbatim. Present a `<= 50`-line
-  pre-flight summary before PR/CL creation, and run `dart format` before
-  `--no-verify` commits. If a push dismisses an `APPROVED` review, check
+  branches: imperative subject `<=70 chars`, bulleted body, `Fixes #123`).
+  Preserve upstream `.github/PULL_REQUEST_TEMPLATE.md` checklists verbatim, show
+  a `<= 50`-line pre-flight summary before PR/CL creation, and run `dart format`
+  before `--no-verify` commits. If a push dismisses an `APPROVED` review, check
   `gh pr view --json reviewDecision,latestReviews,reviewRequests` and offer
   `kscripts pr-triage re-request <login>`.
 - **Outbound Artifacts (issues, PRs, CLs, bugs, chat, email)**: Write for the
@@ -168,15 +158,13 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
   shell, `pubspec.yaml`, `CHANGELOG.md`, `README.md`) and
   `~/.agents/AGENT_DOCS_STANDARDS.md` (`SKILL.md`, `AGENTS.md`, `GEMINI.md`,
   `CLAUDE.md`, `references/*.md`). Edit `~/.agents/skills` in source repos
-  (`dot`, `~/github/kevmoo/kevmoo_skills/skills/<name>/`, `dotcorp`).
-  `github.com/kevmoo/*` lives at `~/github/kevmoo/<repo>`; other orgs at
-  `~/github/<repo>` (`dart-sdk` at `~/github/dart-sdk/core/main/sdk/`). On
-  `.dart_tool` `errno = 2`, use `dart pub get --no-precompile`,
-  `dart test -c source`, `dart <script.dart>`. Dotfiles: `~/.dotfiles` (`dot`,
-  `personal-dotfiles/SKILL.md`) and `~/.dotfiles-corp` (`dotcorp`).
-- **Cross-Machine Relay (`Cloudtop` ☁️🐧⚡ · `Darwin Pro` 🍎🏎️✨ · `Bluefin-DX`
-  🐧🛠️🐳)**: Corp-Private (`$AGENT_RELAY_CORP_REPO` via `ggh` at
-  `$AGENT_RELAY_CORP_DIR`) for internal paths/shortlinks (`cl/`, `b/`, `go/`,
-  `cs/`); Public-Safe (`kevmoo/agent-relay` via `gh` at
-  `~/github/kevmoo/agent-relay`) for zero-corp-secret OSS/dotfiles
-  (`--body-file -` and `drops/<YYYY-MM-DD>-<slug>/`).
+  (`dot`, `~/github/kevmoo/kevmoo_skills/skills/<name>/`). `github.com/kevmoo/*`
+  lives at `~/github/kevmoo/<repo>`; other orgs at `~/github/<repo>` (`dart-sdk`
+  at `~/github/dart-sdk/core/main/sdk/`). On `.dart_tool` `errno = 2`, use
+  `dart pub get --no-precompile`, `dart test -c source`, `dart <script.dart>`.
+  Dotfiles: `~/.dotfiles` (`dot`, `personal-dotfiles/SKILL.md`).
+- **Cross-Machine Relay (`Cloudtop` · `Darwin Pro` · `Bluefin-DX`)**:
+  Corp-Private (`$AGENT_RELAY_CORP_REPO` via `$GH_ENTERPRISE_BIN` at
+  `$AGENT_RELAY_CORP_DIR`) for internal paths/shortlinks; Public-Safe
+  (`kevmoo/agent-relay` via `gh` at `~/github/kevmoo/agent-relay`) for OSS or
+  dotfiles (`--body-file -` and `drops/<YYYY-MM-DD>-<slug>/`).
