@@ -26,15 +26,15 @@
 
 ## Phase 3 — DONE (Google auth in front, verified)
 - `oauth2-proxy` added to the pod as the **front door** on `127.0.0.1:8091`; Guacamole no longer published directly (only reachable through the proxy — verified unauth `/guacamole/` → 403).
-- Google OAuth client (Testing mode, self as user). Config in `~/.config/oauth2-proxy/` (`oauth2-proxy.env` 600 holds client id/secret/cookie secret; `authenticated-emails.txt` = `kevmoo16@gmail.com`).
-- **Verified**: full double-login flow (Google → Guacamole `admin`) → desktop; every request stamped `kevmoo16@gmail.com`; non-allowlisted Google accounts can't pass oauth2-proxy.
-- TODO for Phase 4 (going public): change `OAUTH2_PROXY_REDIRECT_URL` → `https://bluefin.tailba5047.ts.net/oauth2/callback`, set `COOKIE_SECURE=true`, set `--trusted-proxy-ip` to the Funnel/loopback source, then enable Funnel.
+- Google OAuth client (Testing mode, self as user). Config in `~/.config/oauth2-proxy/` (`oauth2-proxy.env` 600 holds client id/secret/cookie secret; `authenticated-emails.txt` = `<allowlisted Google account>`).
+- **Verified**: full double-login flow (Google → Guacamole `admin`) → desktop; every request stamped `<allowlisted Google account>`; non-allowlisted Google accounts can't pass oauth2-proxy.
+- TODO for Phase 4 (going public): change `OAUTH2_PROXY_REDIRECT_URL` → `https://bluefin.<tailnet>.ts.net/oauth2/callback`, set `COOKIE_SECURE=true`, set `--trusted-proxy-ip` to the Funnel/loopback source, then enable Funnel.
 
 ## 🏁 GOAL ACHIEVED — verified from an external Mac browser (no Tailscale client): Google login → Guacamole → live Bluefin desktop over the internet.
-Notes: use the full path `https://bluefin.tailba5047.ts.net/guacamole/` (bare root 404s — declined a redirect). Keyboard: Guacamole forwards physical scancodes, so Dvorak-on-Mac garbled because the host session was QWERTY-primary; set GNOME input source order to Dvorak-first (`us+dvorak`,`us`) — testing whether gnome-remote-desktop honors it vs overriding from the RDP-announced layout.
+Notes: use the full path `https://bluefin.<tailnet>.ts.net/guacamole/` (bare root 404s — declined a redirect). Keyboard: Guacamole forwards physical scancodes, so Dvorak-on-Mac garbled because the host session was QWERTY-primary; set GNOME input source order to Dvorak-first (`us+dvorak`,`us`) — testing whether gnome-remote-desktop honors it vs overriding from the RDP-announced layout.
 
 ## Phase 4 — Funnel LIVE (public, pending external browser confirmation)
-- **Public URL: `https://bluefin.tailba5047.ts.net/`** → Funnel → `127.0.0.1:8091` (oauth2-proxy).
+- **Public URL: `https://bluefin.<tailnet>.ts.net/`** → Funnel → `127.0.0.1:8091` (oauth2-proxy).
 - Required: Funnel enabled in admin console (tailnet capability) + `tailscale set --operator=kevmoo` (so funnel on/off needs no sudo).
 - oauth2-proxy in HTTPS mode (`COOKIE_SECURE=true`, redirect → funnel hostname). Guacamole admin password set to a user-chosen value.
 - Smoke test over HTTPS: valid cert, sign-in 200, unauth `/guacamole/` → 403, oauth2-proxy stays loopback-only. ✅
