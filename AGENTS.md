@@ -109,6 +109,14 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
   bookkeeping from impact reports. Keep `~/memory/default/projects/*.md` `<= 25`
   lines / `<= 2,500 B` (`<= 200` chars/line): Piper/Dolt pointers, `OPEN`/`DRAFT`
   items prefixed `[YOUR_WORK]`/`[TEAM_CONTRIB]`/`[ECOSYSTEM_REF]`, and gotchas.
+- **Memory Routing (Cross-Harness)**: Harness-private memory is invisible to the
+  other agent, so store each fact where both load it: always/never rules here or
+  in the owning skill; open work in the task tracker, issue, PR, or branch;
+  finished work nowhere (git has it). Keep only machine/tool gotchas and harness
+  quirks in private memory. When the user refers to work you have no record of,
+  read the other side before asking: the Claude Code memory index
+  (`~/.claude/projects/*/memory/MEMORY.md`) and either harness's session history
+  via the `duckdb` skill's transcript recipes.
 
 ## GitHub PRs & Workspace
 
@@ -152,7 +160,11 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
 
   <!-- END_SPOT_DEF: workflow-outbound-five-principles -->
   - Mechanics: `# <Proposed Title>` on line 1; inline review comments `<= 50`
-    words; `@mentions` only when named by the user.
+    words; `@mentions` only when named by the user. PR bodies describe the
+    merged end state; open questions go in a follow-up comment, and only a known
+    blocker leads. Never comment on a closed issue (file a new one); on issues
+    filed by `kevmoo` or an agent, fold findings into the body
+    (`gh issue edit --body-file -`) instead of commenting.
 
 - **Standards, Skills & Repos**: Consult `~/.agents/CODING_STANDARDS.md` (Dart,
   shell, `pubspec.yaml`, `CHANGELOG.md`, `README.md`) and
