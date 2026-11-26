@@ -160,7 +160,11 @@ Shared across Claude Code, Gemini CLI, and IDE agents via `~/AGENTS.md`.
 
   <!-- END_SPOT_DEF: workflow-outbound-five-principles -->
   - Mechanics: `# <Proposed Title>` on line 1; inline review comments `<= 50`
-    words; `@mentions` only when named by the user.
+    words; `@mentions` only when named by the user. PR bodies describe the
+    merged end state; open questions go in a follow-up comment, and only a known
+    blocker leads. Never comment on a closed issue (file a new one); on issues
+    filed by `kevmoo` or an agent, fold findings into the body
+    (`gh issue edit --body-file -`) instead of commenting.
 
 - **Standards, Skills & Repos**: Consult `~/.agents/CODING_STANDARDS.md` (Dart,
   shell, `pubspec.yaml`, `CHANGELOG.md`, `README.md`) and
