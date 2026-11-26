@@ -21,13 +21,13 @@
 - Config at `~/.config/guacamole/guac-home/` (`user-mapping.xml` + `guacamole.properties`), mounted `:Z` for SELinux.
 - guacd reaches the host RDP backend via **`host.containers.internal:3389`** (resolves `169.254.1.2`, not firewall-blocked).
 - Gotcha fixed: mapped container uid (1001) couldn't read `600` config → set `644`.
-- **Verified end-to-end**: browser → Guacamole (`admin`/`guac-admin-phase2`) → guacd → RDP → live desktop renders + input works.
+- **Verified end-to-end**: browser → Guacamole (local test login) → guacd → RDP → live desktop renders + input works.
 - TODO before going public: pod is **ephemeral** (no reboot persistence yet — quadlet/systemd in Phase 3/4); `user-mapping.xml` holds RDP password in plaintext `644` (acceptable local; oauth2-proxy fronts it next).
 
 ## Phase 3 — DONE (Google auth in front, verified)
 - `oauth2-proxy` added to the pod as the **front door** on `127.0.0.1:8091`; Guacamole no longer published directly (only reachable through the proxy — verified unauth `/guacamole/` → 403).
 - Google OAuth client (Testing mode, self as user). Config in `~/.config/oauth2-proxy/` (`oauth2-proxy.env` 600 holds client id/secret/cookie secret; `authenticated-emails.txt` = `<allowlisted Google account>`).
-- **Verified**: full double-login flow (Google → Guacamole `admin`) → desktop; every request stamped `<allowlisted Google account>`; non-allowlisted Google accounts can't pass oauth2-proxy.
+- **Verified**: full double-login flow (Google → Guacamole) → desktop; every request stamped `<allowlisted Google account>`; non-allowlisted Google accounts can't pass oauth2-proxy.
 - TODO for Phase 4 (going public): change `OAUTH2_PROXY_REDIRECT_URL` → `https://bluefin.<tailnet>.ts.net/oauth2/callback`, set `COOKIE_SECURE=true`, set `--trusted-proxy-ip` to the Funnel/loopback source, then enable Funnel.
 
 ## 🏁 GOAL ACHIEVED — verified from an external Mac browser (no Tailscale client): Google login → Guacamole → live Bluefin desktop over the internet.
